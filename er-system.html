@@ -179,7 +179,48 @@ fieldset.fs legend{font-family:Consolas,monospace;font-size:12px;color:#335;padd
 .shortbar{display:flex;gap:4px;padding:4px 6px;background:#b9d0f0;border-top:1px solid #7f9fcf}
 .shortbar button{border:1px solid #fff;border-right-color:#555;border-bottom-color:#555;background:#e6eefc;color:#0a2a9a;font-weight:700;padding:2px 22px;border-radius:0}
 @media (max-width:900px){.side{display:none}.fkeys{grid-template-columns:repeat(8,1fr)}.dxr{grid-template-columns:20px 56px 96px 40px 1fr 22px}.dxr .pri{display:none}}
+
+/* ===== 柔化配色與留白 ===== */
+:root{--bg:#f5f7f4}
+.menubar,.filterbar{background:#fbf3c9;color:#4a4220}
+.filterbar{border-top:1px solid #efe3a0;padding:7px 12px;gap:12px}
+.menubar{padding:2px 10px}.menubar .m{padding:6px 10px}
+.rg{background:#fffbe8;border-color:#eadf9c;border-radius:6px;padding:3px 8px}
+.rg label{padding:2px 6px;font-weight:500}
+.filterbar .search{border-radius:6px;border:1px solid #eadf9c;background:#fffef6;padding:4px 10px}
+.filterbar .btn{background:#fffbe8;border-color:#eadf9c;border-radius:6px;padding:4px 14px}
+.legend{padding:6px 12px;font-size:12px}
+table.emr{background:#fff;color:#243326;font-size:14px}
+table.emr th{background:#eaf1e6;color:#3a5340;border:0;border-bottom:1px solid #d5e0d0;padding:8px 8px;font-weight:600}
+table.emr td{padding:7px 8px;border:0;border-bottom:1px solid #edf1ea}
+table.emr tbody tr:nth-child(even){background:#f8faf6}
+table.emr tbody tr:hover{background:#eef6ea}
+table.emr tbody tr.sel{background:#fff6cf}
+table.emr td.stc{padding:4px 6px}
+table.emr .st{border-radius:4px;padding:3px 0;font-weight:600}
+table.emr .st.Y{background:#c4ebf1;color:#1d5560}table.emr .st.N{background:#fff2a8;color:#6b5a00}
+table.emr .st.P{background:#c6e8b0;color:#2f5a1e}table.emr .st.O{background:#ffc9bc;color:#8a2f1c}
+table.emr .stay.long{color:#c0392b}
+.side{background:#f4f7f2;padding:12px}
+.side .f{margin-bottom:8px}
+.side .f input{border:1px solid #d3ddd0;border-radius:6px;padding:4px 6px}
+.side .lg{background:#fffbe8;border:1px solid #eadf9c;border-radius:8px;padding:10px 12px;line-height:2}
+.detail{background:#f4f7f2;border-top:1px solid #d3ddd0}
+.detail .pbar{background:#eaf1e6;padding:8px 14px;gap:16px}
+.fkeys{background:#f4f7f2;border-top:0;gap:6px;padding:8px 10px}
+.fk{background:#fff;border:1px solid #d3ddd0;border-radius:6px;padding:6px 2px;color:#2c3a2e}
+.fk:hover{background:#f0f6ed;border-color:#b8c9b3}
+.fk.on{background:#4a86c5;border-color:#4a86c5;color:#fff}
+.detail .tabbody{background:#f4f7f2;padding:8px 12px}
+fieldset.fs{border:1px solid #d3ddd0;border-radius:8px;background:#fff;padding:6px 12px 12px;margin-bottom:10px}
+fieldset.fs legend{color:#6b7a6d}
+.dxr{height:32px;gap:8px}
+.dxr .code,.dxr .desc,.dxl input{border:1px solid #d3ddd0;border-radius:5px;background:#fafcf9;height:26px;line-height:24px}
+.shortbar{background:#e7eefa;border-top:1px solid #d2deef;padding:8px 10px;gap:8px}
+.shortbar button{background:#fff;border:1px solid #c3d2ea;border-radius:6px;color:#2a4a8a;font-weight:600;padding:4px 22px}
+.detail .pbar select,.detail .pbar input{border-radius:6px}
 </style>
+
 </head>
 <body>
 

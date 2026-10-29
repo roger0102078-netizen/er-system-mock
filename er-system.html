@@ -200,7 +200,8 @@ table.emr td.stc{padding:4px 6px}
 table.emr .st{border-radius:4px;padding:3px 0;font-weight:600}
 table.emr .st.Y{background:#c4ebf1;color:#1d5560}table.emr .st.N{background:#fff2a8;color:#6b5a00}
 table.emr .st.P{background:#c6e8b0;color:#2f5a1e}table.emr .st.O{background:#ffc9bc;color:#8a2f1c}
-table.emr .stay.long{color:#c0392b}
+table.emr .stay{font-weight:700}
+table.emr .stay.s1{color:#d32f2f}table.emr .stay.s2{color:#e67e00}table.emr .stay.s3{color:#1f6fb5}table.emr .stay.s4{color:#111}
 .side{background:#f4f7f2;padding:12px}
 .side .f{margin-bottom:8px}
 .side .f input{border:1px solid #d3ddd0;border-radius:6px;padding:4px 6px}
@@ -397,8 +398,19 @@ const $=s=>document.querySelector(s);
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)};
 const fmtH=h=>h<1?Math.round(h*60)+' 分':h<48?h.toFixed(1)+' 時':(h/24).toFixed(1)+' 天';
 const hrs=p=>(Date.now()-p.arrive)/H;
+const stayCls=h=>h<1?'s1':h<2?'s2':h<4?'s3':'s4';
 
 setInterval(()=>{$('#clock').textContent=new Date().toLocaleString('zh-TW',{hour12:false})},1000);
+
+/* 停留時間：每 30 秒更新文字與顏色 */
+function tickStay(){
+  document.querySelectorAll('td.stay[data-arr]').forEach(td=>{
+    const h=(Date.now()-+td.dataset.arr)/H;
+    td.textContent=fmtH(h);td.className='stay '+stayCls(h);
+  });
+  const p=cur(),e=$('#stayNow');if(p&&e)e.textContent=fmtH(hrs(p));
+}
+setInterval(tickStay,30000);
 
 /* ===== 篩選 ===== */
 function filtered(){
@@ -445,7 +457,7 @@ function renderList(){
     $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號</th><th>床號</th><th>狀態</th><th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>診治醫師</th><th>初診醫師</th><th>負責護理師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
     L.map(p=>`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
       <td>${p.id}</td><td><b>${p.bed}</b></td><td>${stat(p)}</td><td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
-      <td>${p.dir}</td><td class="stay ${hrs(p)>=12?'long':''}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.doc1||p.doc}</td><td>${p.nur}</td>
+      <td>${p.dir}</td><td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.doc1||p.doc}</td><td>${p.nur}</td>
       ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k])}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
   }
   $('#hoN').textContent=S.checked.size;
@@ -469,7 +481,7 @@ function renderDetail(){
     <span><span class="k">床號</span><input id="bedIn" value="${p.bed}" size="5" style="border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--panel)"></span>
     <span><span class="k">主訴</span>${p.cc}</span>
     <span><span class="k">主責醫師</span><b>${p.doc}</b></span><span><span class="k">護理師</span><b>${p.nur}</b></span>
-    <span><span class="k">停留</span>${fmtH(hrs(p))}</span>
+    <span><span class="k">停留</span><span id="stayNow">${fmtH(hrs(p))}</span></span>
     <label style="color:#b3261e;font-weight:600"><input type="checkbox" id="mciCk" ${p.mci?'checked':''}> 大量傷患</label>
   </div>
   <div class="fkeys">${FK1.concat(FK2).map(t=>`<button class="fk ${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>

@@ -91,7 +91,8 @@ td.cc{white-space:normal;min-width:180px}
 .st.Y{background:var(--y);color:#063}.st.N{background:var(--n);color:#440}.st.P{background:var(--p);color:#143}.st.O{background:var(--o);color:#600}
 
 /* 病人詳細 */
-.detail{border-top:2px solid var(--accent);background:var(--panel);height:46%;min-height:260px;display:flex;flex-direction:column}
+.detail{border-top:2px solid var(--accent);background:var(--panel);height:46%;min-height:220px;max-height:60vh;display:flex;flex-direction:column}
+.detail.none{height:auto;min-height:0}
 .pbar{display:flex;gap:14px;align-items:center;padding:6px 12px;background:var(--accent-soft);flex-wrap:wrap}
 .pbar .nm{font-weight:700;font-size:16px}
 .pbar span.k{color:var(--muted);font-size:12px;margin-right:3px}
@@ -175,12 +176,12 @@ textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;b
 
 <script>
 /* ===== 範例資料（皆為虛構）===== */
-const DOCTORS=['洪○彤','呂○宇','陳○恩','林○翰','張○庭'];
-const NURSES=['葉○嘉','廖○雯','徐○希','潘○成','許○珊','周○萱','李○瑄','蔣○芊'];
+const DOCTORS=['周明哲','李婉婷','張宇軒','吳佩珊','黃建宏','林怡君','陳柏翰','蔡雅惠'];
+const NURSES=['王心怡','劉芷瑄','郭庭安','謝佳穎','鄭欣妤','葉雅婷','曾淑芬','宋雨潔','蘇冠霖','賴品妍','施佩君','盧靜怡','簡芮安','古詩涵','彭巧雯','洪語彤'];
 const ZONES=[
- {k:'A',name:'A 區｜急救區',cap:6},{k:'B',name:'B 區｜重症監視區',cap:8},{k:'C',name:'C 區｜一般內科診療區',cap:10},
- {k:'D',name:'D 區｜外科／創傷區',cap:8},{k:'E',name:'E 區｜骨科／處置區',cap:6},{k:'F',name:'F 區｜隔離／發燒區',cap:6},
- {k:'觀察',name:'觀察區',cap:10},{k:'ICU待床',name:'ICU 待床區',cap:4}];
+ {k:'A',name:'A 區｜急救區',cap:24},{k:'B',name:'B 區｜重症監視區',cap:24},{k:'C',name:'C 區｜一般內科診療區',cap:24},
+ {k:'D',name:'D 區｜外科／創傷區',cap:24},{k:'E',name:'E 區｜骨科／處置區',cap:24},{k:'F',name:'F 區｜隔離／發燒區',cap:10},
+ {k:'觀察',name:'觀察區',cap:12},{k:'ICU待床',name:'ICU 待床區',cap:4}];
 const zInfo=k=>ZONES.find(z=>z.k===k)||{k,name:k,cap:0};
 const ICD=[
 ['R07.9','胸痛，未特定','Chest pain, unspecified'],['R07.89','其他胸痛','Other chest pain'],
@@ -215,31 +216,48 @@ const ICD=[
 ];
 const now=Date.now(), H=3600e3;
 const P=(id,bed,zone,lvl,name,sex,age,cc,doc,nur,hrs,dir,st,dx=[])=>({id,bed,zone,lvl,name,sex,age,cc,doc,nur,arrive:now-hrs*H,dir,st,dx,imp:'',notes:[]});
-let patients=[
-P('0226','A01','A',1,'何○欽','男',52,'交通事故，意識改變',DOCTORS[0],NURSES[0],0.2,'',{lab:'O',ct:'O'}),
-P('0316','A02','A',2,'沈○杰','男',77,'突發口齒不清、右側無力',DOCTORS[4],NURSES[0],0.3,'',{lab:'Y',ct:'N'}),
-P('0312','A03','A',2,'楊○豪','男',55,'胸悶冒冷汗',DOCTORS[3],NURSES[1],0.4,'',{lab:'N',xr:'N'}),
-P('0224','B01','B',2,'陳○弘','男',71,'交通事故，前胸痛',DOCTORS[1],NURSES[1],0.85,'會診外科',{lab:'Y',ct:'N',xr:'N',bio:'P'}),
-P('0203','B02','B',2,'邱○源','男',58,'自高處落下',DOCTORS[1],NURSES[2],1.77,'會診骨科',{lab:'Y',ct:'O',xr:'P',bio:'P'},[{code:'S72.001A',ro:false}]),
-P('0315','B03','B',3,'曾○芬','女',68,'呼吸喘',DOCTORS[3],NURSES[2],0.9,'',{lab:'Y',xr:'Y'}),
-P('0186','C01','C',3,'林○合','女',80,'慵懶無力',DOCTORS[1],NURSES[2],2.1,'',{ct:'N'}),
-P('0310','C02','C',4,'吳○宏','男',22,'腹瀉嘔吐一天',DOCTORS[2],NURSES[7],1.2,'',{lab:'Y'}),
-P('0313','C03','C',4,'許○安','女',27,'右下腹痛',DOCTORS[3],NURSES[3],2.4,'',{lab:'P',ct:'N'}),
-P('0223','C04','C',3,'黃○曦','男',45,'上腹痛',DOCTORS[1],NURSES[7],0.3,'',{lab:'Y'}),
-P('0227','D01','D',3,'王○翔','男',34,'頭部外傷',DOCTORS[1],NURSES[3],0.1,'',{}),
-P('0138','D02','D',3,'劉○臻','男',29,'交通事故，左肩痛',DOCTORS[0],NURSES[4],5.82,'會診外科',{lab:'Y',ct:'Y',xr:'Y',bio:'P'}),
-P('0314','D03','D',5,'謝○偉','男',19,'手部割傷',DOCTORS[4],NURSES[4],0.2,'',{}),
-P('0089','E01','E',2,'鄭○哲','男',66,'跌倒，髖部疼痛',DOCTORS[0],NURSES[5],8.62,'等住院',{lab:'Y',ct:'O',xr:'Y',bio:'P'},[{code:'S72.001A',ro:false}]),
-P('0317','E02','E',4,'江○妮','女',33,'下背痛',DOCTORS[4],NURSES[5],3.3,'',{xr:'P'}),
-P('0224b','E03','E',3,'鍾○潔','女',62,'交通事故，下肢疼痛',DOCTORS[0],NURSES[5],0.25,'',{lab:'O',xr:'N'}),
-P('0311','F01','F',3,'蔡○玲','女',39,'發燒咳嗽三天',DOCTORS[2],NURSES[6],0.6,'',{lab:'N',xr:'N'}),
-P('0318','F02','F',4,'潘○豪','男',41,'喉嚨痛發燒',DOCTORS[2],NURSES[6],0.4,'',{lab:'N'}),
-P('0006','觀01','觀察',3,'黃○華','女',74,'交通事故，腹痛',DOCTORS[0],NURSES[6],17.65,'等住院',{lab:'Y',ct:'Y',xr:'Y',bio:'P'}),
-P('0252','觀02','觀察',3,'林○薇','女',48,'數天前跌倒',DOCTORS[1],NURSES[6],212.95,'等照會',{lab:'Y',ct:'Y',xr:'Y',bio:'Y'}),
-P('0306','ICU1','ICU待床',1,'李○賢','男',63,'敗血症、低血壓',DOCTORS[0],NURSES[5],18.2,'等ICU',{lab:'O',ct:'O',xr:'Y',bio:'Y'}),
-];
-try{const s=localStorage.getItem('er-mock-v2');if(s)patients=JSON.parse(s)}catch(e){}
-const save=()=>{try{localStorage.setItem('er-mock-v2',JSON.stringify(patients))}catch(e){}};
+/* 以固定亂數種子產生虛構病人（每次載入結果相同） */
+let patients=(()=>{
+  let seed=20261030;const rnd=()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const pick=a=>a[Math.floor(rnd()*a.length)], ri=(a,b)=>a+Math.floor(rnd()*(b-a+1));
+  const SUR=['陳','林','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','邱','廖','賴','徐','周','葉','蘇','莊','呂','江','何','蕭','羅','高'];
+  const GM=['志明','俊宏','建國','家豪','冠宇','承恩','宗翰','柏毅','彥廷','信宏','文傑','仁豪','國華','榮輝','金龍','明德'];
+  const GF=['淑芬','美玲','雅婷','怡君','佩珊','惠敏','靜宜','欣怡','秀英','麗華','詩涵','雨潔','心怡','玉蘭','淑惠','宛庭'];
+  const CC={
+   A:[['胸痛，冒冷汗','I21.9'],['意識改變','R40.20'],['呼吸困難','R06.02'],['突發口齒不清、肢體無力','I63.9'],['心悸、血壓低','I48.91'],['抽搐','R56.9'],['解黑便、頭暈','K92.2'],['嚴重過敏、喘','T78.2XXA'],['交通事故，多處外傷','T14.90XA'],['昏倒','R55']],
+   B:[['胸悶','I20.0'],['發燒、意識混亂','A41.9'],['喘、無法平躺','I50.9'],['腹痛劇烈','R10.9'],['血糖過高','E11.65'],['嘔血','K92.2'],['肺炎疑似，喘','J18.9'],['低血糖昏迷','E16.2'],['頭暈、步態不穩','R42'],['COPD 惡化','J44.1']],
+   C:[['腹瀉嘔吐','A09'],['上腹痛','K29.70'],['頭痛','R51.9'],['發燒咳嗽','R50.9'],['頭暈','R42'],['尿頻、排尿疼痛','N39.0'],['右下腹痛','K35.80'],['側腹絞痛','N23'],['下背痛','M54.5'],['全身無力','D64.9'],['咳嗽喉嚨痛','J06.9'],['血壓過高','I10']],
+   D:[['頭部外傷','S06.0X0A'],['手部割傷','S61.411A'],['頭皮撕裂傷','S01.01XA'],['機車擦撞','V89.2XXA'],['跌倒，頭部撞傷','W19.XXXA'],['胸部撞傷','S22.39XA'],['腹部外傷','T14.90XA'],['被刀割傷','S61.411A']],
+   E:[['跌倒，髖部疼痛','S72.001A'],['手腕疼痛腫脹','S52.501A'],['小腿受傷','S82.201A'],['腰部拉傷','S39.012A'],['下背痛','M54.5'],['肩膀疼痛','T14.90XA'],['腳踝扭傷','T14.90XA'],['運動傷害，膝蓋痛','T14.90XA'],['肋骨疼痛','S22.39XA']],
+   F:[['發燒、喉嚨痛','J10.1'],['發燒咳嗽、疑似 COVID','U07.1'],['高燒、全身痠痛','J10.1'],['咳嗽、呼吸急促','J18.9'],['腹瀉、發燒','A09']],
+   觀察:[['腹痛，待追蹤','R10.9'],['頭暈，待觀察','R42'],['胸痛，連續心肌酵素追蹤','R07.9'],['發燒，待培養結果','R50.9'],['脫水，輸液中','E86.0']],
+   ICU待床:[['敗血症、低血壓','A41.9'],['呼吸衰竭，插管','J44.1'],['腦出血','I61.9'],['急性心肌梗塞','I21.9']]
+  };
+  const LV={A:[1,1,2,2,2,3],B:[2,2,2,3,3],C:[3,3,4,4,4,5],D:[3,3,4,4,5],E:[3,4,4,5],F:[3,4,4],觀察:[3,3,4],ICU待床:[1,1,2]};
+  const DIR={A:['','','會診外科','會診心臟科'],B:['','等住院','會診神內','等ICU',''],C:['','','等住院',''],D:['','會診外科','','等住院'],E:['','會診骨科','等住院',''],F:['','','隔離中'],觀察:['等住院','等照會','追蹤中'],ICU待床:['等ICU']};
+  const N={A:20,B:20,C:21,D:19,E:20,F:8,觀察:10,ICU待床:3};
+  // 每區固定 2 位主責醫師、4 位護理師
+  const ZD={A:[0,1],B:[2,3],C:[4,5],D:[6,7],E:[0,2],F:[1,3],觀察:[4,6],ICU待床:[0,2]};
+  const ZN={A:[0,1,2,3],B:[4,5,6,7],C:[8,9,10,11],D:[12,13,14,15],E:[0,4,8,12],F:[1,5,9,13],觀察:[2,6,10,14],ICU待床:[3,7,11,15]};
+  const out=[];let no=100;
+  for(const z of Object.keys(N)){
+    for(let i=1;i<=N[z];i++){
+      const f=rnd()<.5, [cc,icd]=pick(CC[z]);
+      const st={};
+      if(rnd()<.8)st.lab=pick('YYNPO');
+      if(['A','B','D','E','F'].includes(z)&&rnd()<.6)st.xr=pick('YYNP');
+      if(['A','B','D'].includes(z)&&rnd()<.4)st.ct=pick('YNO');
+      if(['A','B','觀察'].includes(z)&&rnd()<.5)st.bio=pick('YP');
+      const bed=z==='觀察'?'觀'+String(i).padStart(2,'0'):z==='ICU待床'?'ICU'+i:z+String(i).padStart(2,'0');
+      const hrs=z==='觀察'?rnd()*40+6:z==='ICU待床'?rnd()*20+3:Math.round(rnd()*rnd()*14*100)/100+.05;
+      out.push(P(String(++no).padStart(4,'0'),bed,z,pick(LV[z]),pick(SUR)+(f?pick(GF):pick(GM)),f?'女':'男',ri(z==='F'?5:18,92),cc,
+        DOCTORS[pick(ZD[z])],NURSES[pick(ZN[z])],hrs,pick(DIR[z]),st,rnd()<.3?[{code:icd,ro:rnd()<.3}]:[]));
+    }
+  }
+  return out;
+})();
+try{const s=localStorage.getItem('er-mock-v3');if(s)patients=JSON.parse(s)}catch(e){}
+const save=()=>{try{localStorage.setItem('er-mock-v3',JSON.stringify(patients))}catch(e){}};
 
 /* ===== 狀態 ===== */
 const S={zone:'全部',view:'card',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'診斷'};
@@ -301,7 +319,8 @@ function renderList(){
 const cur=()=>patients.find(p=>p.id===S.sel);
 function renderDetail(){
   const p=cur(), d=$('#detail');
-  if(!p){d.innerHTML=`<div class="empty">請從上方清單選擇病人</div>`;return}
+  d.classList.toggle('none',!p);
+  if(!p){d.innerHTML=`<div class="empty" style="padding:10px">請從上方清單選擇病人</div>`;return}
   const tabs=['診斷','病程','醫囑','檢驗報告','影像'];
   d.innerHTML=`
   <div class="pbar">

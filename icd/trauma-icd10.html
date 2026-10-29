@@ -258,7 +258,6 @@
 <div class="basket">
   <span class="title">選用清單</span>
   <div class="chips" id="chips"><span style="font-size:13px;color:var(--sub)">按各列「＋加入」收集多筆診斷碼</span></div>
-  <button class="btn primary" id="sendAll" style="display:none;background:#FFC857;color:#17324D;border-color:#FFC857">送入病人診斷</button>
   <button class="btn primary" id="copyAll">複製全部</button>
   <button class="btn" id="clearAll">清空</button>
 </div>
@@ -444,6 +443,8 @@ const CAT_NAME = {sup:"表淺傷", cont:"挫傷", abr:"擦傷", lac:"撕裂/開�
 const CAT_VAR  = {sup:"--sup", cont:"--cont", abr:"--abr", lac:"--lac", cru:"--cru", fx:"--fx", spr:"--spr", amp:"--amp", brn:"--brn", tbi:"--tbi", org:"--org"};
 const SIDE_NAME= {R:"右", L:"左", U:"未特定側"};
 
+const EMBED = window.parent!==window;
+if(EMBED){ const st=document.createElement("style"); st.textContent=".basket{display:none!important}"; document.head.appendChild(st); }
 let state = {cat:"cont", region:null, side:"U", ext:"A", ampCP:"1", burnDeg:"0", basket:[]};
 
 const SIDE_DIGIT = {R:"1", L:"2", U:"9"};
@@ -609,7 +610,7 @@ function row(e, regionKey, idx){
   return `<tr>
     <td class="name">${e.n}${note}</td>
     <td class="icd"><span class="code ${nocopy?"nocopy":""}" data-code="${nocopy?"":code}">${code}</span>${sidetag}</td>
-    <td class="act">${nocopy?"":`<button class="btn addbtn" data-code="${code}" data-name="${e.n}">＋加入</button>`}</td>
+    <td class="act">${nocopy?"":`<button class="btn addbtn" data-code="${code}" data-name="${e.n}">${EMBED?"＋加入診斷":"＋加入"}</button>`}</td>
   </tr>`;
 }
 
@@ -620,6 +621,7 @@ function bindRows(root){
   root.querySelectorAll(".addbtn").forEach(el=>{
     el.addEventListener("click", ()=>{
       const code = el.dataset.code;
+      if(EMBED){ window.parent.postMessage({type:"icd-pick",keep:true,items:[{code, name:el.dataset.name}]},"*"); showToast("已送入診斷:" + code); return; }
       if(!state.basket.some(b=>b.code===code)){
         state.basket.push({code, name:el.dataset.name});
         renderBasket(); showToast("已加入清單:" + code);
@@ -757,8 +759,6 @@ $("#copyAll").addEventListener("click", ()=>{
   if(state.basket.length===0){ showToast("清單是空的"); return; }
   copyText(state.basket.map(b=>b.code).join(", "));
 });
-if(window.parent!==window){$("#sendAll").style.display="";}
-$("#sendAll").addEventListener("click", ()=>{ if(!state.basket.length){ showToast("清單是空的"); return; } window.parent.postMessage({type:"icd-pick",items:state.basket.map(b=>({code:b.code,name:b.name}))},"*"); state.basket=[]; renderBasket(); });
 $("#clearAll").addEventListener("click", ()=>{ state.basket=[]; renderBasket(); });
 
 setAccent();

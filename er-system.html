@@ -115,7 +115,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;b
 .sug .e{color:var(--muted);font-size:12px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .log{font-size:12px;color:var(--muted);margin-top:6px}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 18px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 18px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:60}
 .toast.show{opacity:1}
 .note{border-left:3px solid var(--accent);padding:4px 10px;margin:6px 0;background:var(--bg);border-radius:0 6px 6px 0}
 .note small{color:var(--muted)}
@@ -173,12 +173,12 @@ textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;b
 </div>
 
 <div class="toast" id="toast"></div>
+<iframe id="icdSearchFrame" style="display:none" title="icd-search"></iframe>
 <div id="icdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center">
   <div style="background:var(--panel);width:min(1200px,96vw);height:92vh;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
     <div style="display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)">
       <b id="icdWho">診斷查詢</b>
-      <div class="seg"><button data-icd="all">全 ICD 搜尋</button><button data-icd="trauma">外傷人形圖</button></div>
-      <span class="sp"></span><span class="lbl">在清單按「送入病人診斷」即加入</span>
+            <span class="sp"></span><span class="lbl">點診斷旁的「加入診斷」即直接加入，可連續加入</span>
       <button class="btn" id="icdClose">關閉</button>
     </div>
     <iframe id="icdFrame" style="flex:1;border:0;width:100%"></iframe>
@@ -357,10 +357,9 @@ function renderTab(){
     <div class="row" style="margin:10px 0 0">
       <div class="lbl" style="min-width:150px">Discharge Diagnosis（ICD-10）</div>
       <div class="sugwrap" style="flex:1">
-        <input class="search" id="icd" style="width:100%" placeholder="輸入代碼或中英文關鍵字，例如 R07 / 胸痛 / fracture" autocomplete="off">
+        <input class="search" id="icd" style="width:100%" placeholder="輸入代碼或中英文關鍵字（同全 ICD 搜尋），例如 R07 / 胸痛 / fracture" autocomplete="off">
         <div class="sug" id="sug"></div>
       </div>
-      <button class="btn" data-icd="all">全 ICD 查詢</button>
       <button class="btn" data-icd="trauma">外傷人形圖</button>
       <span class="lbl">最多 7 項</span>
       <span class="sp"></span>
@@ -406,7 +405,7 @@ document.addEventListener('click',e=>{
   if(t.id==='saveDx'){cur().imp=$('#imp').value;save();toast('診斷已儲存');return}
   if(t.id==='addNt'){const v=$('#nt').value.trim();if(!v)return;cur().notes.push({t:v,at:new Date().toLocaleString('zh-TW',{hour12:false})});save();renderTab();return}
   const sg=t.closest('#sug [data-code]');
-  if(sg){addDx(sg.dataset.code);return}
+  if(sg){addDx(sg.dataset.code,sg.dataset.name);return}
   if(!t.closest('.sugwrap')){const s=$('#sug');if(s)s.style.display='none'}
 });
 document.addEventListener('change',e=>{
@@ -441,22 +440,26 @@ document.addEventListener('input',e=>{
   if(e.target.id==='icd'){
     const v=e.target.value.trim().toLowerCase(),s=$('#sug');
     if(!v){s.style.display='none';return}
-    const r=ICD.filter(x=>(x[0]+x[1]+x[2]).toLowerCase().includes(v)).slice(0,10);
-    s.innerHTML=r.map(x=>`<div data-code="${x[0]}"><span class="c">${x[0]}</span><span>${x[1]}<br><span class="e">${x[2]}</span></span></div>`).join('')||'<div>找不到符合的診斷</div>';
+    let r;
+    try{r=icdSearch().icdQuery(e.target.value,10)}catch(_){r=null}
+    if(!r)r=ICD.filter(x=>(x[0]+x[1]+x[2]).toLowerCase().includes(v)).slice(0,10).map(x=>({code:x[0],name:x[1]+' / '+x[2]}));
+    const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+    s.innerHTML=r.map(x=>`<div data-code="${x.code}" data-name="${esc(x.name)}"><span class="c">${x.code}</span><span>${esc(x.name)}</span></div>`).join('')||'<div>找不到符合的診斷</div>';
     s.style.display='block';
   }
 });
 document.addEventListener('keydown',e=>{
-  if(e.target.id==='icd'&&e.key==='Enter'){const f=document.querySelector('#sug [data-code]');if(f)addDx(f.dataset.code)}
+  if(e.target.id==='icd'&&e.key==='Enter'){const f=document.querySelector('#sug [data-code]');if(f)addDx(f.dataset.code,f.dataset.name)}
 });
 
 /* ===== 診斷查詢工具（icd/） ===== */
 const ICD_PAGE={all:'icd/all-icd10-search.html',trauma:'icd/trauma-icd10.html'};
+function icdSearch(){const w=$('#icdSearchFrame').contentWindow;if(!w.icdQuery)throw 0;return w}
+setTimeout(()=>{$('#icdSearchFrame').src=ICD_PAGE.all},300);
 function openIcd(k){
   const p=cur();if(!p)return;
   $('#icdModal').style.display='flex';
   $('#icdWho').textContent=`診斷查詢 — ${p.bed} ${p.name}`;
-  document.querySelectorAll('#icdModal .seg button').forEach(b=>b.classList.toggle('on',b.dataset.icd===k));
   const f=$('#icdFrame');if(f.dataset.k!==k){f.dataset.k=k;f.src=ICD_PAGE[k]}
 }
 function closeIcd(){$('#icdModal').style.display='none'}
@@ -464,7 +467,7 @@ window.addEventListener('message',e=>{
   const d=e.data;if(!d||d.type!=='icd-pick'||!Array.isArray(d.items))return;
   let n=0;for(const it of d.items){if(addDx(it.code,it.name,true))n++}
   toast(`已加入 ${n} 項診斷`+(n<d.items.length?`（${d.items.length-n} 項重複或超過上限）`:''));
-  if(n)closeIcd();
+  if(n&&!d.keep)closeIcd();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeIcd()});
 

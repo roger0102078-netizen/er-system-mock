@@ -607,6 +607,7 @@ $list.addEventListener("click", e=>{
 $bItems.addEventListener("click", e=>{ const it=e.target.closest(".it"); if(it) toggleBasket(it.dataset.rm); });
 $("bCopyCode").onclick=()=>{ copyText(basket.map(fmt).join("\n"), `已複製 ${basket.length} 個代碼`); basket.forEach(bump); };
 $("bCopyAll").onclick=()=>{ copyText(basket.map(c=>fmt(c)+"\t"+nameFor(c)).join("\n"), `已複製 ${basket.length} 筆（代碼＋名稱）`); basket.forEach(bump); };
+window.icdQuery=(q,n)=>{ $q.value=q; runSearch(); return results.slice(0,n||10).map(r=>({code:dotted(codes[r[0]]),name:nameFor(codes[r[0]])})); };
 if(window.parent!==window){$("bSend").style.display="";}
 $("bSend").onclick=()=>{ window.parent.postMessage({type:"icd-pick",items:basket.map(c=>({code:fmt(c).includes(".")?fmt(c):dotted(c),name:nameFor(c)}))},"*"); basket.forEach(bump); basket.length=0; renderBasket(); document.querySelectorAll(".add.in").forEach(b=>{b.classList.remove("in"); b.textContent="＋";}); };
 $("bClear").onclick=()=>{ basket.length=0; renderBasket(); document.querySelectorAll(".add.in").forEach(b=>{b.classList.remove("in"); b.textContent="＋";}); };

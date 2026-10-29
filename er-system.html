@@ -120,25 +120,85 @@ textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;b
 .note{border-left:3px solid var(--accent);padding:4px 10px;margin:6px 0;background:var(--bg);border-radius:0 6px 6px 0}
 .note small{color:var(--muted)}
 @media (max-width:700px){.dx{grid-template-columns:24px 60px 1fr 28px}.dx .en,.dx .pri{display:none}.detail{height:55%}}
+
+/* ===== 仿現行急診系統版面 ===== */
+.menubar{background:#f7e83a;font-size:13px}
+.menubar .m{padding:5px 8px;font-weight:400}
+.filterbar{background:#f7e83a;border-top:1px solid #c9bb1c;padding:4px 8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#3b3300}
+.rg{display:flex;gap:2px;align-items:center;flex-wrap:wrap;border:1px solid #c9bb1c;background:#fbf29a;padding:2px 8px;border-radius:2px}
+.rg label{display:inline-flex;align-items:center;gap:2px;padding:1px 5px;cursor:pointer;font-weight:600}
+.rg input{margin:0}
+.rg .n{font-size:10px;opacity:.65}
+.filterbar .search{width:150px;padding:2px 8px;border-radius:2px}
+.filterbar .btn{padding:2px 12px;border-radius:2px;background:#fffbd0;border-color:#c9bb1c;color:#3b3300}
+.filterbar .btn.warn.on{background:var(--danger);color:#fff}
+.top{flex:1;display:flex;min-height:0}
+.side{width:196px;flex-shrink:0;background:#e9efe5;border-left:1px solid var(--line);padding:8px;overflow:auto;font-size:12px;color:#102010}
+.side .f{display:flex;align-items:center;gap:4px;margin-bottom:4px}
+.side .f span{min-width:44px;color:#2b4a33}.side .f input{flex:1;min-width:0;border:1px solid #9bb09b;background:#fff;padding:1px 4px;border-radius:0;color:#111}
+.side .lg{margin-top:8px;border:1px solid #c9bb1c;background:#fbf29a;padding:6px 8px;color:#3b3300;line-height:1.9}
+.side .lg b{display:block;text-align:center}
+.side .lg i{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:4px;border:1px solid rgba(0,0,0,.3)}
+.listwrap{padding:0}
+.legend{padding:4px 8px;margin:0;background:var(--panel);border-bottom:1px solid var(--line)}
+#view{padding:0}
+#view .cards,#view .zone{padding:0 8px}
+table.emr{border:0;border-radius:0;background:#9ccf9c;color:#102010;font-size:13px}
+table.emr th{background:#cfe0c4;color:#1d3b22;border:1px solid #7fae7f;padding:3px 6px;font-weight:600;text-align:center}
+table.emr td{padding:2px 6px;border:1px solid #84b484;text-align:center}
+table.emr td.l{text-align:left}
+table.emr tbody tr:hover{background:#b6e0b6}
+table.emr tbody tr.sel{background:#fff7a8}
+table.emr .nm{font-weight:700}
+table.emr .stay{font-variant-numeric:tabular-nums}
+table.emr .stay.long{color:#b00020;font-weight:700}
+table.emr td.stc{padding:1px 2px}
+table.emr .st{display:block;min-width:0;border-radius:0;padding:2px 0;font-size:13px;width:100%}
+table.emr .st.Y{background:#7fe3f0;color:#033}table.emr .st.N{background:#fff04d;color:#440}table.emr .st.P{background:#74d24a;color:#143}table.emr .st.O{background:#ff9d8a;color:#600}
+.fkeys{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px;padding:5px 6px;background:#c9dcc0;border-top:1px solid #7fae7f}
+.fk{border:1px solid #fff;border-right-color:#6b6b6b;border-bottom-color:#6b6b6b;background:#e6e6e6;color:#111;padding:3px 2px;font-size:13px;border-radius:0;white-space:nowrap;overflow:hidden}
+.fk:hover{background:#f4f4f4}
+.fk.on{background:#0a64c8;color:#fff;border-color:#0a64c8}
+.detail{background:#c9dcc0;border-top:2px solid #6b8f6b}
+.detail .pbar{background:#d8e8d0;color:#102010}
+.detail .tabbody{background:#c9dcc0;padding:6px;color:#102010}
+fieldset.fs{border:1px solid #7fae7f;margin:0 0 6px;padding:2px 6px 6px;background:#c9dcc0}
+fieldset.fs legend{font-family:Consolas,monospace;font-size:12px;color:#335;padding:0 3px}
+.dxwrap{display:flex;gap:8px}
+.dxl{width:92px;flex-shrink:0;font-family:Consolas,monospace;font-size:12px}
+.dxl div{display:flex;align-items:center;gap:4px;margin-bottom:4px}.dxl input{width:60px;border:1px solid #9bb09b;background:#fff;height:20px}
+.dxrows{flex:1;min-width:0}
+.dxr{display:grid;grid-template-columns:20px 62px 112px 46px 1fr 54px 22px;gap:6px;align-items:center;height:26px}
+.dxr .n{text-align:right;font-family:Consolas,monospace}
+.dxr .ro{font-weight:700;color:#1a2fb0;font-family:Consolas,monospace}
+.dxr .code{background:#fff;border:1px solid #9bb09b;height:22px;line-height:20px;padding:0 4px;font-family:Consolas,monospace;font-weight:700;color:#111}
+.dxr .desc{background:#fff;border:1px solid #9bb09b;height:22px;line-height:20px;padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#111}
+.dxr .desc .en{color:#666;font-size:12px}
+.dxr.empty2 .ro,.dxr.empty2 .n{opacity:.55}
+.dxr label{display:flex;align-items:center;gap:2px;font-size:12px}
+.shortbar{display:flex;gap:4px;padding:4px 6px;background:#b9d0f0;border-top:1px solid #7f9fcf}
+.shortbar button{border:1px solid #fff;border-right-color:#555;border-bottom-color:#555;background:#e6eefc;color:#0a2a9a;font-weight:700;padding:2px 22px;border-radius:0}
+@media (max-width:900px){.side{display:none}.fkeys{grid-template-columns:repeat(8,1fr)}.dxr{grid-template-columns:20px 56px 96px 40px 1fr 22px}.dxr .pri{display:none}}
 </style>
 </head>
 <body>
 
 <div class="menubar">
   <span class="m">診斷</span><span class="m">病患重取</span><span class="m">病患動向</span><span class="m">病患清單列印</span>
-  <span class="m">會診名單</span><span class="m">急調病歷</span><span class="m">其他</span><span class="m">國際疫情</span><span class="m">出院衛教</span>
+  <span class="m">會診名單</span><span class="m">急調病歷</span><span class="m">切換醫師</span><span class="m">其他</span><span class="m">國際疫情</span>
+  <span class="m">醫教&amp;病安</span><span class="m">其他功能</span><span class="m">出院衛教</span><span class="m">資料</span>
   <span class="sp"></span>
   <span class="info" id="clock"></span>
 </div>
 
-<div class="toolbar">
-  <div class="chips" id="zoneChips"></div>
+<div class="filterbar">
+  <div class="rg" id="zoneChips"></div>
+  <div class="rg" id="sortRg"></div>
   <input class="search" id="q" placeholder="搜尋 姓名 / 床號 / 主訴">
   <div class="seg" id="viewSeg">
-    <button data-v="card" class="on">卡片（精簡）</button>
-    <button data-v="list">列表</button>
+    <button data-v="list" class="on">列表</button>
+    <button data-v="card">卡片</button>
   </div>
-  <label class="lbl" id="dynWrap" style="display:none"><input type="checkbox" id="dyn"> 顯示動態欄位</label>
   <span class="sp"></span>
   <button class="btn warn" id="hoBtn">交班</button>
 </div>
@@ -157,6 +217,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;b
 </div>
 
 <div class="main" style="flex-direction:column">
+  <div class="top">
   <div class="listwrap" id="listwrap">
     <div class="legend">
       <span><i class="dot" style="background:var(--t1)"></i>1 復甦</span>
@@ -167,6 +228,19 @@ textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;b
       <span id="count" style="margin-left:auto"></span>
     </div>
     <div id="view"></div>
+  </div>
+  <aside class="side">
+    <div class="f"><span>病歷號</span><input id="fId" placeholder="輸入篩選"></div>
+    <div class="f"><span>流水號</span><input id="fSeq" placeholder="輸入篩選"></div>
+    <div class="f"><span>床　位</span><input id="fBed" placeholder="輸入篩選"></div>
+    <div class="lg"><b>★顯示顏色說明★</b>
+      <div><i style="background:#ff9d8a"></i>紅(O) 待覆核</div>
+      <div><i style="background:#fff04d"></i>黃(N) 待收件</div>
+      <div><i style="background:#74d24a"></i>綠(P) 待報告</div>
+      <div><i style="background:#7fe3f0"></i>藍(Y) 全部完成</div>
+    </div>
+    <div class="lg" style="margin-top:8px"><b>狀態</b>住＝等住院　ICU＝等加護<br>隔＝隔離　●＝檢傷1級</div>
+  </aside>
   </div>
 
   <div class="detail" id="detail"></div>
@@ -255,23 +329,27 @@ let patients=(()=>{
     for(let i=1;i<=N[z];i++){
       const f=rnd()<.5, [cc,icd]=pick(CC[z]);
       const st={};
+      if(rnd()<.85)st.med=pick('YYYNP');
+      if(['A','B','D','E'].includes(z)&&rnd()<.5)st.proc=pick('YYNP');
       if(rnd()<.8)st.lab=pick('YYNPO');
       if(['A','B','D','E','F'].includes(z)&&rnd()<.6)st.xr=pick('YYNP');
       if(['A','B','D'].includes(z)&&rnd()<.4)st.ct=pick('YNO');
-      if(['A','B','觀察'].includes(z)&&rnd()<.5)st.bio=pick('YP');
+      if(['A','B','C','觀察'].includes(z)&&rnd()<.5)st.bio=pick('YP');
+      if(['A','B'].includes(z)&&rnd()<.15)st.scope=pick('YN');
+      if(['A','B','C','觀察'].includes(z)&&rnd()<.6)st.ekg=pick('YYNP');
       const bed=z==='觀察'?'觀'+String(i).padStart(2,'0'):z==='ICU待床'?'ICU'+i:z+String(i).padStart(2,'0');
       const hrs=z==='觀察'?rnd()*40+6:z==='ICU待床'?rnd()*20+3:Math.round(rnd()*rnd()*14*100)/100+.05;
-      out.push(P(String(++no).padStart(4,'0'),bed,z,pick(LV[z]),pick(SUR)+(f?pick(GF):pick(GM)),f?'女':'男',ri(z==='F'?5:18,92),cc,
-        DOCTORS[pick(ZD[z])],NURSES[pick(ZN[z])],hrs,pick(DIR[z]),st,rnd()<.3?[{code:icd,ro:rnd()<.3}]:[]));
+      out.push(Object.assign(P(String(++no).padStart(4,'0'),bed,z,pick(LV[z]),pick(SUR)+(f?pick(GF):pick(GM)),f?'女':'男',ri(z==='F'?5:18,92),cc,
+        DOCTORS[pick(ZD[z])],NURSES[pick(ZN[z])],hrs,pick(DIR[z]),st,rnd()<.3?[{code:icd,ro:rnd()<.3}]:[]),{doc1:DOCTORS[pick(ZD[z])]}));
     }
   }
   return out;
 })();
-try{const s=localStorage.getItem('er-mock-v3');if(s)patients=JSON.parse(s)}catch(e){}
-const save=()=>{try{localStorage.setItem('er-mock-v3',JSON.stringify(patients))}catch(e){}};
+try{const s=localStorage.getItem('er-mock-v4');if(s)patients=JSON.parse(s)}catch(e){}
+const save=()=>{try{localStorage.setItem('er-mock-v4',JSON.stringify(patients))}catch(e){}};
 
 /* ===== 狀態 ===== */
-const S={zone:'全部',view:'card',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'診斷'};
+const S={zone:'全部',view:'list',sort:'id',fId:'',fSeq:'',fBed:'',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'診斷'};
 const $=s=>document.querySelector(s);
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)};
 const fmtH=h=>h<1?Math.round(h*60)+' 分':h<48?h.toFixed(1)+' 時':(h/24).toFixed(1)+' 天';
@@ -281,15 +359,19 @@ setInterval(()=>{$('#clock').textContent=new Date().toLocaleString('zh-TW',{hour
 
 /* ===== 篩選 ===== */
 function filtered(){
-  const q=S.q.trim().toLowerCase();
-  return patients.filter(p=>(S.zone==='全部'||p.zone===S.zone)&&(!q||(p.name+p.bed+p.cc+p.id).toLowerCase().includes(q)))
-    .sort((a,b)=>a.lvl-b.lvl||a.arrive-b.arrive);
+  const q=S.q.trim().toLowerCase(),f=(v,k)=>!k||String(v).toLowerCase().includes(k.toLowerCase());
+  const cmp={id:(a,b)=>b.id.localeCompare(a.id),lvl:(a,b)=>a.lvl-b.lvl||a.arrive-b.arrive,bed:(a,b)=>a.bed.localeCompare(b.bed,'zh',{numeric:true}),
+    doc:(a,b)=>a.doc.localeCompare(b.doc,'zh')||a.lvl-b.lvl,stay:(a,b)=>a.arrive-b.arrive}[S.sort];
+  return patients.filter(p=>(S.zone==='全部'||p.zone===S.zone)&&(!q||(p.name+p.bed+p.cc+p.id).toLowerCase().includes(q))&&f(p.id,S.fId)&&f(p.id,S.fSeq)&&f(p.bed,S.fBed))
+    .sort(S.view==='card'?(a,b)=>a.lvl-b.lvl||a.arrive-b.arrive:cmp);
 }
+const ZSHORT={A:'A',B:'B',C:'C',D:'D',E:'E',F:'F',觀察:'觀',ICU待床:'ICU'};
 function renderChips(){
   const z=[{k:'全部',name:'全部區域'},...ZONES];
   $('#zoneChips').innerHTML=z.map(o=>{
     const n=o.k,c=n==='全部'?patients.length:patients.filter(p=>p.zone===n).length;
-    return `<button class="chip ${S.zone===n?'on':''}" data-z="${n}" title="${o.name}">${n}<span class="n">${c}</span></button>`}).join('');
+    return `<label title="${o.name}（${c}）"><input type="radio" name="zr" data-z="${n}" ${S.zone===n?'checked':''}>${n==='全部'?'全':ZSHORT[n]||n}<span class="n">${c}</span></label>`}).join('');
+  $('#sortRg').innerHTML=[['id','流'],['lvl','檢'],['bed','床'],['doc','醫'],['stay','停']].map(([k,t])=>`<label title="排序"><input type="radio" name="sr" data-sort="${k}" ${S.sort===k?'checked':''}>${t}</label>`).join('');
 }
 
 /* ===== 清單 ===== */
@@ -315,12 +397,12 @@ function renderList(){
         <span class="lbl">醫師：${[...new Set(patients.filter(p=>p.zone===z.k).map(p=>p.doc))].join('、')||'—'}</span></div>
         ${zp.length?`<div class="cards">${zp.map(card).join('')}</div>`:'<div class="lbl" style="padding:8px 2px">此區目前沒有病人</div>'}</section>`}).join('');
   }else{
-    const D=S.dyn;
-    $('#view').innerHTML=`<table><thead><tr>${S.ho?'<th></th>':''}<th>檢傷</th><th>區域</th><th>床號</th><th>姓名</th><th>性別/年齡</th><th>主訴</th><th>主責醫師</th><th>負責護理師</th>${D?'<th>停留</th><th>動向</th><th>抽血</th><th>CT/MRI</th><th>X光</th><th>生化</th>':''}</tr></thead><tbody>`+
+    const stat=p=>p.zone==='ICU待床'||p.dir==='等ICU'?'ICU':p.zone==='F'?'隔':/住院/.test(p.dir)?'住':p.lvl===1?'●':'';
+    $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號</th><th>床號</th><th>狀態</th><th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>診治醫師</th><th>初診醫師</th><th>負責護理師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
     L.map(p=>`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
-      <td><span class="tri l${p.lvl}">${p.lvl}</span></td><td>${p.zone}</td><td><b>${p.bed}</b></td><td><b>${p.name}</b></td><td>${p.sex}/${p.age}</td>
-      <td class="cc">${p.cc}</td><td>${p.doc}</td><td>${p.nur}</td>
-      ${D?`<td>${fmtH(hrs(p))}</td><td>${p.dir}</td><td>${stCell(p.st.lab)}</td><td>${stCell(p.st.ct)}</td><td>${stCell(p.st.xr)}</td><td>${stCell(p.st.bio)}</td>`:''}</tr>`).join('')+`</tbody></table>`;
+      <td>${p.id}</td><td><b>${p.bed}</b></td><td>${stat(p)}</td><td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
+      <td>${p.dir}</td><td class="stay ${hrs(p)>=12?'long':''}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.doc1||p.doc}</td><td>${p.nur}</td>
+      ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k])}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
   }
   $('#hoN').textContent=S.checked.size;
   $('#hoApply').disabled=!S.checked.size;
@@ -328,11 +410,12 @@ function renderList(){
 
 /* ===== 病人詳細 ===== */
 const cur=()=>patients.find(p=>p.id===S.sel);
+const FK1=['病歷','檢傷','診斷','病程','查詢','檢驗','報查','累報','醫囑','會診','證明','出院','住院','其他','發報告','呼叫'];
+const FK2=['照相','護理紀錄','VTS','ICU空','ICU待床','提報','待床','流程','鎮靜評估','兒少保','DNR','影像流程','緊急醫療','醫雲','在宅'];
 function renderDetail(){
   const p=cur(), d=$('#detail');
   d.classList.toggle('none',!p);
   if(!p){d.innerHTML=`<div class="empty" style="padding:10px">請從上方清單選擇病人</div>`;return}
-  const tabs=['診斷','病程','醫囑','檢驗報告','影像'];
   d.innerHTML=`
   <div class="pbar">
     <span class="tri l${p.lvl}">${p.lvl}</span>
@@ -344,28 +427,32 @@ function renderDetail(){
     <span><span class="k">主責醫師</span><b>${p.doc}</b></span><span><span class="k">護理師</span><b>${p.nur}</b></span>
     <span><span class="k">停留</span>${fmtH(hrs(p))}</span>
   </div>
-  <div class="tabs">${tabs.map(t=>`<button class="${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>
-  <div class="tabbody" id="tb"></div>`;
+  <div class="fkeys">${FK1.concat(FK2).map(t=>`<button class="fk ${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>
+  <div class="tabbody" id="tb"></div>
+  <div class="shortbar"><button>報查</button><button>醫囑</button><button>會診</button><button>病人重取</button><button>切換醫師</button></div>`;
   renderTab();
 }
 function renderTab(){
   const p=cur(), tb=$('#tb');
   if(S.tab==='診斷'){
     tb.innerHTML=`
-    <div class="lbl">Impression（臨床印象）</div>
-    <textarea id="imp" rows="2">${p.imp||''}</textarea>
-    <div class="row" style="margin:10px 0 0">
-      <div class="lbl" style="min-width:150px">Discharge Diagnosis（ICD-10）</div>
-      <div class="sugwrap" style="flex:1">
-        <input class="search" id="icd" style="width:100%" placeholder="輸入代碼或中英文關鍵字（同全 ICD 搜尋），例如 R07 / 胸痛 / fracture" autocomplete="off">
-        <div class="sug" id="sug"></div>
+    <fieldset class="fs"><legend>Impression</legend>
+      <div class="row" style="flex-wrap:nowrap"><textarea id="imp" rows="2" style="background:#fff;color:#111;border-radius:0">${p.imp||''}</textarea>
+      <button class="btn primary" id="saveDx" style="border-radius:0;align-self:flex-start">儲存</button></div></fieldset>
+    <fieldset class="fs"><legend>Discharge Diagnosis</legend>
+      <div class="row" style="margin-bottom:4px">
+        <div class="sugwrap" style="flex:1">
+          <input class="search" id="icd" style="width:100%;border-radius:0;background:#fff;color:#111" placeholder="輸入代碼或中英文關鍵字（同全 ICD 搜尋），例如 R07 / 胸痛 / fracture" autocomplete="off">
+          <div class="sug" id="sug"></div>
+        </div>
+        <button class="btn" data-icd="trauma" style="border-radius:0">外傷人形圖</button>
+        <span class="lbl">最多 7 項</span>
       </div>
-      <button class="btn" data-icd="trauma">外傷人形圖</button>
-      <span class="lbl">最多 7 項</span>
-      <span class="sp"></span>
-      <button class="btn primary" id="saveDx">儲存</button>
-    </div>
-    <div class="dx-grid" id="dxs"></div>`;
+      <div class="dxwrap">
+        <div class="dxl"><div>MDC <input readonly></div><div>DRG <input readonly></div><div>RW&nbsp; <input readonly></div></div>
+        <div class="dxrows" id="dxs"></div>
+      </div>
+    </fieldset>`;
     renderDx();
   }else if(S.tab==='病程'){
     tb.innerHTML=`<div class="row"><textarea id="nt" rows="2" placeholder="輸入病程紀錄…" style="flex:1"></textarea><button class="btn primary" id="addNt">新增</button></div>
@@ -376,23 +463,31 @@ function renderTab(){
 }
 function renderDx(){
   const p=cur(),el=$('#dxs');if(!el)return;
-  el.innerHTML=p.dx.map((d,i)=>{
+  let h='';
+  for(let i=0;i<7;i++){
+    const d=p.dx[i];
+    if(!d){h+=`<div class="dxr empty2"><span class="n">${i+1}</span><span class="ro">☐ R/O</span><span class="code"></span><span></span><span class="desc"></span><span></span><span></span></div>`;continue}
     const m=ICD.find(x=>x[0]===d.code)||[d.code,d.name||'',''];
-    return `<div class="dx"><span>${i+1}</span>
-      <label title="Rule out"><input type="checkbox" data-ro="${i}" ${d.ro?'checked':''}> R/O</label>
-      <span class="code">${m[0]}</span><span>${m[1]} <span class="en">${m[2]}</span></span>
-      <label class="pri"><input type="radio" name="pri" data-pri="${i}" ${i===0?'checked':''}> 主診斷</label>
-      <button class="x" data-rm="${i}" title="移除">×</button></div>`}).join('')||`<div class="lbl">尚未新增診斷</div>`;
+    h+=`<div class="dxr"><span class="n">${i+1}</span>
+      <label class="ro" title="Rule out"><input type="checkbox" data-ro="${i}" ${d.ro?'checked':''}>R/O</label>
+      <span class="code">${m[0]}</span>
+      <label title="Complication / Comorbidity"><input type="checkbox" data-cc="${i}" ${d.cc?'checked':''}>CC</label>
+      <span class="desc" title="${m[1]} ${m[2]}">${m[1]} <span class="en">${m[2]}</span></span>
+      <label class="pri"><input type="radio" name="pri" data-pri="${i}" ${i===0?'checked':''}>主診斷</label>
+      <button class="x" data-rm="${i}" title="移除">×</button></div>`;
+  }
+  el.innerHTML=h;
 }
 
 /* ===== 事件 ===== */
 document.addEventListener('click',e=>{
   const t=e.target;
   if(t.dataset.z){S.zone=t.dataset.z;renderChips();renderList();return}
+  if(t.dataset.sort){S.sort=t.dataset.sort;renderList();return}
   if(t.closest('#viewSeg')&&t.dataset.v){
     S.view=t.dataset.v;
     document.querySelectorAll('#viewSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.view));
-    $('#dynWrap').style.display=S.view==='list'?'':'none';renderList();return}
+    renderList();return}
   if(t.dataset.ck){t.checked?S.checked.add(t.dataset.ck):S.checked.delete(t.dataset.ck);$('#hoN').textContent=S.checked.size;$('#hoApply').disabled=!S.checked.size;e.stopPropagation();return}
   const row=t.closest('[data-id]');
   if(row&&!t.matches('input')){
@@ -424,6 +519,7 @@ document.addEventListener('change',e=>{
     p.notes.push({t:`區域/床位：${oz} ${ob} → ${p.zone} ${p.bed}`,at:new Date().toLocaleString('zh-TW',{hour12:false})});
     save();renderChips();renderList();renderDetail();return;
   }
+  if(t.dataset.cc!==undefined){cur().dx[+t.dataset.cc].cc=t.checked;save()}
   if(t.dataset.ro!==undefined){cur().dx[+t.dataset.ro].ro=t.checked;save()}
   if(t.dataset.pri!==undefined){const i=+t.dataset.pri,a=cur().dx;a.unshift(...a.splice(i,1));save();renderDx()}
 });
@@ -436,7 +532,9 @@ function addDx(code,name,quiet){
 }
 document.addEventListener('input',e=>{
   if(e.target.id==='q'){S.q=e.target.value;renderList()}
-  if(e.target.id==='dyn'){S.dyn=e.target.checked;renderList()}
+  if(e.target.id==='fId'){S.fId=e.target.value;renderList()}
+  if(e.target.id==='fSeq'){S.fSeq=e.target.value;renderList()}
+  if(e.target.id==='fBed'){S.fBed=e.target.value;renderList()}
   if(e.target.id==='icd'){
     const v=e.target.value.trim().toLowerCase(),s=$('#sug');
     if(!v){s.style.display='none';return}

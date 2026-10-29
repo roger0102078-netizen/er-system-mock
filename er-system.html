@@ -173,6 +173,17 @@ textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;b
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="icdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center">
+  <div style="background:var(--panel);width:min(1200px,96vw);height:92vh;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+    <div style="display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)">
+      <b id="icdWho">診斷查詢</b>
+      <div class="seg"><button data-icd="all">全 ICD 搜尋</button><button data-icd="trauma">外傷人形圖</button></div>
+      <span class="sp"></span><span class="lbl">在清單按「送入病人診斷」即加入</span>
+      <button class="btn" id="icdClose">關閉</button>
+    </div>
+    <iframe id="icdFrame" style="flex:1;border:0;width:100%"></iframe>
+  </div>
+</div>
 
 <script>
 /* ===== 範例資料（皆為虛構）===== */
@@ -349,6 +360,8 @@ function renderTab(){
         <input class="search" id="icd" style="width:100%" placeholder="輸入代碼或中英文關鍵字，例如 R07 / 胸痛 / fracture" autocomplete="off">
         <div class="sug" id="sug"></div>
       </div>
+      <button class="btn" data-icd="all">全 ICD 查詢</button>
+      <button class="btn" data-icd="trauma">外傷人形圖</button>
       <span class="lbl">最多 7 項</span>
       <span class="sp"></span>
       <button class="btn primary" id="saveDx">儲存</button>
@@ -365,7 +378,7 @@ function renderTab(){
 function renderDx(){
   const p=cur(),el=$('#dxs');if(!el)return;
   el.innerHTML=p.dx.map((d,i)=>{
-    const m=ICD.find(x=>x[0]===d.code)||[d.code,'',''];
+    const m=ICD.find(x=>x[0]===d.code)||[d.code,d.name||'',''];
     return `<div class="dx"><span>${i+1}</span>
       <label title="Rule out"><input type="checkbox" data-ro="${i}" ${d.ro?'checked':''}> R/O</label>
       <span class="code">${m[0]}</span><span>${m[1]} <span class="en">${m[2]}</span></span>
@@ -386,6 +399,8 @@ document.addEventListener('click',e=>{
   if(row&&!t.matches('input')){
     if(S.ho&&S.view==='card'&&false){}
     S.sel=row.dataset.id;S.tab=S.tab||'診斷';renderList();renderDetail();return}
+  if(t.dataset.icd){openIcd(t.dataset.icd);return}
+  if(t.id==='icdClose'||t.id==='icdModal'){closeIcd();return}
   if(t.dataset.tab){S.tab=t.dataset.tab;renderDetail();return}
   if(t.dataset.rm!==undefined){cur().dx.splice(+t.dataset.rm,1);renderDx();return}
   if(t.id==='saveDx'){cur().imp=$('#imp').value;save();toast('診斷已儲存');return}
@@ -413,11 +428,12 @@ document.addEventListener('change',e=>{
   if(t.dataset.ro!==undefined){cur().dx[+t.dataset.ro].ro=t.checked;save()}
   if(t.dataset.pri!==undefined){const i=+t.dataset.pri,a=cur().dx;a.unshift(...a.splice(i,1));save();renderDx()}
 });
-function addDx(code){
+function addDx(code,name,quiet){
   const p=cur();
-  if(p.dx.length>=7)return toast('最多 7 項診斷');
-  if(p.dx.some(d=>d.code===code))return toast('已加入此診斷');
-  p.dx.push({code,ro:false});save();$('#icd').value='';$('#sug').style.display='none';renderDx();
+  if(p.dx.length>=7)return toast('最多 7 項診斷'),false;
+  if(p.dx.some(d=>d.code===code))return quiet||toast('已加入此診斷'),false;
+  const e={code,ro:false};if(name&&!ICD.some(x=>x[0]===code))e.name=name;
+  p.dx.push(e);save();const i=$('#icd');if(i){i.value='';$('#sug').style.display='none'}renderDx();return true;
 }
 document.addEventListener('input',e=>{
   if(e.target.id==='q'){S.q=e.target.value;renderList()}
@@ -433,6 +449,24 @@ document.addEventListener('input',e=>{
 document.addEventListener('keydown',e=>{
   if(e.target.id==='icd'&&e.key==='Enter'){const f=document.querySelector('#sug [data-code]');if(f)addDx(f.dataset.code)}
 });
+
+/* ===== 診斷查詢工具（icd/） ===== */
+const ICD_PAGE={all:'icd/all-icd10-search.html',trauma:'icd/trauma-icd10.html'};
+function openIcd(k){
+  const p=cur();if(!p)return;
+  $('#icdModal').style.display='flex';
+  $('#icdWho').textContent=`診斷查詢 — ${p.bed} ${p.name}`;
+  document.querySelectorAll('#icdModal .seg button').forEach(b=>b.classList.toggle('on',b.dataset.icd===k));
+  const f=$('#icdFrame');if(f.dataset.k!==k){f.dataset.k=k;f.src=ICD_PAGE[k]}
+}
+function closeIcd(){$('#icdModal').style.display='none'}
+window.addEventListener('message',e=>{
+  const d=e.data;if(!d||d.type!=='icd-pick'||!Array.isArray(d.items))return;
+  let n=0;for(const it of d.items){if(addDx(it.code,it.name,true))n++}
+  toast(`已加入 ${n} 項診斷`+(n<d.items.length?`（${d.items.length-n} 項重複或超過上限）`:''));
+  if(n)closeIcd();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeIcd()});
 
 /* ===== 交班 ===== */
 function fillSel(id,arr,first){$(id).innerHTML=(first?`<option value="">${first}</option>`:'')+arr.map(d=>`<option>${d}</option>`).join('')}

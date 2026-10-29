@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外傷 ICD-10 人形圖查詢</title>
+<style>
+  :root{
+    --bg:#EDF1F6; --panel:#FFFFFF; --ink:#1B2A3B; --sub:#5B6B7C; --line:#D9E1EA;
+    --body-fill:#D7E0EA; --body-stroke:#9FB2C4;
+    --cont:#4C5FD5; --abr:#C4641D; --lac:#B23A48; --fx:#0E7C86;
+    --spr:#2F7D3B; --tbi:#7A3AA8; --org:#A83A5B;
+    --sup:#3C7C9E; --cru:#8A5A1E; --amp:#5A3A78; --brn:#C23B22;
+    --accent:var(--cont);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif;
+    background:var(--bg); color:var(--ink); font-size:15px;
+  }
+  code, .code{font-family:Consolas,"Courier New",monospace;}
+
+  header{
+    background:#17324D; color:#fff; padding:10px 18px;
+    display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+  }
+  header h1{font-size:19px; font-weight:700; letter-spacing:1px;}
+  header .sub{font-size:12.5px; color:#9FB8D0;}
+
+  .toolbar{
+    display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+    padding:10px 18px; background:var(--panel); border-bottom:1px solid var(--line);
+  }
+  .tabs{display:flex; gap:6px;}
+  .tab{
+    border:1.5px solid var(--line); background:#F5F8FB; color:var(--ink);
+    padding:6px 14px; border-radius:20px; cursor:pointer; font-size:14.5px;
+    display:flex; align-items:center; gap:7px; font-weight:600;
+  }
+  .tab .dot{width:9px; height:9px; border-radius:50%;}
+  .tab[data-cat=cont] .dot{background:var(--cont);}
+  .tab[data-cat=abr]  .dot{background:var(--abr);}
+  .tab[data-cat=lac]  .dot{background:var(--lac);}
+  .tab[data-cat=fx]   .dot{background:var(--fx);}
+  .tab[data-cat=spr]  .dot{background:var(--spr);}
+  .tab[data-cat=tbi]  .dot{background:var(--tbi);}
+  .tab[data-cat=org]  .dot{background:var(--org);}
+  .tab[data-cat=sup]  .dot{background:var(--sup);}
+  .tab[data-cat=cru]  .dot{background:var(--cru);}
+  .tab[data-cat=amp]  .dot{background:var(--amp);}
+  .tab[data-cat=brn]  .dot{background:var(--brn);}
+  .tab.on[data-cat=cont]{border-color:var(--cont); color:var(--cont); background:#EEF0FC;}
+  .tab.on[data-cat=abr] {border-color:var(--abr);  color:var(--abr);  background:#FBF1E7;}
+  .tab.on[data-cat=lac] {border-color:var(--lac);  color:var(--lac);  background:#FAECEE;}
+  .tab.on[data-cat=fx]  {border-color:var(--fx);   color:var(--fx);   background:#E7F4F5;}
+  .tab.on[data-cat=spr] {border-color:var(--spr);  color:var(--spr);  background:#E9F4EB;}
+  .tab.on[data-cat=tbi] {border-color:var(--tbi);  color:var(--tbi);  background:#F2EAF9;}
+  .tab.on[data-cat=org] {border-color:var(--org);  color:var(--org);  background:#F9EAF0;}
+  .tab.on[data-cat=sup] {border-color:var(--sup);  color:var(--sup);  background:#E9F2F6;}
+  .tab.on[data-cat=cru] {border-color:var(--cru);  color:var(--cru);  background:#F6EFE4;}
+  .tab.on[data-cat=amp] {border-color:var(--amp);  color:var(--amp);  background:#F0EAF6;}
+  .tab.on[data-cat=brn] {border-color:var(--brn);  color:var(--brn);  background:#FBEAE6;}
+
+  .seg{display:flex; border:1.5px solid var(--line); border-radius:8px; overflow:hidden;}
+  .seg button{
+    border:none; background:#F5F8FB; padding:6px 11px; cursor:pointer;
+    font-size:13.5px; color:var(--sub); border-right:1px solid var(--line);
+  }
+  .seg button:last-child{border-right:none;}
+  .seg button.on{background:#17324D; color:#fff;}
+  .seg-label{font-size:13px; color:var(--sub); margin-right:-8px;}
+
+  .search{flex:1; min-width:180px; max-width:320px; margin-left:auto;}
+  .search input{
+    width:100%; padding:7px 12px; border:1.5px solid var(--line); border-radius:8px;
+    font-size:14px; font-family:inherit;
+  }
+  .search input:focus{outline:2px solid #17324D; outline-offset:1px;}
+
+  .main{
+    display:grid; grid-template-columns:310px 1fr; gap:14px;
+    padding:14px 18px; align-items:start; max-width:1200px;
+  }
+  @media (max-width:760px){ .main{grid-template-columns:1fr;} }
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px;}
+  .figure-card{padding:8px 10px 12px; position:sticky; top:10px;}
+  .figure-card .hint{font-size:12.5px; color:var(--sub); text-align:center; padding:4px 0 2px;}
+
+  svg .zone{
+    fill:var(--body-fill); stroke:var(--body-stroke); stroke-width:1.4;
+    cursor:pointer; transition:fill .12s;
+  }
+  svg .zone:hover{fill:color-mix(in srgb, var(--accent) 32%, #fff);}
+  svg .zone.sel{fill:var(--accent); stroke:color-mix(in srgb, var(--accent) 70%, #000);}
+  svg .rl{font-size:11px; fill:var(--sub); font-family:inherit;}
+
+  .result-card{padding:14px 16px; min-height:420px;}
+  .result-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;}
+  .result-head h2{font-size:17px;}
+  .badge{
+    font-size:12.5px; padding:2px 10px; border-radius:12px; color:#fff; background:var(--accent);
+  }
+  .empty{color:var(--sub); padding:30px 6px; text-align:center; line-height:2;}
+
+  table.codes{width:100%; border-collapse:collapse;}
+  table.codes td{
+    padding:9px 8px; border-bottom:1px solid var(--line); vertical-align:middle;
+  }
+  table.codes tr:last-child td{border-bottom:none;}
+  td.name{width:46%; line-height:1.45;}
+  td.name .note{display:block; font-size:12px; color:var(--sub); margin-top:2px;}
+  td.icd{width:34%;}
+  .icd .code{
+    font-size:16.5px; font-weight:700; letter-spacing:.5px; color:var(--accent);
+    cursor:pointer; padding:3px 8px; border-radius:6px; border:1px dashed transparent;
+  }
+  .icd .code:hover{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 8%, #fff);}
+  .icd .code.nocopy{cursor:default; color:var(--sub); font-weight:600;}
+  .icd .code.nocopy:hover{border-color:transparent; background:none;}
+  .icd .sidetag{font-size:12px; color:var(--sub); margin-left:4px;}
+  td.act{width:20%; text-align:right; white-space:nowrap;}
+  .btn{
+    border:1.5px solid var(--line); background:#F5F8FB; border-radius:7px;
+    padding:4px 10px; cursor:pointer; font-size:13px; font-family:inherit; color:var(--ink);
+  }
+  .btn:hover{border-color:var(--accent); color:var(--accent);}
+  .btn.primary{background:#17324D; color:#fff; border-color:#17324D;}
+  .btn.primary:hover{background:#0F2436;}
+
+  .fx-hint{
+    font-size:12.5px; color:var(--sub); background:#F1F6F7; border:1px solid #CFE3E5;
+    border-radius:8px; padding:7px 10px; margin-bottom:10px; line-height:1.6;
+  }
+
+  .basket{
+    position:sticky; bottom:0; background:var(--panel); border-top:2px solid var(--line);
+    padding:8px 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    min-height:46px;
+  }
+  .basket .title{font-size:13.5px; font-weight:700; color:var(--sub);}
+  .basket .chips{display:flex; gap:6px; flex-wrap:wrap; flex:1;}
+  .chip{
+    background:#EEF3F8; border:1px solid var(--line); border-radius:14px;
+    padding:2px 10px; font-size:13px; display:flex; gap:6px; align-items:center;
+  }
+  .chip b{font-family:Consolas,monospace;}
+  .chip span{cursor:pointer; color:var(--sub); font-weight:700;}
+  .chip span:hover{color:var(--lac);}
+
+  .toast{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:70px;
+    background:#17324D; color:#fff; padding:8px 18px; border-radius:20px;
+    font-size:14px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:50;
+  }
+  .toast.show{opacity:.95;}
+
+  footer{
+    padding:8px 18px 16px; font-size:12px; color:var(--sub); line-height:1.7; max-width:1200px;
+  }
+  .search-results{margin-top:4px;}
+  .search-results .src{font-size:12px; color:var(--sub);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>外傷 ICD-10 診斷碼查詢</h1>
+  <span class="sub">點選人形圖部位 → 顯示常用診斷碼|急診臨床速查</span>
+  <span class="sub" style="margin-left:auto">黃弘欣 製作</span>
+</header>
+
+<div class="toolbar">
+  <div class="tabs" id="tabs">
+    <button class="tab" data-cat="sup"><span class="dot"></span>表淺傷</button>
+    <button class="tab on" data-cat="cont"><span class="dot"></span>挫傷</button>
+    <button class="tab" data-cat="abr"><span class="dot"></span>擦傷</button>
+    <button class="tab" data-cat="lac"><span class="dot"></span>撕裂/開放傷</button>
+    <button class="tab" data-cat="cru"><span class="dot"></span>壓砸傷</button>
+    <button class="tab" data-cat="fx"><span class="dot"></span>骨折</button>
+    <button class="tab" data-cat="spr"><span class="dot"></span>扭傷/脫臼</button>
+    <button class="tab" data-cat="amp"><span class="dot"></span>截斷</button>
+    <button class="tab" data-cat="brn"><span class="dot"></span>燒傷</button>
+    <button class="tab" data-cat="tbi"><span class="dot"></span>顱腦傷</button>
+    <button class="tab" data-cat="org"><span class="dot"></span>內臟損傷</button>
+  </div>
+  <span class="seg-label">第7碼</span>
+  <div class="seg" id="seg7">
+    <button data-e="A" class="on">A 初診</button>
+    <button data-e="D">D 複診</button>
+    <button data-e="S">S 後遺症</button>
+  </div>
+  <span class="seg-label" id="ampLabel" style="display:none">截斷</span>
+  <div class="seg" id="segAmp" style="display:none">
+    <button data-cp="1" class="on">完全</button>
+    <button data-cp="2">部分</button>
+  </div>
+  <span class="seg-label" id="burnLabel" style="display:none">燒傷度數</span>
+  <div class="seg" id="segBurn" style="display:none">
+    <button data-bd="0" class="on">未指定</button>
+    <button data-bd="1">一度</button>
+    <button data-bd="2">二度</button>
+    <button data-bd="3">三度</button>
+  </div>
+  <button class="btn" id="miscBtn" style="border-radius:8px">非外傷急診碼</button>
+  <div class="search"><input id="q" type="search" placeholder="搜尋:中文名稱或碼(如 橈骨、S52、青光眼)"></div>
+</div>
+
+<div class="main">
+  <div class="card figure-card">
+    <div class="hint">病人面向你:圖左 = 病人<b>右</b>側</div>
+    <svg id="body" viewBox="0 0 260 415" width="100%" aria-label="人形圖">
+      <text class="rl" x="52" y="18">R 病人右側</text>
+      <text class="rl" x="158" y="18">L 病人左側</text>
+      <!-- 軀幹先畫,四肢與臉後畫(確保可點) -->
+      <ellipse class="zone" data-r="head" cx="130" cy="38" rx="23" ry="26"><title>頭部(頭皮)</title></ellipse>
+      <ellipse class="zone" data-r="face" cx="130" cy="48" rx="15" ry="13"><title>顏面</title></ellipse>
+      <ellipse class="zone" data-r="eye" cx="123" cy="43" rx="4.5" ry="3.2"><title>眼</title></ellipse>
+      <ellipse class="zone" data-r="eye" cx="137" cy="43" rx="4.5" ry="3.2"><title>眼</title></ellipse>
+      <ellipse class="zone" data-r="ear" cx="108" cy="44" rx="4" ry="6"><title>耳</title></ellipse>
+      <ellipse class="zone" data-r="ear" cx="152" cy="44" rx="4" ry="6"><title>耳</title></ellipse>
+      <rect class="zone" data-r="teeth" x="122" y="55" width="16" height="7" rx="3"><title>牙齒/口腔</title></rect>
+      <rect class="zone" data-r="neck" x="121" y="66" width="18" height="15" rx="5"><title>頸部</title></rect>
+      <rect class="zone" data-r="chest" x="100" y="86" width="60" height="56" rx="10"><title>胸部</title></rect>
+      <ellipse class="zone" data-r="shoulder" data-s="R" cx="93" cy="95" rx="17" ry="12"><title>右肩</title></ellipse>
+      <ellipse class="zone" data-r="shoulder" data-s="L" cx="167" cy="95" rx="17" ry="12"><title>左肩</title></ellipse>
+      <rect class="zone" data-r="abdomen" x="102" y="142" width="56" height="46" rx="8"><title>腹部/下背</title></rect>
+      <rect class="zone" data-r="pelvis" x="100" y="188" width="60" height="34" rx="8"><title>骨盆</title></rect>
+      <ellipse class="zone" data-r="perineum" cx="130" cy="219" rx="12" ry="7"><title>會陰/外生殖器</title></ellipse>
+      <ellipse class="zone" data-r="hip" data-s="R" cx="99" cy="206" rx="11" ry="14"><title>右髖</title></ellipse>
+      <ellipse class="zone" data-r="hip" data-s="L" cx="161" cy="206" rx="11" ry="14"><title>左髖</title></ellipse>
+      <rect class="zone" data-r="upperarm" data-s="R" x="66" y="106" width="18" height="52" rx="9"><title>右上臂</title></rect>
+      <rect class="zone" data-r="upperarm" data-s="L" x="176" y="106" width="18" height="52" rx="9"><title>左上臂</title></rect>
+      <circle class="zone" data-r="elbow" data-s="R" cx="75" cy="166" r="10"><title>右肘</title></circle>
+      <circle class="zone" data-r="elbow" data-s="L" cx="185" cy="166" r="10"><title>左肘</title></circle>
+      <rect class="zone" data-r="forearm" data-s="R" x="66" y="177" width="16" height="47" rx="8"><title>右前臂</title></rect>
+      <rect class="zone" data-r="forearm" data-s="L" x="178" y="177" width="16" height="47" rx="8"><title>左前臂</title></rect>
+      <ellipse class="zone" data-r="hand" data-s="R" cx="73" cy="242" rx="12" ry="17"><title>右腕與手</title></ellipse>
+      <ellipse class="zone" data-r="hand" data-s="L" cx="187" cy="242" rx="12" ry="17"><title>左腕與手</title></ellipse>
+      <rect class="zone" data-r="thigh" data-s="R" x="103" y="222" width="25" height="68" rx="10"><title>右大腿</title></rect>
+      <rect class="zone" data-r="thigh" data-s="L" x="132" y="222" width="25" height="68" rx="10"><title>左大腿</title></rect>
+      <circle class="zone" data-r="knee" data-s="R" cx="115" cy="299" r="11"><title>右膝</title></circle>
+      <circle class="zone" data-r="knee" data-s="L" cx="145" cy="299" r="11"><title>左膝</title></circle>
+      <rect class="zone" data-r="lowerleg" data-s="R" x="105" y="311" width="21" height="58" rx="9"><title>右小腿</title></rect>
+      <rect class="zone" data-r="lowerleg" data-s="L" x="134" y="311" width="21" height="58" rx="9"><title>左小腿</title></rect>
+      <circle class="zone" data-r="ankle" data-s="R" cx="115" cy="376" r="8"><title>右踝</title></circle>
+      <circle class="zone" data-r="ankle" data-s="L" cx="145" cy="376" r="8"><title>左踝</title></circle>
+      <rect class="zone" data-r="foot" data-s="R" x="97" y="385" width="32" height="14" rx="7"><title>右足</title></rect>
+      <rect class="zone" data-r="foot" data-s="L" x="131" y="385" width="32" height="14" rx="7"><title>左足</title></rect>
+    </svg>
+  </div>
+
+  <div class="card result-card" id="result">
+    <div class="empty">← 點選人形圖部位,或在上方搜尋<br>類別:表淺傷 / 挫傷 / 擦傷 / 撕裂開放 / 壓砸傷 / 骨折 / 扭傷脫臼 / 截斷 / 燒傷 / 顱腦傷 / 內臟損傷<br><span style="font-size:12.5px">臉上可點眼、耳、牙;非外傷眼耳鼻喉牙碼按右上「非外傷急診碼」</span></div>
+  </div>
+</div>
+
+<div class="basket">
+  <span class="title">選用清單</span>
+  <div class="chips" id="chips"><span style="font-size:13px;color:var(--sub)">按各列「＋加入」收集多筆診斷碼</span></div>
+  <button class="btn primary" id="sendAll" style="display:none;background:#FFC857;color:#17324D;border-color:#FFC857">送入病人診斷</button>
+  <button class="btn primary" id="copyAll">複製全部</button>
+  <button class="btn" id="clearAll">清空</button>
+</div>
+
+<footer>
+  ⚠ 本工具為臨床速查輔助,收錄急診常用碼;細碼(側別、指/趾別、椎節、移位與否、開放/閉鎖)請以院內編審系統及健保署公告之 ICD-10-CM 為準。標示「-」者表示需再細分,不可直接申報。<br>
+  黃弘欣 製作
+</footer>
+
+<div class="toast" id="toast">已複製</div>
+
+<script>
+"use strict";
+/* c: {R,L,U} 或 {U};碼尾為 "-" 表示需細分、不可複製 */
+const DATA = {
+head:{label:"頭部(頭皮)",cats:{ cont:[{n:"頭皮挫傷",c:{U:"S00.03XA"}},{n:"腦震盪(無意識喪失)",c:{U:"S06.0X0A"},note:"有意識喪失依時間長短另細分 S06.0X1A 起"}],
+ abr:[{n:"頭皮擦傷",c:{U:"S00.01XA"}}],
+ lac:[{n:"頭皮撕裂傷(無異物)",c:{U:"S01.01XA"}},{n:"頭皮撕裂傷(有異物)",c:{U:"S01.02XA"}}],
+ cru:[{n:"顱部壓砸傷",c:{U:"S07.1XXA"}}],
+ fx:[{n:"顱骨穹窿骨折",c:{U:"S02.0XXA"}},{n:"顱底骨折",c:{U:"S02.1-"},note:"依部位/側別細分"},{n:"頭骨骨折,部位未特定",c:{U:"S02.91XA"}}],
+ brn:[{n:"頭部(頭皮)燒傷(未指定度)",c:{U:"T20.05XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}],
+ tbi:[{n:"腦震盪(無意識喪失)",c:{U:"S06.0X0A"},note:"意識喪失≤30分 S06.0X1A;更長時間再細分"},{n:"創傷性瀰漫性腦損傷(無意識喪失)",c:{U:"S06.2X0A"},note:"依意識喪失時間 S06.2X1A 起細分"},{n:"創傷性局部腦損傷/挫傷(無意識喪失)",c:{U:"S06.330A"},note:"左右腦 S06.31/32,依意識喪失時間細分"},{n:"外傷性硬腦膜上出血 Epidural(無意識喪失)",c:{U:"S06.4X0A"},note:"依意識喪失時間 S06.4X1A 起細分"},{n:"外傷性硬腦膜下出血 Subdural(無意識喪失)",c:{U:"S06.5X0A"},note:"依意識喪失時間 S06.5X1A 起細分"},{n:"外傷性蛛網膜下出血 tSAH(無意識喪失)",c:{U:"S06.6X0A"},note:"依意識喪失時間 S06.6X1A 起細分"},{n:"頭部損傷,未特定(無意識喪失)",c:{U:"S06.9X0A"}}]}},
+face:{label:"顏面",cats:{ sup:[{n:"鼻部表淺傷",c:{U:"S00.31XA"}},{n:"唇表淺傷",c:{U:"S00.501A"}}],
+ cont:[{n:"鼻部挫傷",c:{U:"S00.33XA"}},{n:"眼瞼及眶周挫傷(黑眼圈)",c:{R:"S00.11XA",L:"S00.12XA",U:"S00.10XA"}},{n:"頭臉其他部位挫傷",c:{U:"S00.83XA"}}],
+ abr:[{n:"鼻部擦傷",c:{U:"S00.31XA"}},{n:"頭臉其他部位擦傷",c:{U:"S00.81XA"}}],
+ lac:[{n:"眼瞼及眶周撕裂傷",c:{R:"S01.111A",L:"S01.112A",U:"S01.119A"}},{n:"唇撕裂傷(無異物)",c:{U:"S01.511A"}},{n:"口腔內撕裂傷(無異物)",c:{U:"S01.512A"}},{n:"頭臉其他部位撕裂傷(無異物)",c:{U:"S01.81XA"}},{n:"鼻部開放傷口",c:{U:"S01.20XA"}},{n:"頭臉開放傷口(未特定)",c:{U:"S01.80XA"}}],
+ cru:[{n:"顏面壓砸傷",c:{U:"S07.0XXA"}}],
+ fx:[{n:"鼻骨骨折",c:{U:"S02.2XXA"}},{n:"眶底骨折",c:{R:"S02.31XA",L:"S02.32XA",U:"S02.30XA"}},{n:"下頜骨骨折(未特定部位)",c:{U:"S02.609A"}},{n:"顴骨/上頜骨骨折",c:{U:"S02.40-"},note:"依部位/側別細分"}],
+ brn:[{n:"鼻部燒傷",c:{U:"T20.04XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true},{n:"唇燒傷",c:{U:"T20.02XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+teeth:{label:"牙齒/口腔",cats:{ cont:[{n:"唇挫傷",c:{U:"S00.531A"}},{n:"口腔挫傷",c:{U:"S00.532A"}}],
+ lac:[{n:"唇撕裂傷(無異物)",c:{U:"S01.511A"}},{n:"口腔內撕裂傷(無異物)",c:{U:"S01.512A"}},{n:"舌及口底撕裂傷",c:{U:"S01.512A"},note:"多以口腔內撕裂傷歸類"},{n:"唇開放傷口",c:{U:"S01.501A"}},{n:"口腔開放傷口",c:{U:"S01.502A"}}],
+ fx:[{n:"牙齒斷裂(冠折,琺瑯質/象牙質)",c:{U:"S02.5XXA"},note:"外傷牙折均編 S02.5"},{n:"齒槽骨骨折",c:{U:"S02.5XXA"},note:"併牙折時同碼,另可加下頜齒槽部碼"}],
+ spr:[{n:"牙齒脫位/半脫位(撞出、鬆動)",c:{U:"S03.2XXA"},note:"含撞入、撞出、側方移位、完全脫落"},{n:"顳顎關節(TMJ)脫臼",c:{R:"S03.01XA",L:"S03.02XA",U:"S03.03XA"},note:"雙側 S03.03,未特定側 S03.00"},{n:"下頜韌帶/TMJ 扭傷",c:{R:"S03.41XA",L:"S03.42XA",U:"S03.40XA"},note:"雙側 S03.43XA"}],
+ org:[{n:"牙齦炎",c:{U:"K05.10"},note:"院內 K04/K05;急性牙齦炎 K05.0",raw:true},{n:"牙髓炎",c:{U:"K04.02"},raw:true,note:"可逆性 K04.01;不可逆性 K04.02"},{n:"口腔膿瘍(蜂窩組織炎)",c:{U:"K12.2"},raw:true}]}},
+neck:{label:"頸部",cats:{ cont:[{n:"頸部挫傷(未特定部位)",c:{U:"S10.93XA"}},{n:"喉部挫傷",c:{U:"S10.0XXA"}}],
+ abr:[{n:"頸部擦傷(未特定部位)",c:{U:"S10.91XA"}}],
+ lac:[{n:"頸部撕裂傷(無異物,未特定部位)",c:{U:"S11.91XA"}},{n:"頸部開放傷口(未特定)",c:{U:"S11.90XA"}}],
+ cru:[{n:"頸部壓砸傷",c:{U:"S17.9XXA"}}],
+ fx:[{n:"頸椎骨折(未特定)",c:{U:"S12.9XXA"}},{n:"C1–C7 各椎節骨折",c:{U:"S12.0- ~ S12.6-"},note:"依椎節/型態細分"}],
+ spr:[{n:"頸椎扭傷(揮鞭式,whiplash)",c:{U:"S13.4XXA"}},{n:"頸椎關節脫位(未特定椎節)",c:{U:"S13.101A"},note:"依椎節 C0/1–C7/T1 細分 S13.1-"},{n:"頸部其他/未特定韌帶扭傷",c:{U:"S13.9XXA"}}],
+ brn:[{n:"頸部燒傷(未指定度)",c:{U:"T20.07XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+shoulder:{label:"肩部",cats:{ sup:[{n:"肩表淺傷(未特定)",c:{U:"S40.219A"}}],
+ cont:[{n:"肩部挫傷",c:{R:"S40.011A",L:"S40.012A",U:"S40.019A"}}],
+ abr:[{n:"肩部擦傷",c:{R:"S40.211A",L:"S40.212A",U:"S40.219A"}}],
+ lac:[{n:"肩部撕裂傷(無異物)",c:{R:"S41.011A",L:"S41.012A",U:"S41.019A"}},{n:"肩開放傷口(未特定)",c:{U:"S41.009A"},note:"院內『開放傷口』收案碼"}],
+ cru:[{n:"肩壓砸傷",c:{U:"S47.9XXA"}}],
+ fx:[{n:"鎖骨骨折(未特定部位)",c:{R:"S42.001A",L:"S42.002A",U:"S42.009A"}},{n:"肩胛骨骨折(未特定部位)",c:{R:"S42.101A",L:"S42.102A",U:"S42.109A"}},{n:"肱骨近端骨折(未特定)",c:{R:"S42.201A",L:"S42.202A",U:"S42.209A"}}],
+ spr:[{n:"肩關節脫臼(肱盂關節,未特定)",c:{R:"S43.004A",L:"S43.005A",U:"S43.006A"},note:"前脫位 S43.01/後 S43.02/下 S43.03"},{n:"肩鎖關節脫臼(AC joint)",c:{R:"S43.101A",L:"S43.102A",U:"S43.109A"}},{n:"胸鎖關節脫臼(SC joint)",c:{R:"S43.201A",L:"S43.202A",U:"S43.203A"}},{n:"旋轉肌袖扭傷/拉傷",c:{R:"S43.421A",L:"S43.422A",U:"S43.429A"}},{n:"肩關節扭傷(未特定)",c:{R:"S43.401A",L:"S43.402A",U:"S43.409A"}}],
+ amp:[{n:"肩部創傷性截斷",c:{U:"S48.0-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S48.0"}],
+ brn:[{n:"肩部燒傷(未指定度)",c:{U:"T22.059A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+upperarm:{label:"上臂",cats:{ sup:[{n:"上臂表淺傷(未特定)",c:{U:"S40.819A"}}],
+ cont:[{n:"上臂挫傷",c:{R:"S40.021A",L:"S40.022A",U:"S40.029A"}}],
+ abr:[{n:"上臂擦傷",c:{R:"S40.221A",L:"S40.222A",U:"S40.229A"}}],
+ lac:[{n:"上臂撕裂傷(無異物)",c:{R:"S41.111A",L:"S41.112A",U:"S41.119A"}},{n:"上臂開放傷口(未特定)",c:{U:"S41.109A"}}],
+ cru:[{n:"上臂壓砸傷",c:{U:"S47.9XXA"}}],
+ fx:[{n:"肱骨幹骨折(未特定)",c:{R:"S42.301A",L:"S42.302A",U:"S42.309A"}}],
+ amp:[{n:"上臂創傷性截斷",c:{U:"S48.1-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S48.1"}],
+ brn:[{n:"上臂燒傷(未指定度)",c:{U:"T22.039A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+elbow:{label:"手肘",cats:{ sup:[{n:"肘表淺傷(未特定)",c:{U:"S50.319A"}}],
+ cont:[{n:"肘部挫傷",c:{R:"S50.01XA",L:"S50.02XA",U:"S50.00XA"}}],
+ abr:[{n:"肘部擦傷",c:{R:"S50.311A",L:"S50.312A",U:"S50.319A"}}],
+ lac:[{n:"肘部撕裂傷(無異物)",c:{R:"S51.011A",L:"S51.012A",U:"S51.019A"}},{n:"肘開放傷口(未特定)",c:{U:"S51.009A"}}],
+ cru:[{n:"肘壓砸傷",c:{U:"S57.00XA"}}],
+ fx:[{n:"肱骨遠端骨折(未特定)",c:{R:"S42.401A",L:"S42.402A",U:"S42.409A"}},{n:"橈骨頭骨折",c:{U:"S52.12-"},note:"依側別/移位細分"},{n:"鷹嘴突骨折",c:{U:"S52.02-"},note:"依側別/移位細分"}],
+ spr:[{n:"肘關節脫臼(未特定)",c:{R:"S53.104A",L:"S53.105A",U:"S53.106A"},note:"前/後/內/外側另細分"},{n:"橈骨頭半脫位(保母肘,Nursemaid)",c:{R:"S53.031A",L:"S53.032A",U:"S53.033A"}},{n:"肘尺側副韌帶扭傷",c:{R:"S53.431A",L:"S53.432A",U:"S53.439A"},note:"橈側 S53.44"},{n:"肘關節扭傷(未特定)",c:{R:"S53.401A",L:"S53.402A",U:"S53.409A"}}],
+ amp:[{n:"肘部創傷性截斷",c:{U:"S58.0-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S58.0"}],
+ brn:[{n:"手肘燒傷(未指定度)",c:{U:"T22.029A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+forearm:{label:"前臂",cats:{ sup:[{n:"前臂表淺傷(未特定)",c:{U:"S50.819A"}}],
+ cont:[{n:"前臂挫傷",c:{R:"S50.11XA",L:"S50.12XA",U:"S50.10XA"}}],
+ abr:[{n:"前臂擦傷",c:{R:"S50.811A",L:"S50.812A",U:"S50.819A"}}],
+ lac:[{n:"前臂撕裂傷(無異物)",c:{R:"S51.811A",L:"S51.812A",U:"S51.819A"}},{n:"前臂開放傷口(未特定)",c:{U:"S51.809A"}}],
+ cru:[{n:"前臂壓砸傷",c:{U:"S57.80XA"}}],
+ fx:[{n:"橈骨遠端骨折(未特定)",c:{R:"S52.501A",L:"S52.502A",U:"S52.509A"}},{n:"Colles 骨折",c:{R:"S52.531A",L:"S52.532A",U:"S52.539A"}},{n:"橈骨幹骨折(未特定)",c:{R:"S52.301A",L:"S52.302A",U:"S52.309A"}},{n:"尺骨幹骨折(未特定)",c:{R:"S52.201A",L:"S52.202A",U:"S52.209A"}}],
+ amp:[{n:"前臂創傷性截斷",c:{U:"S58.1-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S58.1"}],
+ brn:[{n:"前臂燒傷(未指定度)",c:{U:"T22.019A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+hand:{label:"腕與手",cats:{ sup:[{n:"腕表淺傷(未特定)",c:{U:"S60.819A"}},{n:"手掌表淺傷(未特定)",c:{U:"S60.519A"}},{n:"手指表淺傷(未特定)",c:{U:"S60.419A"}}],
+ cont:[{n:"腕部挫傷",c:{R:"S60.211A",L:"S60.212A",U:"S60.219A"}},{n:"手部挫傷",c:{R:"S60.221A",L:"S60.222A",U:"S60.229A"}},{n:"拇指挫傷(未傷及指甲)",c:{R:"S60.011A",L:"S60.012A",U:"S60.019A"}},{n:"手指挫傷(未傷及指甲,未特定指)",c:{U:"S60.00XA"}}],
+ abr:[{n:"手部擦傷",c:{R:"S60.511A",L:"S60.512A",U:"S60.519A"}},{n:"腕部擦傷",c:{R:"S60.811A",L:"S60.812A",U:"S60.819A"}},{n:"拇指擦傷",c:{R:"S60.311A",L:"S60.312A",U:"S60.319A"}},{n:"手指擦傷(未特定指)",c:{U:"S60.429A"}}],
+ lac:[{n:"手部撕裂傷(無異物)",c:{R:"S61.411A",L:"S61.412A",U:"S61.419A"}},{n:"腕部撕裂傷(無異物)",c:{R:"S61.511A",L:"S61.512A",U:"S61.519A"}},{n:"手指撕裂傷(未傷及指甲,未特定指)",c:{U:"S61.219A"},note:"各指別另有細碼 S61.21-"},{n:"手/腕開放傷口(未特定)",c:{U:"S61.409A"},note:"手掌 S61.409/腕 S61.509"}],
+ cru:[{n:"腕壓砸傷",c:{U:"S67.30XA"}},{n:"手掌壓砸傷",c:{U:"S67.20XA"}},{n:"手指壓砸傷",c:{U:"S67.10XA"}}],
+ fx:[{n:"舟狀骨骨折(未特定)",c:{R:"S62.001A",L:"S62.002A",U:"S62.009A"}},{n:"掌骨骨折(未特定)",c:{U:"S62.309A"},note:"依第幾掌骨細分 S62.3-"},{n:"拇指骨折(未特定)",c:{U:"S62.509A"}},{n:"指骨骨折(未特定指)",c:{U:"S62.609A"},note:"依指別/指節細分 S62.6-"}],
+ spr:[{n:"腕關節扭傷(未特定)",c:{R:"S63.501A",L:"S63.502A",U:"S63.509A"}},{n:"手指關節脫臼(未特定指)",c:{U:"S63.259A"},note:"依指別/MCP·IP 細分 S63.2-"},{n:"拇指扭傷(MCP/IP)",c:{R:"S63.641A",L:"S63.642A",U:"S63.649A"}},{n:"手指扭傷(未特定指)",c:{U:"S63.699A"},note:"依指別細分 S63.6-"},{n:"腕掌/掌骨關節脫臼",c:{U:"S63.05-"},note:"依側別細分"}],
+ amp:[{n:"腕部創傷性截斷",c:{U:"S68.4-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S68.4"},{n:"手掌創傷性截斷",c:{U:"S68.7-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S68.7"},{n:"手指創傷性截斷",digits:"finger",note:"依指別逐列展開;無明確指別用『其他指』"}],
+ brn:[{n:"腕/手燒傷",c:{U:"T23.-"},note:"此區另需部位/側別細分,度數改小數點後第一碼(1/2/3)"},{n:"手掌燒傷",c:{U:"T23.009A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true},{n:"手指燒傷",c:{U:"T23.-"},note:"此區另需部位/側別細分,度數改小數點後第一碼(1/2/3)"}]}},
+chest:{label:"胸部",cats:{ sup:[{n:"胸壁表淺傷(未特定)",c:{U:"S20.91XA"}},{n:"上背表淺傷",c:{U:"S20.409A"},note:"院內『上背』"}],
+ cont:[{n:"前胸壁挫傷",c:{R:"S20.211A",L:"S20.212A",U:"S20.219A"}},{n:"後胸壁挫傷",c:{R:"S20.221A",L:"S20.222A",U:"S20.229A"}}],
+ abr:[{n:"前胸壁擦傷",c:{R:"S20.311A",L:"S20.312A",U:"S20.319A"}},{n:"後胸壁擦傷",c:{R:"S20.411A",L:"S20.412A",U:"S20.419A"}}],
+ lac:[{n:"前胸壁撕裂傷(無異物,未穿入胸腔)",c:{R:"S21.111A",L:"S21.112A",U:"S21.119A"}},{n:"胸壁開放傷口(未特定)",c:{U:"S21.90XA"}}],
+ cru:[{n:"胸廓壓砸傷",c:{U:"S28.0XXA"}}],
+ fx:[{n:"單根肋骨骨折",c:{R:"S22.31XA",L:"S22.32XA",U:"S22.39XA"}},{n:"多根肋骨骨折",c:{R:"S22.41XA",L:"S22.42XA",U:"S22.49XA"},note:"雙側 S22.43XA"},{n:"連枷胸(Flail chest)",c:{U:"S22.5XXA"}},{n:"胸骨骨折(未特定)",c:{U:"S22.20XA"}},{n:"胸椎骨折(未特定)",c:{U:"S22.009A"},note:"依椎節細分 S22.0-"}],
+ brn:[{n:"胸部燒傷(未指定度)",c:{U:"T21.01XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}],
+ org:[{n:"肺挫傷(Lung contusion,單側)",c:{U:"S27.321A"},note:"雙側 S27.322A;未特定 S27.329A"},{n:"肺撕裂傷(Lung laceration,單側)",c:{U:"S27.331A"},note:"雙側 S27.332A;未特定 S27.339A"},{n:"創傷性氣胸(Traumatic pneumothorax)",c:{U:"S27.0XXA"}},{n:"創傷性血胸(Traumatic hemothorax)",c:{U:"S27.1XXA"}},{n:"創傷性血氣胸(Hemopneumothorax)",c:{U:"S27.2XXA"}},{n:"心臟挫傷(Cardiac contusion)",c:{U:"S26.01XA"},note:"含裂傷 S26.0-,依有無心包積血細分"},{n:"支氣管損傷(未特定,單側)",c:{U:"S27.401A"},note:"雙側 S27.402A;未特定 S27.409A;挫傷 S27.421A;裂傷 S27.431A;其他 S27.491A"},{n:"胸主動脈損傷",c:{U:"S25.00XA"},note:"依部位/型態 S25.0-"},{n:"創傷性橫膈損傷",c:{U:"S27.809A"}}]}},
+abdomen:{label:"腹部/下背",cats:{ sup:[{n:"腹壁表淺傷",c:{U:"S30.811A"}}],
+ cont:[{n:"腹壁挫傷",c:{U:"S30.11XA"}},{n:"下背及骨盆挫傷",c:{U:"S30.0XXA"}}],
+ abr:[{n:"腹壁擦傷",c:{U:"S30.811A"}},{n:"下背及骨盆擦傷",c:{U:"S30.810A"}}],
+ lac:[{n:"腹壁撕裂傷(無異物,未穿入腹腔,未特定象限)",c:{U:"S31.119A"}},{n:"下背/骨盆撕裂傷(無異物,未穿入後腹腔)",c:{U:"S31.010A"}},{n:"腹壁開放傷口(未特定)",c:{U:"S31.109A"}}],
+ cru:[{n:"腹/下背/骨盆壓砸傷",c:{U:"S38.1XXA"}}],
+ fx:[{n:"腰椎骨折(未特定)",c:{U:"S32.009A"},note:"依 L1–L5 椎節細分 S32.0-"}],
+ brn:[{n:"腹部/下背燒傷(未指定度)",c:{U:"T21.02XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}],
+ org:[{n:"肝損傷/裂傷(Liver laceration,輕度)",c:{U:"S36.115A"},note:"挫傷 S36.112;中度 S36.116;重度/大裂 S36.117"},{n:"脾臟裂傷(Spleen laceration,輕度)",c:{U:"S36.031A"},note:"挫傷 S36.021;中度 S36.032;大裂/破裂 S36.033"},{n:"腎損傷/裂傷(Kidney laceration,單側,中度)",c:{R:"S37.02-",L:"S37.02-",U:"S37.029A"},note:"挫傷 S37.01;輕/中/重依 S37.02-04,側別另編"},{n:"胰臟損傷/裂傷",c:{U:"S36.239A"},note:"部位(頭/體/尾)與型態細分 S36.2-"},{n:"胃損傷",c:{U:"S36.30-"},note:"挫傷/裂傷細分"},{n:"小腸損傷",c:{U:"S36.418A"},note:"十二指腸 S36.4;依挫傷/裂傷細分"},{n:"大腸損傷",c:{U:"S36.508A"},note:"依節段/型態細分 S36.5-"},{n:"膀胱損傷(挫傷/裂傷)",c:{U:"S37.20XA"},note:"裂傷 S37.22/S37.23"},{n:"腹部/腹膜後其他及未特定器官損傷",c:{U:"S36.90XA"}}]}},
+pelvis:{label:"骨盆",cats:{ cont:[{n:"下背及骨盆挫傷",c:{U:"S30.0XXA"}}],
+ abr:[{n:"下背及骨盆擦傷",c:{U:"S30.810A"}}],
+ lac:[{n:"下背/骨盆撕裂傷(無異物,未穿入後腹腔)",c:{U:"S31.010A"}}],
+ cru:[{n:"下背/骨盆壓砸傷",c:{U:"S38.1XXA"}}],
+ fx:[{n:"恥骨骨折(未特定)",c:{R:"S32.501A",L:"S32.502A",U:"S32.509A"}},{n:"髂骨骨折(未特定)",c:{R:"S32.301A",L:"S32.302A",U:"S32.309A"}},{n:"髖臼骨折(未特定)",c:{R:"S32.401A",L:"S32.402A",U:"S32.409A"}},{n:"薦椎骨折(未特定)",c:{U:"S32.10XA"}},{n:"尾椎骨折",c:{U:"S32.2XXA"}},{n:"骨盆骨折(未特定部位)",c:{U:"S32.9XXA"}}],
+ brn:[{n:"骨盆燒傷(未指定度)",c:{U:"T21.04XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+perineum:{label:"會陰/外生殖器",cats:{ sup:[{n:"外生殖器表淺傷(男)",c:{U:"S30.815A"}},{n:"外生殖器表淺傷(女)",c:{U:"S30.97XA"}}],
+ cont:[{n:"外生殖器挫傷(未特定)",c:{U:"S30.201A"},note:"陰莖 S30.21;陰囊睪丸 S30.22;陰道外陰 S30.23"},{n:"肛門挫傷",c:{U:"S30.3XXA"}}],
+ abr:[{n:"外生殖器擦傷(男性,未特定)",c:{U:"S30.815A"},note:"陰莖 S30.812A;陰囊 S30.813A;外陰 S30.814A;女性未特定 S30.816A"}],
+ lac:[{n:"陰莖撕裂傷(無異物)",c:{U:"S31.21XA"}},{n:"陰囊及睪丸撕裂傷(無異物)",c:{U:"S31.31XA"}},{n:"外陰/陰道撕裂傷(無異物)",c:{U:"S31.41XA"}},{n:"會陰其他/未特定撕裂傷(無異物)",c:{U:"S31.119A"},note:"依部位另可用 S31.5-"}],
+ cru:[{n:"男性外生殖器壓砸傷",c:{U:"S38.001A"}},{n:"女性外生殖器壓砸傷",c:{U:"S38.03XA"}}],
+ brn:[{n:"男性外生殖器燒傷",c:{U:"T21.06XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true},{n:"女性外生殖器燒傷",c:{U:"T21.07XA"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}],
+ org:[{n:"尿道損傷",c:{U:"S37.30XA"},note:"挫傷/裂傷細分 S37.3-"},{n:"睪丸損傷",c:{U:"S37.892A"}},{n:"卵巢/子宮損傷",c:{U:"S37.892A"},note:"依器官細分 S37.6-/S37.89-"}]}},
+hip:{label:"髖部",cats:{ sup:[{n:"髖表淺傷(未特定)",c:{U:"S70.219A"}}],
+ cont:[{n:"髖部挫傷",c:{R:"S70.01XA",L:"S70.02XA",U:"S70.00XA"}}],
+ abr:[{n:"髖部擦傷",c:{R:"S70.211A",L:"S70.212A",U:"S70.219A"}}],
+ lac:[{n:"髖部撕裂傷(無異物)",c:{R:"S71.011A",L:"S71.012A",U:"S71.019A"}},{n:"髖開放傷口(未特定)",c:{U:"S71.009A"}}],
+ cru:[{n:"髖壓砸傷",c:{U:"S77.00XA"}}],
+ fx:[{n:"股骨頸骨折(未特定)",c:{R:"S72.001A",L:"S72.002A",U:"S72.009A"}},{n:"轉子間骨折",c:{R:"S72.141A",L:"S72.142A",U:"S72.143A"}},{n:"轉子下骨折",c:{U:"S72.2-"},note:"依側別/移位細分"}],
+ spr:[{n:"髖關節脫臼(未特定)",c:{R:"S73.004A",L:"S73.005A",U:"S73.006A"},note:"前/後/中央脫位另細分 S73.0-"},{n:"髂股韌帶扭傷",c:{R:"S73.121A",L:"S73.122A",U:"S73.129A"}},{n:"髖關節扭傷(未特定)",c:{R:"S73.101A",L:"S73.102A",U:"S73.109A"}}],
+ amp:[{n:"髖部創傷性截斷",c:{U:"S78.0-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S78.0"}],
+ brn:[{n:"髖部燒傷(未指定度)",c:{U:"T24.-"},note:"此區另需部位/側別細分,度數改小數點後第一碼(1/2/3)"}]}},
+thigh:{label:"大腿",cats:{ sup:[{n:"大腿表淺傷(未特定)",c:{U:"S70.319A"}}],
+ cont:[{n:"大腿挫傷",c:{R:"S70.11XA",L:"S70.12XA",U:"S70.10XA"}}],
+ abr:[{n:"大腿擦傷",c:{R:"S70.311A",L:"S70.312A",U:"S70.319A"}}],
+ lac:[{n:"大腿撕裂傷(無異物)",c:{R:"S71.111A",L:"S71.112A",U:"S71.119A"}},{n:"大腿開放傷口(未特定)",c:{U:"S71.109A"}}],
+ cru:[{n:"大腿壓砸傷",c:{U:"S77.10XA"}}],
+ fx:[{n:"股骨幹骨折(未特定)",c:{R:"S72.301A",L:"S72.302A",U:"S72.309A"}},{n:"股骨遠端骨折(未特定)",c:{R:"S72.401A",L:"S72.402A",U:"S72.409A"}}],
+ amp:[{n:"大腿創傷性截斷",c:{U:"S78.1-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S78.1"}],
+ brn:[{n:"大腿燒傷(未指定度)",c:{U:"T24.019A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+knee:{label:"膝部",cats:{ sup:[{n:"膝表淺傷(未特定)",c:{U:"S80.219A"}}],
+ cont:[{n:"膝部挫傷",c:{R:"S80.01XA",L:"S80.02XA",U:"S80.00XA"}}],
+ abr:[{n:"膝部擦傷",c:{R:"S80.211A",L:"S80.212A",U:"S80.219A"}}],
+ lac:[{n:"膝部撕裂傷(無異物)",c:{R:"S81.011A",L:"S81.012A",U:"S81.019A"}},{n:"膝開放傷口(未特定)",c:{U:"S81.009A"}}],
+ cru:[{n:"膝壓砸傷",c:{U:"S87.00XA"}}],
+ fx:[{n:"髕骨骨折(未特定)",c:{R:"S82.001A",L:"S82.002A",U:"S82.009A"}},{n:"脛骨近端骨折(未特定)",c:{R:"S82.101A",L:"S82.102A",U:"S82.109A"}}],
+ spr:[{n:"前十字韌帶扭傷(ACL)",c:{R:"S83.511A",L:"S83.512A",U:"S83.519A"}},{n:"後十字韌帶扭傷(PCL)",c:{R:"S83.521A",L:"S83.522A",U:"S83.529A"}},{n:"內側副韌帶扭傷(MCL)",c:{R:"S83.411A",L:"S83.412A",U:"S83.419A"}},{n:"外側副韌帶扭傷(LCL)",c:{R:"S83.421A",L:"S83.422A",U:"S83.429A"}},{n:"內側半月板急性撕裂",c:{R:"S83.241A",L:"S83.242A",U:"S83.249A"},note:"型態(bucket/桶柄等)細分 S83.2-"},{n:"外側半月板急性撕裂",c:{U:"S83.289A"},note:"型態/側別細分 S83.2-"},{n:"髕骨脫臼",c:{R:"S83.004A",L:"S83.005A",U:"S83.006A"}},{n:"膝關節脫臼(未特定)",c:{R:"S83.104A",L:"S83.105A",U:"S83.106A"}},{n:"膝關節扭傷(未特定)",c:{R:"S83.91XA",L:"S83.92XA",U:"S83.90XA"}}],
+ amp:[{n:"膝部創傷性截斷",c:{U:"S88.0-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S88.0"}],
+ brn:[{n:"膝部燒傷(未指定度)",c:{U:"T24.029A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+lowerleg:{label:"小腿",cats:{ sup:[{n:"小腿表淺傷(未特定)",c:{U:"S80.819A"}}],
+ cont:[{n:"小腿挫傷",c:{R:"S80.11XA",L:"S80.12XA",U:"S80.10XA"}}],
+ abr:[{n:"小腿擦傷",c:{R:"S80.811A",L:"S80.812A",U:"S80.819A"}}],
+ lac:[{n:"小腿撕裂傷(無異物)",c:{R:"S81.811A",L:"S81.812A",U:"S81.819A"}},{n:"小腿開放傷口(未特定)",c:{U:"S81.809A"}}],
+ cru:[{n:"小腿壓砸傷",c:{U:"S87.80XA"}}],
+ fx:[{n:"脛骨幹骨折(未特定)",c:{R:"S82.201A",L:"S82.202A",U:"S82.209A"}},{n:"腓骨幹骨折(未特定)",c:{R:"S82.401A",L:"S82.402A",U:"S82.409A"}}],
+ amp:[{n:"小腿創傷性截斷",c:{U:"S88.1-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S88.1"}],
+ brn:[{n:"小腿燒傷(未指定度)",c:{U:"T24.039A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+ankle:{label:"踝部",cats:{ sup:[{n:"踝表淺傷(未特定)",c:{U:"S90.519A"}}],
+ cont:[{n:"踝部挫傷",c:{R:"S90.01XA",L:"S90.02XA",U:"S90.00XA"}}],
+ abr:[{n:"踝部擦傷",c:{R:"S90.511A",L:"S90.512A",U:"S90.519A"}}],
+ lac:[{n:"踝部撕裂傷(無異物)",c:{R:"S91.011A",L:"S91.012A",U:"S91.019A"}},{n:"踝開放傷口(未特定)",c:{U:"S91.009A"}}],
+ cru:[{n:"踝壓砸傷",c:{U:"S97.00XA"}}],
+ fx:[{n:"內踝骨折(移位)",c:{R:"S82.51XA",L:"S82.52XA",U:"S82.53XA"},note:"無移位 S82.54–56"},{n:"外踝骨折(移位)",c:{R:"S82.61XA",L:"S82.62XA",U:"S82.63XA"},note:"無移位 S82.64–66"},{n:"雙踝骨折(移位)",c:{R:"S82.841A",L:"S82.842A",U:"S82.843A"},note:"無移位 S82.844–846"}],
+ spr:[{n:"距腓前韌帶等外側韌帶扭傷",c:{R:"S93.431A",L:"S93.432A",U:"S93.439A"},note:"跟腓韌帶 S93.41"},{n:"三角韌帶(deltoid)扭傷",c:{R:"S93.421A",L:"S93.422A",U:"S93.429A"}},{n:"踝關節扭傷(未特定)",c:{R:"S93.401A",L:"S93.402A",U:"S93.409A"}},{n:"踝關節脫臼",c:{R:"S93.04XA",L:"S93.05XA",U:"S93.06XA"}}],
+ amp:[{n:"踝部創傷性截斷",c:{U:"S98.0-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S98.0"}],
+ brn:[{n:"踝部燒傷(未指定度)",c:{U:"T25.019A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+foot:{label:"足部",cats:{ sup:[{n:"足表淺傷(未特定)",c:{U:"S90.819A"}},{n:"趾表淺傷(第2–5趾)",c:{R:"S90.934A",L:"S90.935A",U:"S90.936A"},note:"拇趾 S90.931A右/S90.932A左/S90.933A未特定;趾擦傷 S90.41-"}],
+ cont:[{n:"足部挫傷",c:{R:"S90.31XA",L:"S90.32XA",U:"S90.30XA"}},{n:"大趾挫傷(未傷及趾甲)",c:{R:"S90.111A",L:"S90.112A",U:"S90.119A"}},{n:"其他趾挫傷(未傷及趾甲)",c:{R:"S90.121A",L:"S90.122A",U:"S90.129A"}}],
+ abr:[{n:"足部擦傷",c:{R:"S90.811A",L:"S90.812A",U:"S90.819A"}}],
+ lac:[{n:"足部撕裂傷(無異物)",c:{R:"S91.311A",L:"S91.312A",U:"S91.319A"}},{n:"足開放傷口(未特定)",c:{U:"S91.309A"}}],
+ cru:[{n:"足壓砸傷",c:{U:"S97.80XA"}},{n:"趾壓砸傷",c:{U:"S97.109A"}}],
+ fx:[{n:"蹠骨骨折(未特定)",c:{R:"S92.301A",L:"S92.302A",U:"S92.309A"},note:"依第幾蹠骨細分 S92.3-"},{n:"跟骨骨折(未特定)",c:{R:"S92.001A",L:"S92.002A",U:"S92.009A"}},{n:"趾骨骨折(未特定趾)",c:{R:"S92.911A",L:"S92.912A",U:"S92.919A"}}],
+ amp:[{n:"足創傷性截斷",c:{U:"S98.3-"},note:"側別由左右選取、完全/部分由上方切換帶入",amp:"S98.3"},{n:"趾創傷性截斷",digits:"toe",note:"ICD-10-CM 趾別僅分拇趾/其他趾"}],
+ brn:[{n:"足燒傷",c:{U:"T25.029A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true},{n:"趾燒傷",c:{U:"T25.039A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}]}},
+eye:{label:"眼",cats:{ sup:[{n:"眼瞼及眶周表淺傷(未特定)",c:{U:"S00.209A"}}],
+ cont:[{n:"眼瞼及眶周挫傷",c:{U:"S00.10XA"}}],
+ lac:[{n:"眼瞼及眶周開放傷口(未特定)",c:{U:"S01.109A"}}],
+ brn:[{n:"眼及附器燒傷",c:{U:"T26.40XA"},note:"化學灼傷另 T26.5-/T26.6-"}],
+ org:[{n:"角膜擦傷(表淺)",c:{U:"S05.00XA"}},{n:"眼球破裂/眼內容脫出",c:{U:"S05.30XA"},note:"疑破裂勿加壓,眼科急會診"},{n:"眼內異物(機械性)",c:{U:"T15.90XA"},note:"角膜異物 T15.00XA"}]},always:[{n:"針眼/麥粒腫(hordeolum)",c:{U:"H00.019"},raw:true},{n:"結膜炎(未特定)",c:{U:"H10.9"},raw:true},{n:"結膜水腫(chemosis)",c:{U:"H11.429"},raw:true},{n:"結膜下出血",c:{U:"H11.30"},raw:true},{n:"角膜潰瘍(未特定)",c:{U:"H16.009"},raw:true},{n:"視網膜剝離(未特定)",c:{U:"H33.009"},raw:true},{n:"青光眼(未特定)",c:{U:"H40.9"},raw:true},{n:"玻璃體出血",c:{U:"H43.10"},raw:true}]},
+ear:{label:"耳",cats:{ sup:[{n:"耳部表淺傷(未特定)",c:{U:"S00.419A"}}],
+ cont:[{n:"耳部挫傷",c:{U:"S00.439A"}}],
+ lac:[{n:"耳部開放傷口(未特定)",c:{U:"S01.309A"}}],
+ brn:[{n:"耳部燒傷",c:{U:"T20.019A"},note:"度數由上方切換帶入(未指定/1/2/3)",bd:true}],
+ org:[{n:"外傷性耳膜穿孔",c:{R:"S09.21XA",L:"S09.22XA",U:"S09.20XA"},note:"耳內異物 T16"},{n:"外耳異物",c:{U:"T16.9XXA"},note:"右 T16.1/左 T16.2"}]}}
+};
+const MISC = [
+  {g:"耳鼻喉",items:[{n:"鼻出血(epistaxis)",c:{U:"R04.0"},raw:true},{n:"咽喉/呼吸道異物",c:{U:"T17.308A"},note:"院內喉異物"},{n:"食道異物",c:{U:"T18.108A"}},{n:"外耳異物",c:{U:"T16.9XXA"},note:"右 T16.1XXA/左 T16.2XXA"},{n:"鼻腔異物",c:{U:"T17.1XXA"}}]},
+  {g:"牙科/口腔",items:[{n:"牙齒斷裂(冠折)/裂齒",c:{U:"S02.5XXA"},note:"院內併列牙體 K03.81"},{n:"牙髓炎",c:{U:"K04.02"},raw:true,note:"可逆性 K04.01;不可逆性 K04.02"},{n:"急性牙齦炎",c:{U:"K05.00"},raw:true},{n:"口腔膿瘍/蜂窩組織炎",c:{U:"K12.2"},raw:true},{n:"口內傷口",c:{U:"S01.502A"}}]},
+  {g:"眼科(非外傷)",items:[{n:"針眼/麥粒腫",c:{U:"H00.019"},raw:true},{n:"結膜炎",c:{U:"H10.9"},raw:true},{n:"結膜下出血",c:{U:"H11.30"},raw:true},{n:"角膜潰瘍",c:{U:"H16.009"},raw:true},{n:"視網膜剝離",c:{U:"H33.009"},raw:true},{n:"青光眼",c:{U:"H40.9"},raw:true},{n:"玻璃體出血",c:{U:"H43.10"},raw:true}]}
+];
+
+const CAT_NAME = {sup:"表淺傷", cont:"挫傷", abr:"擦傷", lac:"撕裂/開放傷", cru:"壓砸傷", fx:"骨折", spr:"扭傷/脫臼", amp:"截斷", brn:"燒傷", tbi:"顱腦傷", org:"內臟損傷"};
+const CAT_VAR  = {sup:"--sup", cont:"--cont", abr:"--abr", lac:"--lac", cru:"--cru", fx:"--fx", spr:"--spr", amp:"--amp", brn:"--brn", tbi:"--tbi", org:"--org"};
+const SIDE_NAME= {R:"右", L:"左", U:"未特定側"};
+
+let state = {cat:"cont", region:null, side:"U", ext:"A", ampCP:"1", burnDeg:"0", basket:[]};
+
+const SIDE_DIGIT = {R:"1", L:"2", U:"9"};
+
+// 手指截斷:拇指 S68.5_;食/中/環/小 S68.6_(末碼合併指別+側別);其他指=未指定 9
+const FINGERS = [
+  {n:"拇指", thumb:true},
+  {n:"食指", base:0},
+  {n:"中指", base:2},
+  {n:"環指", base:4},
+  {n:"小指", base:6},
+  {n:"其他指(未指定)", other:true},
+];
+// 足趾截斷:拇趾 S98.11/12;其他趾(一趾) S98.13/14
+const TOES = [
+  {n:"拇趾", great:true},
+  {n:"其他趾(一趾)", great:false},
+];
+function buildFinger(f, cp, side, ext){
+  if(f.thumb) return {code:"S68.5"+cp+SIDE_DIGIT[side]+ext, side:side};
+  if(f.other) return {code:"S68.6"+cp+"9"+ext, side:"U"};   // 未指定指別,不帶側別
+  const d = f.base + (side==="L"?1:0);                       // 側別未指定時退回 9
+  const combo = (side==="U") ? "9" : String(d);
+  return {code:"S68.6"+cp+combo+ext, side:(side==="U"?"U":side)};
+}
+function buildToe(t, cp, side, ext){
+  const lvl = t.great ? cp : String(+cp+2);                  // 拇趾 1/2、其他趾 3/4
+  return {code:"S98.1"+lvl+SIDE_DIGIT[side]+ext, side:side};
+}
+function expandDigits(e){
+  const cp = state.ampCP, side = state.side, ext = state.ext;
+  if(e.digits==="finger")
+    return FINGERS.map(f=>{const b=buildFinger(f,cp,side,ext);
+      return {n:f.n+"截斷", fixed:b.code, dside:b.side};});
+  if(e.digits==="toe")
+    return TOES.map(t=>{const b=buildToe(t,cp,side,ext);
+      return {n:t.n+"截斷", fixed:b.code, dside:b.side};});
+  return [e];
+}
+
+const $ = s=>document.querySelector(s);
+const result = $("#result");
+const toast = $("#toast");
+let toastTimer=null;
+
+function applyExt(code){
+  if(code.includes("-")) return code;           // 需細分,不改
+  return code.slice(0,-1) + state.ext;          // 換第7碼
+}
+function showToast(msg){
+  toast.textContent = msg; toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toast.classList.remove("show"), 1300);
+}
+function copyText(t){
+  const ta = document.createElement("textarea");
+  ta.value = t; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); showToast("已複製:" + t); }
+  catch(e){ showToast("複製失敗,請手動選取"); }
+  document.body.removeChild(ta);
+}
+
+function setAccent(){
+  document.documentElement.style.setProperty("--accent", `var(${CAT_VAR[state.cat]})`);
+}
+
+function updateSegs(){
+  const showAmp = state.cat==="amp", showBurn = state.cat==="brn";
+  $("#ampLabel").style.display = showAmp ? "" : "none";
+  $("#segAmp").style.display   = showAmp ? "" : "none";
+  $("#burnLabel").style.display= showBurn ? "" : "none";
+  $("#segBurn").style.display  = showBurn ? "" : "none";
+}
+
+function pickCode(entry){
+  // 依目前側別取碼;無該側碼時退回 U
+  const c = entry.c;
+  if(state.side!=="U" && c[state.side]) return {code:c[state.side], side:state.side};
+  return {code:c.U, side: (c.R||c.L) ? "U" : null}; // side=null 表示本項無側別之分
+}
+
+function render(){
+  setAccent();
+  updateSegs();
+  document.querySelectorAll(".zone").forEach(z=>{
+    z.classList.toggle("sel",
+      z.dataset.r===state.region && (z.dataset.s||"U")===(state.side||"U"));
+  });
+  if(!state.region){ return; }
+  const reg = DATA[state.region];
+  const list = reg.cats[state.cat] || [];
+  let html = `<div class="result-head">
+    <h2>${reg.label}${state.side!=="U" ? "(" + SIDE_NAME[state.side] + ")" : ""}</h2>
+    <span class="badge">${CAT_NAME[state.cat]}</span>
+    <span style="font-size:12.5px;color:var(--sub)">點碼可直接複製</span>
+  </div>`;
+  if(state.cat==="fx"){
+    html += `<div class="fx-hint">骨折碼第7碼:<b>A</b>=閉鎖性初診、<b>B</b>=開放性初診(第7碼切到 A 後,開放性骨折請自行改為 B)、<b>D</b>=複診、其餘依癒合狀況細分。</div>`;
+  }
+  if(state.cat==="tbi"){
+    html += `<div class="fx-hint">顱腦傷 S06 第6碼為意識喪失(LOC)狀態:此處預設 <b>0</b>=無意識喪失。有 LOC 時依時間改碼:≤30分 <b>1</b>、31分–59分 <b>2</b>、1–5.99小時 <b>3</b>… 死亡前未恢復 <b>7/8</b>。同一病人顱骨骨折(S02)與腦出血(S06)可併列。</div>`;
+  }
+  if(state.cat==="org"){
+    html += `<div class="fx-hint">內臟損傷分級碼(肝 S36.11/脾 S36.03/腎 S37.02 等)第6碼多對應損傷嚴重度(輕/中/重),請依影像或手術所見選正確等級;此處列常用起始碼,細碼以院內編審為準。</div>`;
+  }
+  if(state.cat==="amp"){
+    html += `<div class="fx-hint">截斷碼已依上方<b>完全/部分</b>與人形圖<b>左右側</b>自動組出。手指自動展開為拇/食/中/環/小及<b>其他指</b>(指別不明用此);足趾依 ICD-10-CM 僅分拇趾/其他趾。</div>`;
+  }
+  if(state.cat==="brn"){
+    html += `<div class="fx-hint">燒傷碼已依上方<b>度數</b>自動帶入(未指定 / 一度 / 二度 / 三度,對應小數點後第一碼 0/1/2/3)。標「-」者另需部位或側別細分。</div>`;
+  }
+  if(state.cat==="cru"){
+    html += `<div class="fx-hint">壓砸傷(crush)常合併深部軟組織、血管神經與腔室症候群,注意 rhabdomyolysis;可視情況併列骨折、血管損傷等碼。</div>`;
+  }
+  if(list.length===0 && !(reg.always && reg.always.length)){
+    html += `<div class="empty">此部位在「${CAT_NAME[state.cat]}」類別無收錄碼<br><span style="font-size:12.5px">(此類別通常不適用於這個部位——例如四肢無「內臟損傷」、實質器官無「骨折」)</span></div>`;
+  }else if(list.length>0){
+    let flat = [];
+    for(const e of list){ if(e.digits) flat.push(...expandDigits(e)); else flat.push(e); }
+    html += `<table class="codes">` + flat.map((e,i)=>row(e, state.region, i)).join("") + `</table>`;
+  }
+  if(reg.always && reg.always.length){
+    html += `<div class="fx-hint" style="margin-top:12px;background:#F5EFF7;border-color:#DCCBE6">此部位常見<b>非外傷急診</b>診斷(不隨傷勢類別改變、不套第7碼):</div>`;
+    html += `<table class="codes">` + reg.always.map((e,i)=>row(e, state.region, i)).join("") + `</table>`;
+  }
+  result.innerHTML = html;
+  bindRows(result, state.region);
+}
+
+function row(e, regionKey, idx){
+  const raw = e.raw === true;
+  let code, side, chk=false;
+  if(e.fixed){
+    // 手指/足趾截斷:已組好完整碼
+    code = e.fixed; side = e.dside;
+  } else if(raw){
+    code = e.c.U; side = null;
+  } else if(e.amp){
+    // 截斷:base + 完全(1)/部分(2) + 側別(1/2/9) + 第7碼
+    side = (state.side!=="U") ? state.side : "U";
+    code = e.amp + state.ampCP + SIDE_DIGIT[side] + state.ext;
+    chk = e.chk === true;
+  } else if(e.bd){
+    // 燒傷:替換小數點後第一碼為度數,再套第7碼
+    const p = pickCode(e);
+    let base = applyExt(p.code);
+    const dot = base.indexOf(".");
+    if(dot>=0) base = base.slice(0,dot+1) + state.burnDeg + base.slice(dot+2);
+    code = base; side = p.side;
+  } else {
+    const p = pickCode(e);
+    code = applyExt(p.code); side = p.side;
+  }
+  const nocopy = code.includes("-");
+  let sidetag = "";
+  if(raw) sidetag = `<span class="sidetag">非外傷</span>`;
+  else if(e.fixed) sidetag = `<span class="sidetag">${side==="U"?"未指定側":SIDE_NAME[side]}·${state.ampCP==="1"?"完全":"部分"}</span>`;
+  else if(e.amp) sidetag = `<span class="sidetag">${SIDE_NAME[side]}·${state.ampCP==="1"?"完全":"部分"}${chk?" ⚠核對":""}</span>`;
+  else if(e.bd && state.burnDeg!=="0") sidetag = `<span class="sidetag">${["","一","二","三"][+state.burnDeg]}度</span>`;
+  else if(side!==null) sidetag = `<span class="sidetag">${SIDE_NAME[side]}</span>`;
+  const note = e.note ? `<span class="note">${e.note}</span>` : "";
+  return `<tr>
+    <td class="name">${e.n}${note}</td>
+    <td class="icd"><span class="code ${nocopy?"nocopy":""}" data-code="${nocopy?"":code}">${code}</span>${sidetag}</td>
+    <td class="act">${nocopy?"":`<button class="btn addbtn" data-code="${code}" data-name="${e.n}">＋加入</button>`}</td>
+  </tr>`;
+}
+
+function bindRows(root){
+  root.querySelectorAll(".code[data-code]").forEach(el=>{
+    if(el.dataset.code) el.addEventListener("click", ()=>copyText(el.dataset.code));
+  });
+  root.querySelectorAll(".addbtn").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const code = el.dataset.code;
+      if(!state.basket.some(b=>b.code===code)){
+        state.basket.push({code, name:el.dataset.name});
+        renderBasket(); showToast("已加入清單:" + code);
+      }else showToast("清單中已有此碼");
+    });
+  });
+}
+
+function renderBasket(){
+  const box = $("#chips");
+  if(state.basket.length===0){
+    box.innerHTML = `<span style="font-size:13px;color:var(--sub)">按各列「＋加入」收集多筆診斷碼</span>`;
+    return;
+  }
+  box.innerHTML = state.basket.map((b,i)=>
+    `<span class="chip" title="${b.name}"><b>${b.code}</b><span data-i="${i}">✕</span></span>`).join("");
+  box.querySelectorAll(".chip span[data-i]").forEach(x=>{
+    x.addEventListener("click", ()=>{ state.basket.splice(+x.dataset.i,1); renderBasket(); });
+  });
+}
+
+/* ---------- 搜尋 ---------- */
+function flatIndex(){
+  const out=[];
+  for(const [rk,reg] of Object.entries(DATA)){
+    for(const [ck,arr] of Object.entries(reg.cats))
+      for(const e of arr){
+        if(e.digits){
+          // 手指/足趾:索引展開後的碼(以完全+右側為代表,仍可用名稱/碼片段搜尋)
+          const rows = e.digits==="finger"
+            ? FINGERS.map(f=>buildFinger(f,"1","R","A"))
+            : TOES.map(t=>buildToe(t,"1","R","A"));
+          const names = e.digits==="finger" ? FINGERS.map(f=>f.n) : TOES.map(t=>t.n+"截斷");
+          rows.forEach((r,i)=> out.push({rk, region:reg.label, ck, cat:CAT_NAME[ck], name:names[i], side:"R", code:r.code, raw:true}));
+          continue;
+        }
+        for(const [s,code] of Object.entries(e.c))
+          out.push({rk, region:reg.label, ck, cat:CAT_NAME[ck], name:e.n, side:s, code, raw:!!e.raw});
+      }
+    if(reg.always) for(const e of reg.always)
+      out.push({rk, region:reg.label, ck:"", cat:"非外傷", name:e.n, side:"U", code:e.c.U, raw:true});
+  }
+  for(const g of MISC) for(const e of g.items)
+    out.push({rk:"", region:g.g, ck:"", cat:"非外傷", name:e.n, side:"U", code:e.c.U, raw:!!e.raw});
+  return out;
+}
+const INDEX = flatIndex();
+
+function renderSearch(q){
+  const kw = q.trim().toUpperCase();
+  if(!kw){ render(); if(!state.region) result.innerHTML = `<div class="empty">← 點選人形圖部位,或在上方搜尋</div>`; return; }
+  const hits = INDEX.filter(x=> x.name.toUpperCase().includes(kw) || x.code.toUpperCase().includes(kw)
+    || x.region.includes(q.trim()) ).slice(0,50);
+  let html = `<div class="result-head"><h2>搜尋:「${q}」</h2>
+    <span style="font-size:12.5px;color:var(--sub)">${hits.length} 筆(最多顯示 50 筆)</span></div>`;
+  if(hits.length===0){ html += `<div class="empty">查無結果,換個關鍵字試試(可輸入部位、傷勢或碼)</div>`; }
+  else{
+    html += `<table class="codes">` + hits.map(h=>{
+      const code = h.raw ? h.code : applyExt(h.code);
+      const nocopy = code.includes("-");
+      const meta = h.raw ? `${h.region}|${h.cat}` : `${h.region}|${h.cat}|${SIDE_NAME[h.side]}`;
+      return `<tr>
+        <td class="name">${h.name}<span class="note">${meta}</span></td>
+        <td class="icd"><span class="code ${nocopy?"nocopy":""}" data-code="${nocopy?"":code}">${code}</span></td>
+        <td class="act">${nocopy?"":`<button class="btn addbtn" data-code="${code}" data-name="${h.name}">＋加入</button>`}</td>
+      </tr>`;}).join("") + `</table>`;
+  }
+  result.innerHTML = html;
+  bindRows(result);
+}
+
+function renderMisc(){
+  $("#q").value = "";
+  state.region = null;
+  document.querySelectorAll(".zone").forEach(z=>z.classList.remove("sel"));
+  let html = `<div class="result-head"><h2>非外傷急診常用碼</h2>
+    <span style="font-size:12.5px;color:var(--sub)">眼科 / 耳鼻喉 / 牙科|點碼可複製</span></div>`;
+  for(const g of MISC){
+    html += `<div class="fx-hint" style="background:#EEF3F8;border-color:#D9E1EA;margin-top:10px"><b>${g.g}</b></div>`;
+    html += `<table class="codes">` + g.items.map(e=>row(e)).join("") + `</table>`;
+  }
+  result.innerHTML = html;
+  bindRows(result);
+}
+
+/* ---------- 事件 ---------- */
+document.querySelectorAll(".zone").forEach(z=>{
+  z.addEventListener("click", ()=>{
+    state.region = z.dataset.r;
+    state.side = z.dataset.s || "U";
+    $("#q").value = "";
+    render();
+  });
+});
+document.querySelectorAll("#tabs .tab").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll("#tabs .tab").forEach(x=>x.classList.remove("on"));
+    t.classList.add("on");
+    state.cat = t.dataset.cat;
+    updateSegs();
+    const q = $("#q").value;
+    q ? renderSearch(q) : render();
+  });
+});
+document.querySelectorAll("#seg7 button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll("#seg7 button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    state.ext = b.dataset.e;
+    const q = $("#q").value;
+    q ? renderSearch(q) : render();
+  });
+});
+document.querySelectorAll("#segAmp button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll("#segAmp button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    state.ampCP = b.dataset.cp;
+    const q = $("#q").value;
+    q ? renderSearch(q) : render();
+  });
+});
+document.querySelectorAll("#segBurn button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll("#segBurn button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    state.burnDeg = b.dataset.bd;
+    const q = $("#q").value;
+    q ? renderSearch(q) : render();
+  });
+});
+$("#q").addEventListener("input", e=>renderSearch(e.target.value));
+$("#miscBtn").addEventListener("click", renderMisc);
+$("#copyAll").addEventListener("click", ()=>{
+  if(state.basket.length===0){ showToast("清單是空的"); return; }
+  copyText(state.basket.map(b=>b.code).join(", "));
+});
+if(window.parent!==window){$("#sendAll").style.display="";}
+$("#sendAll").addEventListener("click", ()=>{ if(!state.basket.length){ showToast("清單是空的"); return; } window.parent.postMessage({type:"icd-pick",items:state.basket.map(b=>({code:b.code,name:b.name}))},"*"); state.basket=[]; renderBasket(); });
+$("#clearAll").addEventListener("click", ()=>{ state.basket=[]; renderBasket(); });
+
+setAccent();
+</script>
+</body>
+</html>

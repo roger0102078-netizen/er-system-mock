@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>急診系統 模擬範本</title>
+<style>
+:root{
+  --bg:#f3f5f1; --panel:#fff; --ink:#1d2a1f; --muted:#6b7a6d; --line:#dde3da;
+  --top:#f6d835; --top-ink:#3b3300; --accent:#2f7d4f; --accent-soft:#e3f2e8;
+  --sel:#fff7c2; --danger:#c0392b;
+  --t1:#d32f2f; --t2:#f57c00; --t3:#f9c80e; --t4:#43a047; --t5:#90a4ae;
+  --y:#8fe3ef; --n:#fff04d; --p:#8bd55a; --o:#ff9d8a;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#161b17; --panel:#202721; --ink:#e7eee8; --muted:#93a396; --line:#324035; --accent-soft:#233a2b; --sel:#4a4420;--top-ink:#2a2400}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Microsoft JhengHei","PingFang TC",system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* 頂部選單 */
+.menubar{background:var(--top);color:var(--top-ink);display:flex;align-items:center;gap:2px;padding:0 8px;flex-wrap:wrap;min-height:36px}
+.menubar .m{padding:7px 10px;border-radius:4px;cursor:pointer;font-weight:500;white-space:nowrap}
+.menubar .m:hover{background:rgba(0,0,0,.1)}
+.menubar .sp{flex:1}
+.menubar .info{font-size:12px;padding:0 8px}
+
+/* 工具列 */
+.toolbar{background:var(--panel);border-bottom:1px solid var(--line);padding:8px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 12px;font-size:13px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .n{opacity:.7;margin-left:4px;font-size:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:5px 12px}
+.seg button.on{background:var(--accent);color:#fff}
+.search{border:1px solid var(--line);border-radius:8px;padding:5px 10px;background:var(--panel);width:170px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 14px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.warn.on{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.sp{flex:1}
+.lbl{font-size:12px;color:var(--muted)}
+
+/* 交班列 */
+.handover{display:none;background:var(--accent-soft);border-bottom:1px solid var(--accent);padding:8px 12px;gap:10px;align-items:center;flex-wrap:wrap}
+.handover.show{display:flex}
+.handover select{border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--panel)}
+
+/* 主體 */
+.main{flex:1;display:flex;min-height:0}
+.listwrap{flex:1;overflow:auto;padding:12px;min-width:0}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-bottom:8px;flex-wrap:wrap}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.tri{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;color:#fff;font-weight:700;font-size:13px}
+.tri.l1{background:var(--t1)}.tri.l2{background:var(--t2)}.tri.l3{background:var(--t3);color:#3b3300}.tri.l4{background:var(--t4)}.tri.l5{background:var(--t5)}
+
+/* 卡片檢視 */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--t5);border-radius:8px;padding:8px 10px;cursor:pointer;position:relative}
+.card.l1{border-left-color:var(--t1)}.card.l2{border-left-color:var(--t2)}.card.l3{border-left-color:var(--t3)}.card.l4{border-left-color:var(--t4)}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.card.sel{background:var(--sel);outline:2px solid var(--accent)}
+.card .r1{display:flex;align-items:center;gap:6px}
+.card .bed{font-weight:700;font-size:15px;min-width:34px}
+.card .nm{font-weight:600;font-size:15px}
+.card .as{color:var(--muted);font-size:12px;margin-left:auto}
+.card .cc{margin:4px 0 6px;font-size:14px;min-height:20px}
+.card .staff{display:flex;gap:10px;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:5px}
+.card .staff b{color:var(--ink);font-weight:600}
+.card .ck{position:absolute;right:8px;top:8px;width:18px;height:18px}
+
+/* 列表檢視 */
+table{border-collapse:collapse;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+th{background:#dcebd5;color:#2b4a33;text-align:left;font-weight:600;padding:6px 8px;font-size:13px;position:sticky;top:0;white-space:nowrap}
+@media (prefers-color-scheme:dark){th{background:#2b3d30;color:#cfe3d4}}
+td{padding:6px 8px;border-top:1px solid var(--line);white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--accent-soft)}
+tbody tr.sel{background:var(--sel)}
+td.cc{white-space:normal;min-width:180px}
+.st{display:inline-block;min-width:24px;text-align:center;border-radius:4px;font-weight:600;font-size:12px;padding:1px 4px}
+.st.Y{background:var(--y);color:#063}.st.N{background:var(--n);color:#440}.st.P{background:var(--p);color:#143}.st.O{background:var(--o);color:#600}
+
+/* 病人詳細 */
+.detail{border-top:2px solid var(--accent);background:var(--panel);height:46%;min-height:260px;display:flex;flex-direction:column}
+.pbar{display:flex;gap:14px;align-items:center;padding:6px 12px;background:var(--accent-soft);flex-wrap:wrap}
+.pbar .nm{font-weight:700;font-size:16px}
+.pbar span.k{color:var(--muted);font-size:12px;margin-right:3px}
+.tabs{display:flex;gap:2px;padding:6px 12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);border-bottom:0;background:var(--bg);padding:5px 14px;border-radius:6px 6px 0 0}
+.tabs button.on{background:var(--panel);font-weight:600;color:var(--accent);position:relative;top:1px}
+.tabbody{flex:1;overflow:auto;padding:12px}
+.empty{color:var(--muted);text-align:center;padding:40px 0}
+textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--panel);resize:vertical}
+.dx-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
+.dx{display:grid;grid-template-columns:24px 62px 110px 1fr 70px 28px;gap:8px;align-items:center;padding:5px 8px;border:1px solid var(--line);border-radius:8px}
+.dx .code{font-weight:700;color:var(--accent);font-family:Consolas,monospace}
+.dx .en{color:var(--muted);font-size:12px}
+.x{border:0;background:none;color:var(--danger);font-size:18px;line-height:1}
+.sugwrap{position:relative;max-width:560px}
+.sug{position:absolute;left:0;right:0;top:100%;background:var(--panel);border:1px solid var(--accent);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);max-height:260px;overflow:auto;z-index:20;display:none}
+.sug div{padding:6px 10px;cursor:pointer;display:flex;gap:10px}
+.sug div:hover,.sug div.hl{background:var(--accent-soft)}
+.sug .c{font-weight:700;min-width:70px;color:var(--accent);font-family:Consolas,monospace}
+.sug .e{color:var(--muted);font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.log{font-size:12px;color:var(--muted);margin-top:6px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 18px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+.toast.show{opacity:1}
+.note{border-left:3px solid var(--accent);padding:4px 10px;margin:6px 0;background:var(--bg);border-radius:0 6px 6px 0}
+.note small{color:var(--muted)}
+@media (max-width:700px){.dx{grid-template-columns:24px 60px 1fr 28px}.dx .en,.dx .pri{display:none}.detail{height:55%}}
+</style>
+</head>
+<body>
+
+<div class="menubar">
+  <span class="m">診斷</span><span class="m">病患重取</span><span class="m">病患動向</span><span class="m">病患清單列印</span>
+  <span class="m">會診名單</span><span class="m">急調病歷</span><span class="m">其他</span><span class="m">國際疫情</span><span class="m">出院衛教</span>
+  <span class="sp"></span>
+  <span class="info" id="clock"></span>
+</div>
+
+<div class="toolbar">
+  <div class="chips" id="zoneChips"></div>
+  <input class="search" id="q" placeholder="搜尋 姓名 / 床號 / 主訴">
+  <div class="seg" id="viewSeg">
+    <button data-v="card" class="on">卡片（精簡）</button>
+    <button data-v="list">列表</button>
+  </div>
+  <label class="lbl" id="dynWrap" style="display:none"><input type="checkbox" id="dyn"> 顯示動態欄位</label>
+  <span class="sp"></span>
+  <button class="btn warn" id="hoBtn">交班</button>
+</div>
+
+<div class="handover" id="ho">
+  <b>交班模式</b>
+  <button class="btn" id="hoAll">全選目前清單</button>
+  <button class="btn" id="hoNone">清除</button>
+  <span class="lbl">快速選取原醫師：</span>
+  <select id="hoFrom"></select>
+  <span>已選 <b id="hoN">0</b> 位</span>
+  <span class="sp"></span>
+  <span class="lbl">新主責醫師</span><select id="hoDoc"></select>
+  <span class="lbl">新負責護理師（選填）</span><select id="hoNurse"></select>
+  <button class="btn primary" id="hoApply" disabled>確認交班</button>
+</div>
+
+<div class="main" style="flex-direction:column">
+  <div class="listwrap" id="listwrap">
+    <div class="legend">
+      <span><i class="dot" style="background:var(--t1)"></i>1 復甦</span>
+      <span><i class="dot" style="background:var(--t2)"></i>2 危急</span>
+      <span><i class="dot" style="background:var(--t3)"></i>3 緊急</span>
+      <span><i class="dot" style="background:var(--t4)"></i>4 次緊急</span>
+      <span><i class="dot" style="background:var(--t5)"></i>5 非緊急</span>
+      <span id="count" style="margin-left:auto"></span>
+    </div>
+    <div id="view"></div>
+  </div>
+
+  <div class="detail" id="detail"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== 範例資料（皆為虛構）===== */
+const DOCTORS=['洪○彤','呂○宇','陳○恩','林○翰','張○庭'];
+const NURSES=['葉○嘉','廖○雯','徐○希','潘○成','許○珊','周○萱','李○瑄','蔣○芊'];
+const ZONES=['A','B','C','ICU待床','觀察'];
+const ICD=[
+['R07.9','胸痛，未特定','Chest pain, unspecified'],['R07.89','其他胸痛','Other chest pain'],
+['I21.9','急性心肌梗塞，未特定','Acute myocardial infarction, unspecified'],['I20.0','不穩定型心絞痛','Unstable angina'],
+['I48.91','心房顫動，未特定','Unspecified atrial fibrillation'],['I50.9','心衰竭，未特定','Heart failure, unspecified'],
+['I10','原發性高血壓','Essential hypertension'],['I63.9','腦梗塞，未特定','Cerebral infarction, unspecified'],
+['I61.9','腦內出血，未特定','Intracerebral hemorrhage, unspecified'],['R55','暈厥','Syncope and collapse'],
+['R51.9','頭痛，未特定','Headache, unspecified'],['R42','頭暈及眩暈','Dizziness and giddiness'],
+['R10.9','腹痛，未特定','Unspecified abdominal pain'],['R10.31','右下腹痛','Right lower quadrant pain'],
+['K35.80','急性闌尾炎，未特定','Unspecified acute appendicitis'],['K80.00','急性膽囊炎併膽結石','Calculus of gallbladder with acute cholecystitis'],
+['K29.70','胃炎，未特定','Gastritis, unspecified'],['K92.2','胃腸道出血，未特定','Gastrointestinal hemorrhage, unspecified'],
+['K56.69','其他腸阻塞','Other intestinal obstruction'],['A09','感染性腸胃炎及結腸炎','Infectious gastroenteritis and colitis'],
+['N39.0','泌尿道感染','Urinary tract infection'],['N20.0','腎結石','Calculus of kidney'],['N23','腎絞痛，未特定','Unspecified renal colic'],
+['J18.9','肺炎，未特定','Pneumonia, unspecified organism'],['J44.1','慢性阻塞性肺病急性發作','COPD with acute exacerbation'],
+['J45.901','氣喘急性發作','Unspecified asthma with acute exacerbation'],['J06.9','急性上呼吸道感染','Acute upper respiratory infection'],
+['U07.1','COVID-19','COVID-19'],['J10.1','流感併其他呼吸道表現','Influenza with other respiratory manifestations'],
+['R50.9','發燒，未特定','Fever, unspecified'],['A41.9','敗血症，未特定','Sepsis, unspecified organism'],
+['R06.02','呼吸急促','Shortness of breath'],['R05.9','咳嗽，未特定','Cough, unspecified'],
+['E11.65','第2型糖尿病併高血糖','Type 2 DM with hyperglycemia'],['E16.2','低血糖，未特定','Hypoglycemia, unspecified'],
+['E87.1','低鈉血症','Hypo-osmolality and hyponatremia'],['E86.0','脫水','Dehydration'],
+['S06.0X0A','腦震盪','Concussion without LOC, initial'],['S06.5X0A','外傷性硬腦膜下出血','Traumatic subdural hemorrhage, initial'],
+['S72.001A','股骨頸骨折，初次','Fracture of neck of femur, initial'],['S52.501A','橈骨遠端骨折，初次','Fracture of distal radius, initial'],
+['S82.201A','脛骨骨折，初次','Fracture of tibia, initial'],['S22.39XA','肋骨骨折，初次','Fracture of rib, initial'],
+['S01.01XA','頭皮撕裂傷，初次','Laceration of scalp, initial'],['S61.411A','手部撕裂傷，初次','Laceration of right hand, initial'],
+['S39.012A','腰部拉傷，初次','Strain of muscle of lower back, initial'],['M54.5','下背痛','Low back pain'],
+['T14.90XA','外傷，未特定','Injury, unspecified'],['V89.2XXA','機車交通事故','Person injured in traffic accident, initial'],
+['W19.XXXA','跌倒，未特定','Unspecified fall, initial'],['T78.2XXA','過敏性休克，未特定','Anaphylactic shock, unspecified'],
+['L50.0','過敏性蕁麻疹','Allergic urticaria'],['T40.601A','麻醉藥物中毒','Poisoning by narcotics, initial'],
+['R40.20','昏迷','Unspecified coma'],['R56.9','痙攣，未特定','Unspecified convulsions'],
+['F10.129','酒精中毒','Alcohol abuse with intoxication'],['R11.2','噁心嘔吐','Nausea with vomiting'],
+['D64.9','貧血，未特定','Anemia, unspecified'],['O20.0','先兆流產','Threatened abortion'],['N83.20','卵巢囊腫','Unspecified ovarian cysts']
+];
+const now=Date.now(), H=3600e3;
+const P=(id,bed,zone,lvl,name,sex,age,cc,doc,nur,hrs,dir,st,dx=[])=>({id,bed,zone,lvl,name,sex,age,cc,doc,nur,arrive:now-hrs*H,dir,st,dx,imp:'',notes:[]});
+let patients=[
+P('0226','A95','A',3,'王○翔','男',34,'頭部外傷',DOCTORS[1],NURSES[0],0.1,'',{}),
+P('0224','A01','A',3,'鍾○潔','女',62,'交通事故，下肢疼痛',DOCTORS[0],NURSES[0],0.25,'',{lab:'O',xr:'N'}),
+P('0223','A02','A',3,'黃○曦','男',45,'撞到身體疼痛',DOCTORS[1],NURSES[0],0.3,'',{lab:'Y'}),
+P('0218','A93','A',2,'陳○弘','男',71,'交通事故，前胸痛',DOCTORS[1],NURSES[0],0.85,'會診外科',{lab:'Y',ct:'N',xr:'N',bio:'P'}),
+P('0203','A03','A',2,'邱○源','男',58,'自高處落下',DOCTORS[1],NURSES[1],1.77,'會診骨科',{lab:'Y',ct:'O',xr:'P',bio:'P'},[{code:'S72.001A',ro:false}]),
+P('0186','A10','A',3,'林○合','女',80,'慵懶無力',DOCTORS[1],NURSES[2],2.1,'',{ct:'N'}),
+P('0138','A02','A',3,'劉○臻','男',29,'交通事故，左肩痛',DOCTORS[0],NURSES[2],5.82,'會診外科',{lab:'Y',ct:'Y',xr:'Y',bio:'P'}),
+P('0089','A06','B',2,'鄭○哲','男',66,'跌倒，頭部外傷',DOCTORS[0],NURSES[3],8.62,'等住院',{lab:'Y',ct:'O',xr:'Y',bio:'P'},[{code:'S06.5X0A',ro:false}]),
+P('0006','A01','B',2,'黃○華','女',74,'交通事故，腹痛',DOCTORS[0],NURSES[4],17.65,'等住院',{lab:'Y',ct:'Y',xr:'Y',bio:'P'}),
+P('0306','A05','ICU待床',1,'何○欽','男',52,'交通事故，意識改變',DOCTORS[0],NURSES[5],18.2,'等ICU',{lab:'O',ct:'O',xr:'Y',bio:'Y'}),
+P('0252','A09','觀察',3,'林○薇','女',48,'數天前跌倒',DOCTORS[1],NURSES[6],212.95,'等照會',{lab:'Y',ct:'Y',xr:'Y',bio:'Y'}),
+P('0310','C01','C',4,'吳○宏','男',22,'腹瀉嘔吐一天',DOCTORS[2],NURSES[7],1.2,'',{lab:'Y'}),
+P('0311','C02','C',3,'蔡○玲','女',39,'發燒咳嗽三天',DOCTORS[2],NURSES[7],0.6,'',{lab:'N',xr:'N'}),
+P('0312','C03','C',3,'楊○豪','男',55,'胸悶冒冷汗',DOCTORS[3],NURSES[1],0.4,'',{lab:'N',xr:'N'}),
+P('0313','C04','C',4,'許○安','女',27,'右下腹痛',DOCTORS[3],NURSES[3],2.4,'',{lab:'P',ct:'N'}),
+P('0314','C05','C',5,'謝○偉','男',19,'手部割傷',DOCTORS[4],NURSES[4],0.2,'',{}),
+P('0315','C06','C',3,'曾○芬','女',68,'呼吸喘',DOCTORS[3],NURSES[2],0.9,'',{lab:'Y',xr:'Y'}),
+P('0316','B02','B',2,'沈○杰','男',77,'突發口齒不清、右側無力',DOCTORS[4],NURSES[6],0.3,'',{lab:'Y',ct:'N'}),
+P('0317','B03','B',4,'江○妮','女',33,'下背痛',DOCTORS[4],NURSES[5],3.3,'',{xr:'P'}),
+];
+try{const s=localStorage.getItem('er-mock-v1');if(s)patients=JSON.parse(s)}catch(e){}
+const save=()=>{try{localStorage.setItem('er-mock-v1',JSON.stringify(patients))}catch(e){}};
+
+/* ===== 狀態 ===== */
+const S={zone:'全部',view:'card',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'診斷'};
+const $=s=>document.querySelector(s);
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)};
+const fmtH=h=>h<1?Math.round(h*60)+' 分':h<48?h.toFixed(1)+' 時':(h/24).toFixed(1)+' 天';
+const hrs=p=>(Date.now()-p.arrive)/H;
+
+setInterval(()=>{$('#clock').textContent=new Date().toLocaleString('zh-TW',{hour12:false})},1000);
+
+/* ===== 篩選 ===== */
+function filtered(){
+  const q=S.q.trim().toLowerCase();
+  return patients.filter(p=>(S.zone==='全部'||p.zone===S.zone)&&(!q||(p.name+p.bed+p.cc+p.id).toLowerCase().includes(q)))
+    .sort((a,b)=>a.lvl-b.lvl||a.arrive-b.arrive);
+}
+function renderChips(){
+  const z=['全部',...ZONES];
+  $('#zoneChips').innerHTML=z.map(n=>{
+    const c=n==='全部'?patients.length:patients.filter(p=>p.zone===n).length;
+    return `<button class="chip ${S.zone===n?'on':''}" data-z="${n}">${n}<span class="n">${c}</span></button>`}).join('');
+}
+
+/* ===== 清單 ===== */
+const stCell=v=>v?`<span class="st ${v}">${v}</span>`:'';
+function renderList(){
+  const L=filtered();
+  $('#count').textContent=`共 ${L.length} 位`;
+  const ck=p=>S.ho?`<input type="checkbox" class="ck" data-ck="${p.id}" ${S.checked.has(p.id)?'checked':''}>`:'';
+  if(S.view==='card'){
+    $('#view').innerHTML=`<div class="cards">`+L.map(p=>`
+      <div class="card l${p.lvl} ${S.sel===p.id?'sel':''}" data-id="${p.id}">
+        ${ck(p)}
+        <div class="r1"><span class="tri l${p.lvl}">${p.lvl}</span><span class="bed">${p.bed}</span><span class="nm">${p.name}</span><span class="as" ${S.ho?'style="margin-right:24px"':''}>${p.sex}/${p.age}</span></div>
+        <div class="cc">${p.cc}</div>
+        <div class="staff"><span>醫 <b>${p.doc}</b></span><span>護 <b>${p.nur}</b></span></div>
+      </div>`).join('')+`</div>`;
+  }else{
+    const D=S.dyn;
+    $('#view').innerHTML=`<table><thead><tr>${S.ho?'<th></th>':''}<th>檢傷</th><th>床號</th><th>姓名</th><th>性別/年齡</th><th>主訴</th><th>主責醫師</th><th>負責護理師</th>${D?'<th>停留</th><th>動向</th><th>抽血</th><th>CT/MRI</th><th>X光</th><th>生化</th>':''}</tr></thead><tbody>`+
+    L.map(p=>`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
+      <td><span class="tri l${p.lvl}">${p.lvl}</span></td><td><b>${p.bed}</b></td><td><b>${p.name}</b></td><td>${p.sex}/${p.age}</td>
+      <td class="cc">${p.cc}</td><td>${p.doc}</td><td>${p.nur}</td>
+      ${D?`<td>${fmtH(hrs(p))}</td><td>${p.dir}</td><td>${stCell(p.st.lab)}</td><td>${stCell(p.st.ct)}</td><td>${stCell(p.st.xr)}</td><td>${stCell(p.st.bio)}</td>`:''}</tr>`).join('')+`</tbody></table>`;
+  }
+  $('#hoN').textContent=S.checked.size;
+  $('#hoApply').disabled=!S.checked.size;
+}
+
+/* ===== 病人詳細 ===== */
+const cur=()=>patients.find(p=>p.id===S.sel);
+function renderDetail(){
+  const p=cur(), d=$('#detail');
+  if(!p){d.innerHTML=`<div class="empty">請從上方清單選擇病人</div>`;return}
+  const tabs=['診斷','病程','醫囑','檢驗報告','影像'];
+  d.innerHTML=`
+  <div class="pbar">
+    <span class="tri l${p.lvl}">${p.lvl}</span>
+    <span class="nm">${p.name}</span><span>${p.sex}/${p.age}歲</span>
+    <span><span class="k">病歷號</span>${p.id}</span><span><span class="k">床號</span>${p.bed}</span>
+    <span><span class="k">主訴</span>${p.cc}</span>
+    <span><span class="k">主責醫師</span><b>${p.doc}</b></span><span><span class="k">護理師</span><b>${p.nur}</b></span>
+    <span><span class="k">停留</span>${fmtH(hrs(p))}</span>
+  </div>
+  <div class="tabs">${tabs.map(t=>`<button class="${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>
+  <div class="tabbody" id="tb"></div>`;
+  renderTab();
+}
+function renderTab(){
+  const p=cur(), tb=$('#tb');
+  if(S.tab==='診斷'){
+    tb.innerHTML=`
+    <div class="lbl">Impression（臨床印象）</div>
+    <textarea id="imp" rows="2">${p.imp||''}</textarea>
+    <div class="row" style="margin:10px 0 0">
+      <div class="lbl" style="min-width:150px">Discharge Diagnosis（ICD-10）</div>
+      <div class="sugwrap" style="flex:1">
+        <input class="search" id="icd" style="width:100%" placeholder="輸入代碼或中英文關鍵字，例如 R07 / 胸痛 / fracture" autocomplete="off">
+        <div class="sug" id="sug"></div>
+      </div>
+      <span class="lbl">最多 7 項</span>
+      <span class="sp"></span>
+      <button class="btn primary" id="saveDx">儲存</button>
+    </div>
+    <div class="dx-grid" id="dxs"></div>`;
+    renderDx();
+  }else if(S.tab==='病程'){
+    tb.innerHTML=`<div class="row"><textarea id="nt" rows="2" placeholder="輸入病程紀錄…" style="flex:1"></textarea><button class="btn primary" id="addNt">新增</button></div>
+    <div id="nts">${p.notes.map(n=>`<div class="note">${n.t}<br><small>${n.at}</small></div>`).reverse().join('')||'<div class="empty">尚無病程紀錄</div>'}</div>`;
+  }else{
+    tb.innerHTML=`<div class="empty">「${S.tab}」模組（示意，之後串接）</div>`;
+  }
+}
+function renderDx(){
+  const p=cur(),el=$('#dxs');if(!el)return;
+  el.innerHTML=p.dx.map((d,i)=>{
+    const m=ICD.find(x=>x[0]===d.code)||[d.code,'',''];
+    return `<div class="dx"><span>${i+1}</span>
+      <label title="Rule out"><input type="checkbox" data-ro="${i}" ${d.ro?'checked':''}> R/O</label>
+      <span class="code">${m[0]}</span><span>${m[1]} <span class="en">${m[2]}</span></span>
+      <label class="pri"><input type="radio" name="pri" data-pri="${i}" ${i===0?'checked':''}> 主診斷</label>
+      <button class="x" data-rm="${i}" title="移除">×</button></div>`}).join('')||`<div class="lbl">尚未新增診斷</div>`;
+}
+
+/* ===== 事件 ===== */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(t.dataset.z){S.zone=t.dataset.z;renderChips();renderList();return}
+  if(t.closest('#viewSeg')&&t.dataset.v){
+    S.view=t.dataset.v;
+    document.querySelectorAll('#viewSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.view));
+    $('#dynWrap').style.display=S.view==='list'?'':'none';renderList();return}
+  if(t.dataset.ck){t.checked?S.checked.add(t.dataset.ck):S.checked.delete(t.dataset.ck);$('#hoN').textContent=S.checked.size;$('#hoApply').disabled=!S.checked.size;e.stopPropagation();return}
+  const row=t.closest('[data-id]');
+  if(row&&!t.matches('input')){
+    if(S.ho&&S.view==='card'&&false){}
+    S.sel=row.dataset.id;S.tab=S.tab||'診斷';renderList();renderDetail();return}
+  if(t.dataset.tab){S.tab=t.dataset.tab;renderDetail();return}
+  if(t.dataset.rm!==undefined){cur().dx.splice(+t.dataset.rm,1);renderDx();return}
+  if(t.id==='saveDx'){cur().imp=$('#imp').value;save();toast('診斷已儲存');return}
+  if(t.id==='addNt'){const v=$('#nt').value.trim();if(!v)return;cur().notes.push({t:v,at:new Date().toLocaleString('zh-TW',{hour12:false})});save();renderTab();return}
+  const sg=t.closest('#sug [data-code]');
+  if(sg){addDx(sg.dataset.code);return}
+  if(!t.closest('.sugwrap')){const s=$('#sug');if(s)s.style.display='none'}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.ro!==undefined){cur().dx[+t.dataset.ro].ro=t.checked;save()}
+  if(t.dataset.pri!==undefined){const i=+t.dataset.pri,a=cur().dx;a.unshift(...a.splice(i,1));save();renderDx()}
+});
+function addDx(code){
+  const p=cur();
+  if(p.dx.length>=7)return toast('最多 7 項診斷');
+  if(p.dx.some(d=>d.code===code))return toast('已加入此診斷');
+  p.dx.push({code,ro:false});save();$('#icd').value='';$('#sug').style.display='none';renderDx();
+}
+document.addEventListener('input',e=>{
+  if(e.target.id==='q'){S.q=e.target.value;renderList()}
+  if(e.target.id==='dyn'){S.dyn=e.target.checked;renderList()}
+  if(e.target.id==='icd'){
+    const v=e.target.value.trim().toLowerCase(),s=$('#sug');
+    if(!v){s.style.display='none';return}
+    const r=ICD.filter(x=>(x[0]+x[1]+x[2]).toLowerCase().includes(v)).slice(0,10);
+    s.innerHTML=r.map(x=>`<div data-code="${x[0]}"><span class="c">${x[0]}</span><span>${x[1]}<br><span class="e">${x[2]}</span></span></div>`).join('')||'<div>找不到符合的診斷</div>';
+    s.style.display='block';
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.id==='icd'&&e.key==='Enter'){const f=document.querySelector('#sug [data-code]');if(f)addDx(f.dataset.code)}
+});
+
+/* ===== 交班 ===== */
+function fillSel(id,arr,first){$(id).innerHTML=(first?`<option value="">${first}</option>`:'')+arr.map(d=>`<option>${d}</option>`).join('')}
+fillSel('#hoFrom',DOCTORS,'— 選擇醫師 —');fillSel('#hoDoc',DOCTORS);fillSel('#hoNurse',NURSES,'不變更');
+$('#hoBtn').onclick=()=>{
+  S.ho=!S.ho;S.checked.clear();$('#ho').classList.toggle('show',S.ho);
+  $('#hoBtn').classList.toggle('on',S.ho);$('#hoBtn').textContent=S.ho?'結束交班':'交班';renderList();
+};
+$('#hoAll').onclick=()=>{filtered().forEach(p=>S.checked.add(p.id));renderList()};
+$('#hoNone').onclick=()=>{S.checked.clear();renderList()};
+$('#hoFrom').onchange=e=>{if(!e.target.value)return;filtered().filter(p=>p.doc===e.target.value).forEach(p=>S.checked.add(p.id));renderList()};
+$('#hoApply').onclick=()=>{
+  const doc=$('#hoDoc').value,nur=$('#hoNurse').value,n=S.checked.size;
+  patients.forEach(p=>{if(S.checked.has(p.id)){p.doc=doc;if(nur)p.nur=nur;
+    p.notes.push({t:`交班：主責醫師 → ${doc}${nur?'，護理師 → '+nur:''}`,at:new Date().toLocaleString('zh-TW',{hour12:false})})}});
+  S.checked.clear();save();renderList();renderDetail();
+  toast(`已將 ${n} 位病人交班給 ${doc}`);
+};
+
+/* 初始化 */
+renderChips();renderList();renderDetail();
+document.addEventListener('click',e=>{if(e.target.dataset.z)renderChips()});
+</script>
+</body>
+</html>

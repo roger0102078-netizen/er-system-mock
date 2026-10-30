@@ -150,6 +150,7 @@ table.emr td.l{text-align:left}
 table.emr tbody tr:hover{background:#b6e0b6}
 table.emr tbody tr.sel{background:#fff7a8}
 table.emr .nm{font-weight:700}
+table.emr .arr{color:#5b6b5e;font-size:11px;margin-left:2px}
 table.emr .stay{font-variant-numeric:tabular-nums}
 table.emr .stay.long{color:#b00020;font-weight:700}
 table.emr td.stc{padding:1px 2px}
@@ -236,6 +237,35 @@ fieldset.fs legend{color:#6b7a6d}
 #view .cards,#view .zone{padding:0 8px}
 .detail.min{height:auto;min-height:0}
 .detail.min .fkeys,.detail.min .tabbody,.detail.min .shortbar{display:none}
+
+/* ===== 配色：淺綠灰底，降低大面積白色 ===== */
+:root{--bg:#d6e2d1;--panel:#eef4ea;--line:#b5c6af;--sel:#fff1b0;--accent-soft:#e1edda}
+body{background:#d6e2d1}
+.legend{background:#e4eddf;border-bottom:1px solid #b5c6af}
+table.emr{background:#eef4ea;color:#1c2b1f}
+table.emr th{background:#c3d6bd;color:#1f3a25;border-bottom:1px solid #a4bb9d}
+table.emr td{border-bottom:1px solid #c9d8c3}
+table.emr tbody tr:nth-child(even){background:#e3ede0}
+table.emr tbody tr:hover{background:#d3e5cd}
+table.emr tbody tr.sel{background:#ffef9e}
+.side{background:#d0ddca;border-left:1px solid #b5c6af}
+.side .f input{background:#fff;border-color:#a9bba3}
+.side .lg{background:#f6efbf;border-color:#e2d58c}
+.detail{background:#d0ddca;border-top:2px solid #a4bb9d}
+.detail .pbar{background:#c3d6bd}
+.fkeys,.detail .tabbody{background:#d0ddca}
+.fk{background:#f1f6ee;border-color:#a9bba3}
+.fk:hover{background:#fff;border-color:#8fa88a}
+.fk.on{background:#3f7cbc;border-color:#3f7cbc}
+fieldset.fs{background:#e4eddf;border-color:#a9bba3}
+.dxr .code,.dxr .desc,.dxl input{background:#fff;border-color:#a9bba3}
+.shortbar{background:#cbd9f0;border-top:1px solid #aebfdd}
+.shortbar button{background:#f1f6ff;border-color:#a9bbdb}
+.card{background:#f3f8f0;border-color:#b5c6af}
+.card.sel{background:#fff1b0}
+.zh{background:#c9dcc2}
+.occ{background:#eef4ea}
+.chip,.seg button{background:#eef4ea}
 </style>
 
 </head>
@@ -397,16 +427,21 @@ let patients=(()=>{
       if(['A','B','C','觀察'].includes(z)&&rnd()<.6)st.ekg=pick('YYNP');
       const bed=z==='觀察'?'觀'+String(i).padStart(2,'0'):z==='ICU待床'?'ICU'+i:z+String(i).padStart(2,'0');
       const hrs=z==='觀察'?rnd()*40+6:z==='ICU待床'?rnd()*20+3:Math.round(rnd()*rnd()*14*100)/100+.05;
-      out.push(Object.assign(P(String(++no).padStart(4,'0'),bed,z,pick(LV[z]),pick(SUR)+(f?pick(GF):pick(GM)),f?'女':'男',ri(z==='F'?5:18,92),cc,
-        DOCTORS[pick(ZD[z])],NURSES[pick(ZN[z])],hrs,pick(DIR[z]),st,rnd()<.3?[{code:icd,ro:rnd()<.3}]:[]),{doc1:DOCTORS[pick(ZD[z])]}));
+      out.push((P(String(++no).padStart(4,'0'),bed,z,pick(LV[z]),pick(SUR)+(f?pick(GF):pick(GM)),f?'女':'男',ri(z==='F'?5:18,92),cc,
+        DOCTORS[pick(ZD[z])],NURSES[pick(ZN[z])],hrs,pick(DIR[z]),st,rnd()<.3?[{code:icd,ro:rnd()<.3}]:[])));
     }
   }
+  /* 流水號：依到院先後遞增（越晚到院號碼越大）；病歷號為另一組編號 */
+  [...out].sort((a,b)=>a.arrive-b.arrive).forEach((q,i)=>{
+    q.id=String(101+i).padStart(4,'0');
+    q.mrn=String(10000000+(parseInt(q.id,10)*7919003)%89999999).padStart(8,'0');
+  });
   /* 範例：模擬一起事故的大量傷患，分散在各區（旗標與區域無關） */
   let m=0;for(const q of out){if(m<8&&['A','B','D','E'].includes(q.zone)&&/機車|擦撞|外傷|撞傷|跌倒|傷|割/.test(q.cc)){q.mci=true;m++}}
   return out;
 })();
-try{const s=localStorage.getItem('er-mock-v5');if(s)patients=JSON.parse(s)}catch(e){}
-const save=()=>{try{localStorage.setItem('er-mock-v5',JSON.stringify(patients))}catch(e){}};
+try{const s=localStorage.getItem('er-mock-v6');if(s)patients=JSON.parse(s)}catch(e){}
+const save=()=>{try{localStorage.setItem('er-mock-v6',JSON.stringify(patients))}catch(e){}};
 
 /* ===== 狀態 ===== */
 const S={zone:'全部',view:'list',sort:'id',fId:'',fSeq:'',fBed:'',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'診斷'};
@@ -433,7 +468,7 @@ function filtered(){
   const q=S.q.trim().toLowerCase(),f=(v,k)=>!k||String(v).toLowerCase().includes(k.toLowerCase());
   const cmp={id:(a,b)=>b.id.localeCompare(a.id),lvl:(a,b)=>a.lvl-b.lvl||a.arrive-b.arrive,bed:(a,b)=>a.bed.localeCompare(b.bed,'zh',{numeric:true}),
     doc:(a,b)=>a.doc.localeCompare(b.doc,'zh')||a.lvl-b.lvl,stay:(a,b)=>a.arrive-b.arrive}[S.sort];
-  return patients.filter(p=>(S.zone==='全部'||(S.zone==='大'?p.mci:p.zone===S.zone))&&(!q||(p.name+p.bed+p.cc+p.id).toLowerCase().includes(q))&&f(p.id,S.fId)&&f(p.id,S.fSeq)&&f(p.bed,S.fBed))
+  return patients.filter(p=>(S.zone==='全部'||(S.zone==='大'?p.mci:p.zone===S.zone))&&(!q||(p.name+p.bed+p.cc+p.id+(p.mrn||'')).toLowerCase().includes(q))&&f(p.mrn||p.id,S.fId)&&f(p.id,S.fSeq)&&f(p.bed,S.fBed))
     .sort(S.view==='card'?(a,b)=>a.lvl-b.lvl||a.arrive-b.arrive:cmp);
 }
 const ZSHORT={A:'A',B:'B',C:'C',D:'D',E:'E',F:'F',觀察:'觀',ICU待床:'ICU'};
@@ -470,10 +505,10 @@ function renderList(){
         ${zp.length?`<div class="cards">${zp.map(card).join('')}</div>`:'<div class="lbl" style="padding:8px 2px">此區目前沒有病人</div>'}</section>`}).join('');
   }else{
     const stat=p=>p.mci?'<b style="color:#b3261e">大</b>':p.zone==='ICU待床'||p.dir==='等ICU'?'ICU':p.zone==='F'?'隔':/住院/.test(p.dir)?'住':p.lvl===1?'●':'';
-    $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號</th><th>床號</th><th>狀態</th><th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>診治醫師</th><th>初診醫師</th><th>負責護理師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
+    $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號 <small>到院</small></th><th>床號</th><th>狀態</th><th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>主責醫師</th><th>負責護理師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
     L.map(p=>`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
-      <td>${p.id}</td><td><b>${p.bed}</b></td><td>${stat(p)}</td><td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
-      <td>${p.dir}</td><td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.doc1||p.doc}</td><td>${p.nur}</td>
+      <td title="到院 ${new Date(p.arrive).toLocaleString('zh-TW',{hour12:false})}"><b>${p.id}</b> <small class="arr">${new Date(p.arrive).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</small></td><td><b>${p.bed}</b></td><td>${stat(p)}</td><td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
+      <td>${p.dir}</td><td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.nur}</td>
       ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k])}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
   }
   $('#hoN').textContent=S.checked.size;
@@ -492,7 +527,8 @@ function renderDetail(){
   <div class="pbar">
     <span class="tri l${p.lvl}">${p.lvl}</span>
     <span class="nm">${p.name}</span><span>${p.sex}/${p.age}歲</span>
-    <span><span class="k">病歷號</span>${p.id}</span>
+    <span><span class="k">流水號</span>${p.id}</span><span><span class="k">病歷號</span>${p.mrn||''}</span>
+    <span><span class="k">到院</span>${new Date(p.arrive).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</span>
     <span><span class="k">區域</span><select id="zSel">${ZONES.map(z=>`<option value="${z.k}" ${z.k===p.zone?'selected':''}>${z.name}</option>`).join('')}</select></span>
     <span><span class="k">床號</span><input id="bedIn" value="${p.bed}" size="5" style="border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--panel)"></span>
     <span><span class="k">主訴</span>${p.cc}</span>

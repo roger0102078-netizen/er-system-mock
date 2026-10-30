@@ -481,6 +481,31 @@ fieldset.fs{background:#dcebd1;border-color:#9dbb8c}
 .card{background:#d6e8ca;border-color:#9dbb8c}
 .zh{background:#a6c496}.occ{background:#d3e5c7}.seg button{background:#d3e5c7}
 .note{background:#d3e5c7}
+
+/* ===== 結構化病歷 ===== */
+.rec{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:8px;align-items:start}
+.rec .col{min-width:0}
+.rec fieldset.fs{margin:0 0 6px}
+.rec .g{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:3px 0}
+.rec .g>.lb{min-width:64px;font-size:14px;opacity:.85}
+.rc{border:1px solid var(--line);background:#e9f3e0;border-radius:14px;padding:1px 10px;cursor:pointer;font-size:14px;line-height:1.6}
+.rc:hover{background:#f3faed}
+.rc.on{background:#2f6fb5;border-color:#2f6fb5;color:#fff}
+.rc.ab.on{background:#c0392b;border-color:#c0392b}
+.rc.nk.on{background:#2e8b57;border-color:#2e8b57}
+.rec input[type=text],.rec input:not([type]),.rec textarea,.rec select{border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:#f6fbf1;color:inherit;font:inherit}
+.rec textarea{width:100%;box-sizing:border-box;resize:vertical}
+.rec .vs input{width:58px;text-align:center}
+.rec .vs .u{font-size:12.5px;opacity:.7;margin-right:6px}
+.rec .vs input.bad{background:#ffd2cc;color:#8a1a0e}
+.rec .pe{display:grid;grid-template-columns:78px auto 1fr;gap:4px 6px;align-items:center}
+.rec .pe input{width:100%;box-sizing:border-box}
+.rec .prev{position:sticky;top:0;white-space:pre-wrap;font-size:14px;line-height:1.55;background:#f6fbf1;border:1px solid var(--line);border-radius:6px;padding:8px;max-height:380px;overflow:auto;font-weight:600}
+.rec .prev .ph{opacity:.5}
+body.dark .rc{background:#2a3a30}body.dark .rc:hover{background:#34483b}
+body.dark .rec input,body.dark .rec textarea,body.dark .rec select,body.dark .rec .prev{background:#1f2a24}
+body.dark .rec .vs input.bad{background:#6a2b25;color:#ffd9d4}
+@media(max-width:1000px){.rec{grid-template-columns:1fr}}
 </style>
 
 </head>
@@ -663,7 +688,7 @@ try{const s=localStorage.getItem('er-mock-v9');if(s)patients=JSON.parse(s)}catch
 const save=()=>{try{localStorage.setItem('er-mock-v9',JSON.stringify(patients))}catch(e){}};
 
 /* ===== 狀態 ===== */
-const S={zone:'全部',view:'list',sort:'id',fId:'',fSeq:'',fBed:'',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'診斷'};
+const S={zone:'全部',view:'list',sort:'id',fId:'',fSeq:'',fBed:'',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'病歷'};
 const $=s=>document.querySelector(s);
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)};
 const fmtH=h=>h<1?Math.round(h*60)+' 分':h<48?h.toFixed(1)+' 時':(h/24).toFixed(1)+' 天';
@@ -770,7 +795,8 @@ function renderDetail(){
 }
 function renderTab(){
   const p=cur(), tb=$('#tb');
-  if(S.tab==='診斷'){
+  if(S.tab==='病歷'){renderRec(p,tb)}
+  else if(S.tab==='診斷'){
     tb.innerHTML=`
     <fieldset class="fs"><legend>Impression</legend>
       <div class="row" style="flex-wrap:nowrap"><textarea id="imp" rows="2" style="background:#fff;color:#111;border-radius:0">${p.imp||''}</textarea>
@@ -805,6 +831,114 @@ function renderTab(){
     tb.innerHTML=`<div class="empty">「${S.tab}」模組（示意，之後串接）</div>`;
   }
 }
+
+/* ===== 結構化病歷 ===== */
+const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const REC_SYM={
+  '胸痛':['胸痛','胸悶','呼吸喘','冒冷汗','噁心嘔吐','放射至左臂/下顎','心悸','暈厥','咳嗽','發燒'],
+  '腹痛':['腹痛','噁心','嘔吐','腹瀉','便秘','血便','黑便','發燒','解尿不適','食慾差'],
+  '呼吸':['呼吸喘','咳嗽','有痰','胸痛','發燒','喘鳴','咳血','下肢水腫','端坐呼吸'],
+  '發燒':['發燒','畏寒/寒顫','咳嗽','喉嚨痛','流鼻水','腹瀉','解尿不適','皮疹','頭痛','肌肉痠痛'],
+  '頭':['頭痛','頭暈','噁心嘔吐','意識改變','單側無力','言語不清','視力模糊','抽搐','頸部僵硬'],
+  '外傷':['意識喪失','頭痛','噁心嘔吐','頸痛','胸痛','腹痛','出血','肢體疼痛','麻木'],
+  '預設':['發燒','頭痛','頭暈','胸痛','呼吸喘','腹痛','噁心嘔吐','腹瀉','咳嗽','疼痛']
+};
+const symKey=cc=>/胸/.test(cc)?'胸痛':/腹|胃|腸/.test(cc)?'腹痛':/喘|呼吸|咳|氣/.test(cc)?'呼吸':/燒|感染|畏寒/.test(cc)?'發燒':/頭|暈|中風|無力|抽搐|意識/.test(cc)?'頭':/傷|撞|跌|車禍|割|骨折|摔/.test(cc)?'外傷':'預設';
+const REC_PMH=['高血壓','糖尿病','冠心病','心衰竭','心房顫動','中風','腎臟病/洗腎','氣喘/COPD','癌症','肝硬化','癲癇','精神疾病','甲狀腺'];
+const REC_PE=[['一般外觀','意識清楚，無明顯急性病容'],['頭頸','無外傷，頸部柔軟，無淋巴結腫大'],['眼耳鼻喉','瞳孔等大對光反射正常，咽喉無紅腫'],['胸部','呼吸音清，無囉音/喘鳴，雙側對稱'],['心臟','心律規則，無雜音'],['腹部','平坦柔軟，無壓痛/反彈痛，腸音正常'],['背/四肢','無水腫，無壓痛，活動正常'],['神經學','GCS 15，四肢肌力正常，無局部神經學缺損'],['皮膚','無皮疹，無傷口']];
+const REC_PLAN=['抽血','心電圖','胸部X光','CT','超音波','點滴','止痛','抗生素','氧氣','觀察','會診','住院','返家'];
+const REC_HPI_EX={'胸痛':'病人於__小時前突發胸痛，位於__，性質為__，程度__/10，持續__，休息/活動後__。','腹痛':'病人於__小時前開始腹痛，位於__，性質為__，程度__/10，伴隨__。','預設':'病人於__前開始__，伴隨__，無__。'};
+const recOf=p=>p.rec=p.rec||{cc:p.cc,onset:'',hpi:'',sym:[],neg:[],pmh:[],pmhO:'',sx:'',alg:'NKDA',algT:'',meds:'',acoag:false,smk:'',alc:'',vs:{},pe:{},plan:[],planT:''};
+const vsBad=(k,v)=>{v=parseFloat(v);if(isNaN(v))return false;return k==='sbp'?(v<90||v>180):k==='hr'?(v<50||v>120):k==='rr'?(v<10||v>24):k==='bt'?(v<35.5||v>38):k==='spo2'?v<94:k==='gcs'?v<15:false};
+function recText(p){
+  const r=recOf(p),L=[],v=r.vs,gcs=(+v.e||0)+(+v.v||0)+(+v.m||0);
+  L.push(`【主訴】${r.cc||'—'}${r.onset?`（${r.onset}）`:''}`);
+  const hp=[];if(r.hpi.trim())hp.push(r.hpi.trim());
+  if(r.sym.length)hp.push('伴隨症狀：'+r.sym.join('、')+'。');
+  if(r.neg.length)hp.push('否認：'+r.neg.join('、')+'。');
+  L.push(`【現病史】${hp.join(' ')||'—'}`);
+  const pm=[...r.pmh,...(r.pmhO.trim()?[r.pmhO.trim()]:[])];
+  L.push(`【過去史】${pm.length?pm.join('、'):'無特殊'}${r.sx.trim()?`；手術史：${r.sx.trim()}`:''}`);
+  L.push(`【過敏】${r.alg==='NKDA'?'無已知藥物過敏':(r.algT.trim()||'有（未填寫）')}`);
+  L.push(`【用藥】${r.meds.trim()||'無'}${r.acoag?'（使用抗凝血劑）':''}`);
+  if(r.smk||r.alc)L.push(`【個人史】${[r.smk&&'抽菸：'+r.smk,r.alc&&'飲酒：'+r.alc].filter(Boolean).join('；')}`);
+  const vv=[(v.sbp||v.dbp)?`BP ${v.sbp||'?'}/${v.dbp||'?'}`:'',v.hr&&`HR ${v.hr}`,v.rr&&`RR ${v.rr}`,v.bt&&`BT ${v.bt}°C`,v.spo2&&`SpO2 ${v.spo2}%`,gcs?`GCS E${v.e||'?'}V${v.v||'?'}M${v.m||'?'}${gcs&&v.e&&v.v&&v.m?`=${gcs}`:''}`:'',v.pain!==undefined&&v.pain!==''&&`疼痛 ${v.pain}/10`].filter(Boolean);
+  L.push(`【生命徵象】${vv.join('，')||'—'}`);
+  const pe=REC_PE.map(([k,n])=>{const e=r.pe[k];return e&&e.s==='N'?`${k}：${n}`:e&&e.s==='A'?`${k}：${e.t||'異常（未描述）'}`:null}).filter(Boolean);
+  L.push(`【理學檢查】\n${pe.length?pe.map(x=>'  '+x).join('\n'):'  —'}`);
+  const dx=(p.dx||[]).map(d=>(d.ro?'R/O ':'')+(d.code||'')+(d.name?' '+d.name:'')).join('；');
+  L.push(`【評估】${p.imp||dx||'—'}`);
+  const pl=[...r.plan,...(r.planT.trim()?[r.planT.trim()]:[])];
+  L.push(`【處置計畫】${pl.join('、')||'—'}`);
+  return L.join('\n');
+}
+function renderRec(p,tb){
+  const r=recOf(p),v=r.vs,ch=(k,x,cls='')=>`<button type="button" class="rc ${cls} ${(r[k]||[]).includes(x)?'on':''}" data-rk="${k}" data-v="${esc(x)}">${esc(x)}</button>`;
+  const sk=symKey(r.cc||p.cc),sy=REC_SYM[sk];
+  const vin=(k,u,w)=>`<input type="text" inputmode="decimal" data-vs="${k}" value="${esc(v[k]??'')}" ${w?`style="width:${w}px"`:''} class="${vsBad(k,v[k])?'bad':''}"><span class="u">${u}</span>`;
+  tb.innerHTML=`<div class="rec"><div class="col">
+  <fieldset class="fs"><legend>主訴 / 現病史</legend>
+    <div class="g"><span class="lb">主訴</span><input type="text" data-rf="cc" value="${esc(r.cc)}" style="flex:1;min-width:140px"><span class="lb" style="min-width:auto">發作時間</span><input type="text" data-rf="onset" value="${esc(r.onset)}" placeholder="例：3小時前" size="12"></div>
+    <div class="g"><span class="lb">伴隨症狀</span>${sy.map(x=>ch('sym',x)).join('')}</div>
+    <div class="g"><span class="lb">否認</span>${sy.map(x=>ch('neg',x,'ab')).join('')}</div>
+    <textarea data-rf="hpi" rows="2" placeholder="現病史描述…（可按下方範本帶入句型）">${esc(r.hpi)}</textarea>
+    <div class="g"><span class="lb">句型範本</span><button type="button" class="rc" data-tpl="胸痛">胸痛</button><button type="button" class="rc" data-tpl="腹痛">腹痛</button><button type="button" class="rc" data-tpl="預設">通用</button></div>
+  </fieldset>
+  <fieldset class="fs"><legend>過去史 / 過敏 / 用藥</legend>
+    <div class="g"><span class="lb">過去史</span>${REC_PMH.map(x=>ch('pmh',x)).join('')}<input type="text" data-rf="pmhO" value="${esc(r.pmhO)}" placeholder="其他疾病" size="14"></div>
+    <div class="g"><span class="lb">手術史</span><input type="text" data-rf="sx" value="${esc(r.sx)}" style="flex:1" placeholder="例：2019 膽囊切除"></div>
+    <div class="g"><span class="lb">過敏</span><button type="button" class="rc nk ${r.alg==='NKDA'?'on':''}" data-alg="NKDA">無已知過敏</button><button type="button" class="rc ab ${r.alg==='有'?'on':''}" data-alg="有">有過敏</button>${r.alg==='有'?`<input type="text" data-rf="algT" value="${esc(r.algT)}" placeholder="藥物／反應" style="flex:1">`:''}</div>
+    <div class="g"><span class="lb">目前用藥</span><input type="text" data-rf="meds" value="${esc(r.meds)}" style="flex:1" placeholder="藥名、劑量（可空白＝無）"><button type="button" class="rc ab ${r.acoag?'on':''}" data-acoag="1">抗凝血劑</button></div>
+    <div class="g"><span class="lb">抽菸</span>${['無','戒菸','偶爾','每日'].map(x=>`<button type="button" class="rc ${r.smk===x?'on':''}" data-smk="${x}">${x}</button>`).join('')}<span class="lb" style="min-width:auto;margin-left:8px">飲酒</span>${['無','偶爾','每日'].map(x=>`<button type="button" class="rc ${r.alc===x?'on':''}" data-alc="${x}">${x}</button>`).join('')}</div>
+  </fieldset>
+  <fieldset class="fs"><legend>生命徵象</legend>
+    <div class="g vs"><span class="lb">BP</span>${vin('sbp','',46)}/${vin('dbp','mmHg',46)}<span class="lb" style="min-width:auto">HR</span>${vin('hr','/min')}<span class="lb" style="min-width:auto">RR</span>${vin('rr','/min')}<span class="lb" style="min-width:auto">BT</span>${vin('bt','°C')}<span class="lb" style="min-width:auto">SpO2</span>${vin('spo2','%')}</div>
+    <div class="g vs"><span class="lb">GCS</span>E${vin('e','',34)}V${vin('v','',34)}M${vin('m','',34)}<span class="lb" style="min-width:auto">疼痛</span>${vin('pain','/10',40)}</div>
+  </fieldset>
+  <fieldset class="fs"><legend>理學檢查</legend>
+    <div class="g"><button type="button" class="rc nk" data-peall="1">全部帶入正常</button><button type="button" class="rc" data-peclr="1">清除</button></div>
+    <div class="pe">${REC_PE.map(([k,n])=>{const e=r.pe[k]||{};return `<span>${k}</span><span><button type="button" class="rc nk ${e.s==='N'?'on':''}" data-pe="${k}" data-s="N">正常</button> <button type="button" class="rc ab ${e.s==='A'?'on':''}" data-pe="${k}" data-s="A">異常</button></span>${e.s==='A'?`<input type="text" data-pet="${k}" value="${esc(e.t||'')}" placeholder="描述異常發現">`:`<span class="lbl" style="opacity:.6">${e.s==='N'?esc(n):''}</span>`}`}).join('')}</div>
+  </fieldset>
+  <fieldset class="fs"><legend>處置計畫</legend>
+    <div class="g">${REC_PLAN.map(x=>ch('plan',x)).join('')}</div>
+    <textarea data-rf="planT" rows="2" placeholder="其他處置／備註">${esc(r.planT)}</textarea>
+  </fieldset>
+  </div><div class="col"><fieldset class="fs"><legend>病歷預覽（自動產生）</legend>
+    <div class="prev" id="recPrev"></div>
+    <div class="g" style="margin-top:6px"><button type="button" class="btn primary" id="recSave">存入病程</button><button type="button" class="btn" id="recCopy">複製文字</button></div>
+    <div class="lbl">診斷與 Impression 取自「診斷」頁籤。</div></fieldset></div></div>`;
+  recPrev(p);
+}
+function recPrev(p){const e=$('#recPrev');if(e)e.textContent=recText(p)}
+function recClick(e){
+  const t=e.target.closest('button');if(!t)return false;const p=cur(),r=recOf(p);let re=true;
+  const tb=$('#tb'),st=tb.scrollTop;
+  if(t.dataset.rk){const k=t.dataset.rk,a=r[k],i=a.indexOf(t.dataset.v);
+    if(i<0){a.push(t.dataset.v);if(k==='sym')r.neg=r.neg.filter(x=>x!==t.dataset.v);if(k==='neg')r.sym=r.sym.filter(x=>x!==t.dataset.v)}else a.splice(i,1)}
+  else if(t.dataset.alg)r.alg=t.dataset.alg;
+  else if(t.dataset.acoag)r.acoag=!r.acoag;
+  else if(t.dataset.smk)r.smk=r.smk===t.dataset.smk?'':t.dataset.smk;
+  else if(t.dataset.alc)r.alc=r.alc===t.dataset.alc?'':t.dataset.alc;
+  else if(t.dataset.pe){const k=t.dataset.pe,e2=r.pe[k]=r.pe[k]||{};e2.s=e2.s===t.dataset.s?'':t.dataset.s}
+  else if(t.dataset.peall){REC_PE.forEach(([k])=>{if(!(r.pe[k]&&r.pe[k].s==='A'))r.pe[k]={s:'N'}})}
+  else if(t.dataset.peclr)r.pe={};
+  else if(t.dataset.tpl){const x=REC_HPI_EX[t.dataset.tpl];r.hpi=r.hpi.trim()?r.hpi.trim()+'\n'+x:x}
+  else if(t.id==='recSave'){
+    p.notes.push({t:'【病歷】\n'+recText(p),at:new Date().toLocaleString('zh-TW',{hour12:false})});
+    save();toast('已存入病程');return true}
+  else if(t.id==='recCopy'){try{navigator.clipboard.writeText(recText(p));toast('已複製')}catch(_){toast('此瀏覽器無法複製')}return true}
+  else re=false;
+  if(!re)return false;
+  save();renderRec(p,tb);tb.scrollTop=st;return true;
+}
+function recInput(e){
+  const t=e.target,p=cur();if(!p||!t.closest('.rec'))return false;const r=recOf(p);
+  if(t.dataset.rf)r[t.dataset.rf]=t.value;
+  else if(t.dataset.vs){r.vs[t.dataset.vs]=t.value.trim();t.classList.toggle('bad',vsBad(t.dataset.vs,t.value))}
+  else if(t.dataset.pet){(r.pe[t.dataset.pet]=r.pe[t.dataset.pet]||{s:'A'}).t=t.value}
+  else return false;
+  save();recPrev(p);return true;
+}
 function renderDx(){
   const p=cur(),el=$('#dxs');if(!el)return;
   let h='';
@@ -826,6 +960,7 @@ function renderDx(){
 /* ===== 事件 ===== */
 document.addEventListener('click',e=>{
   const t=e.target;
+  if(S.tab==='病歷'&&t.closest&&t.closest('.rec')&&recClick(e))return;
   if(t.dataset.dirv!==undefined&&t.closest('#dirMenu')){const id=t.closest('#dirMenu').dataset.pid;closeDir();setDir(id,t.dataset.dirv);return}
   if(t.id==='themeBtn'){THEME=THEME==='dark'?'dim':'dark';try{localStorage.setItem('er-theme',THEME)}catch(_){}applyTheme();return}
   const dtd=t.closest('td.dir:not(.auto)');
@@ -895,6 +1030,7 @@ function addDx(code,name,quiet){
   p.dx.push(e);save();const i=$('#icd');if(i){i.value='';$('#sug').style.display='none'}renderDx();return true;
 }
 document.addEventListener('input',e=>{
+  if(S.tab==='病歷'&&recInput(e))return;
   if(e.target.id==='q'){S.q=e.target.value;renderList()}
   if(e.target.id==='fId'){S.fId=e.target.value;renderList()}
   if(e.target.id==='fSeq'){S.fSeq=e.target.value;renderList()}

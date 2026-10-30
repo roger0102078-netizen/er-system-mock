@@ -482,30 +482,6 @@ fieldset.fs{background:#dcebd1;border-color:#9dbb8c}
 .zh{background:#a6c496}.occ{background:#d3e5c7}.seg button{background:#d3e5c7}
 .note{background:#d3e5c7}
 
-/* ===== 結構化病歷 ===== */
-.rec{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:8px;align-items:start}
-.rec .col{min-width:0}
-.rec fieldset.fs{margin:0 0 6px}
-.rec .g{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:3px 0}
-.rec .g>.lb{min-width:64px;font-size:14px;opacity:.85}
-.rc{border:1px solid var(--line);background:#e9f3e0;border-radius:14px;padding:1px 10px;cursor:pointer;font-size:14px;line-height:1.6}
-.rc:hover{background:#f3faed}
-.rc.on{background:#2f6fb5;border-color:#2f6fb5;color:#fff}
-.rc.ab.on{background:#c0392b;border-color:#c0392b}
-.rc.nk.on{background:#2e8b57;border-color:#2e8b57}
-.rec input[type=text],.rec input:not([type]),.rec textarea,.rec select{border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:#f6fbf1;color:inherit;font:inherit}
-.rec textarea{width:100%;box-sizing:border-box;resize:vertical}
-.rec .vs input{width:58px;text-align:center}
-.rec .vs .u{font-size:12.5px;opacity:.7;margin-right:6px}
-.rec .vs input.bad{background:#ffd2cc;color:#8a1a0e}
-.rec .pe{display:grid;grid-template-columns:78px auto 1fr;gap:4px 6px;align-items:center}
-.rec .pe input{width:100%;box-sizing:border-box}
-.rec .prev{position:sticky;top:0;white-space:pre-wrap;font-size:14px;line-height:1.55;background:#f6fbf1;border:1px solid var(--line);border-radius:6px;padding:8px;max-height:380px;overflow:auto;font-weight:600}
-.rec .prev .ph{opacity:.5}
-body.dark .rc{background:#2a3a30}body.dark .rc:hover{background:#34483b}
-body.dark .rec input,body.dark .rec textarea,body.dark .rec select,body.dark .rec .prev{background:#1f2a24}
-body.dark .rec .vs input.bad{background:#6a2b25;color:#ffd9d4}
-@media(max-width:1000px){.rec{grid-template-columns:1fr}}
 
 /* ===== 五級檢傷視窗 ===== */
 .tm{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:none;align-items:center;justify-content:center}
@@ -539,6 +515,113 @@ body.dark .rec .vs input.bad{background:#6a2b25;color:#ffd9d4}
 .tmf .cur{display:flex;align-items:center;gap:8px}
 body.dark .tmb{background:#26332b;color:#e6efe8;border-color:#6b8a62}
 body.dark .tmb .tt{background:#2e3d33}
+
+/* ===== 結構化病歷（急診結構化病歷，非外傷／外傷）===== */
+.chart{--bg:#dfeed5;--panel:#eef6e8;--ink:#16261a;--mute:#4f6355;--line:#a7bf9a;--accent:#1f6f86;--accent-ink:#fff;--accent-soft:#d3e8e0;--ok:#1b7f4c;--warn:#a85f00;--crit:#c0282d;--crit-soft:#fbe0dd;--warn-soft:#fff0cf;--t1:#c0282d;--t2:#e0662a;--t3:#e3b02a;--t4:#2f8f5b;--t5:#4f7fb8;--trauma:#a8321f;--sans:inherit;--mono:ui-monospace,Consolas,monospace;color:var(--ink);font-size:14.5px;line-height:1.5}
+body.dark .chart{--bg:#1c2a22;--panel:#23332a;--ink:#e6efe8;--mute:#9fb3a5;--line:#3d5446;--accent:#4cc2d6;--accent-ink:#06222a;--accent-soft:#1d4048;--ok:#5fd093;--warn:#f0b04a;--crit:#ff7b7f;--crit-soft:#3a1d20;--warn-soft:#3a2d12;--trauma:#ff9a85}
+.chart button{font:inherit;color:inherit;cursor:pointer}
+.chart input,.chart textarea,.chart select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+.chart :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.chart .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.chart .tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;border:1px dashed var(--line);color:var(--mute)}
+.chart .tri{display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:3px 12px;border-radius:6px;color:#fff;background:var(--mute)}
+.chart .tri[data-l="1"]{background:var(--t1)}
+.chart .tri[data-l="2"]{background:var(--t2)}
+.chart .tri[data-l="3"]{background:var(--t3);color:#2b2200}
+.chart .tri[data-l="4"]{background:var(--t4)}
+.chart .tri[data-l="5"]{background:var(--t5)}
+.chart .modebar{display:flex;align-items:center;gap:8px}
+.chart .modebar>span{font-size:12px;font-weight:700;color:var(--mute);letter-spacing:.04em}
+.chart .modebar .seg button{padding:7px 18px;font-weight:700}
+.chart .modebar .seg button.on{background:var(--accent);color:var(--accent-ink)}
+.chart .modebar .seg button.tr.on{background:var(--trauma);color:#fff}
+.chart.is-tr{--accent:var(--trauma)}
+.chart nav.steps{position:sticky;top:calc(env(safe-area-inset-top,0px) + 74px);display:flex;flex-direction:column;gap:2px}
+.chart nav.steps a{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-weight:500}
+.chart nav.steps a:hover{background:var(--accent-soft)}
+.chart nav.steps a.act{background:var(--accent-soft);color:var(--accent)}
+.chart nav.steps i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px;font-style:normal}
+.chart nav.steps a.done i{background:var(--ok);border-color:var(--ok);color:#fff}
+.chart nav.steps a.part i{border-color:var(--warn)}
+.chart .prog{margin-top:12px;font-size:12px;color:var(--mute);padding:0 10px}
+.chart .prog div{height:5px;background:var(--line);border-radius:3px;margin-top:4px;overflow:hidden}
+.chart .prog div span{display:block;height:100%;background:var(--ok);transition:width .2s}
+.chart section.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px;scroll-margin-top:90px}
+.chart section.card>h2{margin:0 0 12px;font-size:16px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.chart section.card>h2 small{font-weight:400;color:var(--mute);font-size:12px}
+.chart .f{margin-bottom:14px}
+.chart .f>label,.chart .lbl{display:block;font-size:12px;font-weight:700;color:var(--mute);letter-spacing:.04em;margin-bottom:6px}
+.chart .grp{font-size:12px;color:var(--mute);margin:10px 0 4px}
+.chart .grp:first-child{margin-top:0}
+.chart .chips{display:flex;flex-wrap:wrap;gap:6px}
+.chart .chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:5px 12px;font-size:13px;line-height:1.3;min-height:32px}
+.chart .chip:hover{border-color:var(--accent)}
+.chart .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chart .chip.neg{background:var(--crit-soft);border-color:var(--crit);color:var(--crit);text-decoration:line-through}
+.chart .chip.on.ab{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.chart .chip.on.hr{background:var(--crit-soft);border-color:var(--crit);color:var(--crit)}
+.chart .chip small{opacity:.7;font-family:var(--mono);margin-left:4px}
+.chart .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chart .hint{font-size:12px;color:var(--mute);margin-top:4px}
+.chart .sub{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}
+.chart .sub>h3{margin:0 0 8px;font-size:13px}
+.chart .sub .f:last-child{margin-bottom:0}
+.chart .sub .f>label{font-weight:500}
+.chart .nrs{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:3px}
+.chart .nrs button{border:1px solid var(--line);background:var(--panel);border-radius:5px;padding:6px 0;font-family:var(--mono)}
+.chart .nrs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chart .pe{display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px 12px;padding:8px 0;border-top:1px solid var(--line);align-items:start}
+.chart .pe.first{border-top:0}
+.chart .pe .sys{font-weight:700;padding-top:4px}
+.chart .pe .fx{margin-top:8px}
+.chart .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.chart .seg button{border:0;background:var(--panel);padding:5px 14px}
+.chart .seg button+button{border-left:1px solid var(--line)}
+.chart .seg button.n.on{background:var(--ok);color:#fff}
+.chart .seg button.a.on{background:var(--warn);color:#fff}
+.chart details.more{margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+.chart details.more summary{cursor:pointer;color:var(--mute);padding:4px 0}
+.chart .btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 12px}
+.chart .btn:hover{border-color:var(--accent)}
+.chart .gcs{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.chart .gcs .tot{font-family:var(--mono);font-size:22px;font-weight:500;padding-bottom:4px}
+.chart .dx{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.chart .dx div{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+.chart .dx div b{flex:1;min-width:0;font-weight:500}
+.chart .dx .pri{font-size:11px;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:0 6px}
+.chart .dx button{border:0;background:none;color:var(--mute)}
+.chart .none{color:var(--mute);padding:8px 0}
+.chart aside.out{position:sticky;top:calc(env(safe-area-inset-top,0px) + 74px);background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;max-height:calc(100vh - 100px)}
+.chart .tabs{display:flex;border-bottom:1px solid var(--line)}
+.chart .tabs button{flex:1;border:0;background:none;padding:10px 4px;font-weight:500;color:var(--mute);border-bottom:2px solid transparent}
+.chart .tabs button.on{color:var(--accent);border-color:var(--accent)}
+.chart .pane{padding:14px;overflow:auto;flex:1;min-height:200px}
+.chart .note h4{margin:12px 0 2px;font-size:12px;letter-spacing:.06em;color:var(--accent)}
+.chart .note h4:first-child{margin-top:0}
+.chart .note p{margin:0;white-space:pre-wrap}
+.chart .note .empty{color:var(--mute)}
+.chart pre.json{margin:0;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-all}
+.chart .alert{border-radius:8px;padding:9px 12px;margin-bottom:8px;border:1px solid}
+.chart .alert.crit{background:var(--crit-soft);border-color:var(--crit)}
+.chart .alert.warn{background:var(--warn-soft);border-color:var(--warn)}
+.chart .alert b{display:block}
+.chart .foot{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.chart .foot .btn{flex:1}
+.chart .tabs button .n{background:var(--crit);color:#fff;border-radius:99px;font-size:11px;padding:0 6px;margin-left:4px}
+#detail.full{position:fixed;inset:0;z-index:50;height:auto!important;max-height:none!important;overflow:auto;display:block;background:var(--panel)}
+#detail.full .tabbody{max-height:none!important;overflow:visible}
+#detail.full .chart aside.out{top:6px;max-height:90vh}
+.chart .tri{width:auto;height:auto;min-width:0;font-size:inherit;padding:3px 12px;border-radius:6px;white-space:nowrap}
+.chart .cbar{display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.chart nav.steps{position:static;flex-direction:row;flex-wrap:wrap;gap:2px;flex:1;align-items:center}
+.chart nav.steps a{padding:4px 10px}
+.chart .prog{margin:0 0 0 8px;min-width:120px;padding:0}
+.chart .cgrid{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:12px;align-items:start}
+.chart aside.out{position:sticky;top:0;max-height:68vh}
+.chart section.card{scroll-margin-top:4px;padding:12px;margin-bottom:10px}
+.chart input,.chart textarea,.chart select{font-weight:700;font-size:14px}
+@media(max-width:1000px){.chart .cgrid{grid-template-columns:1fr}.chart aside.out{position:static;max-height:none}}
+@media(max-width:700px){.chart .pe{grid-template-columns:minmax(0,1fr)}}
 </style>
 
 </head>
@@ -828,7 +911,7 @@ function renderDetail(){
 }
 function renderTab(){
   const p=cur(), tb=$('#tb');
-  if(S.tab==='病歷'){renderRec(p,tb)}
+  if(S.tab==='病歷'){Chart.render(p,tb)}
   else if(S.tab==='診斷'){
     tb.innerHTML=`
     <fieldset class="fs"><legend>Impression</legend>
@@ -865,191 +948,383 @@ function renderTab(){
   }
 }
 
-/* ===== 結構化病歷 ===== */
 const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const REC_SYM={
-  '胸痛':['胸痛','胸悶','呼吸喘','冒冷汗','噁心嘔吐','放射至左臂/下顎','心悸','暈厥','咳嗽','發燒'],
-  '腹痛':['腹痛','噁心','嘔吐','腹瀉','便秘','血便','黑便','發燒','解尿不適','食慾差'],
-  '呼吸':['呼吸喘','咳嗽','有痰','胸痛','發燒','喘鳴','咳血','下肢水腫','端坐呼吸'],
-  '發燒':['發燒','畏寒/寒顫','咳嗽','喉嚨痛','流鼻水','腹瀉','解尿不適','皮疹','頭痛','肌肉痠痛'],
-  '頭':['頭痛','頭暈','噁心嘔吐','意識改變','單側無力','言語不清','視力模糊','抽搐','頸部僵硬'],
-  '外傷':['意識喪失','頭痛','噁心嘔吐','頸痛','胸痛','腹痛','出血','肢體疼痛','麻木'],
-  '預設':['發燒','頭痛','頭暈','胸痛','呼吸喘','腹痛','噁心嘔吐','腹瀉','咳嗽','疼痛']
-};
-const symKey=cc=>/胸/.test(cc)?'胸痛':/腹|胃|腸/.test(cc)?'腹痛':/喘|呼吸|咳|氣/.test(cc)?'呼吸':/燒|感染|畏寒/.test(cc)?'發燒':/頭|暈|中風|無力|抽搐|意識/.test(cc)?'頭':/傷|撞|跌|車禍|割|骨折|摔/.test(cc)?'外傷':'預設';
-const REC_PMH=['高血壓','糖尿病','冠心病','心衰竭','心房顫動','中風','腎臟病/洗腎','氣喘/COPD','癌症','肝硬化','癲癇','精神疾病','甲狀腺'];
-const REC_PE=[['一般外觀','意識清楚，無明顯急性病容'],['頭頸','無外傷，頸部柔軟，無淋巴結腫大'],['眼耳鼻喉','瞳孔等大對光反射正常，咽喉無紅腫'],['胸部','呼吸音清，無囉音/喘鳴，雙側對稱'],['心臟','心律規則，無雜音'],['腹部','平坦柔軟，無壓痛/反彈痛，腸音正常'],['背/四肢','無水腫，無壓痛，活動正常'],['神經學','GCS 15，四肢肌力正常，無局部神經學缺損'],['皮膚','無皮疹，無傷口']];
-const REC_PLAN=['抽血','心電圖','胸部X光','CT','超音波','點滴','止痛','抗生素','氧氣','觀察','會診','住院','返家'];
-const REC_HPI_EX={'胸痛':'病人於__小時前突發胸痛，位於__，性質為__，程度__/10，持續__，休息/活動後__。','腹痛':'病人於__小時前開始腹痛，位於__，性質為__，程度__/10，伴隨__。','預設':'病人於__前開始__，伴隨__，無__。'};
-const recOf=p=>p.rec=p.rec||{cc:p.cc,onset:'',hpi:'',sym:[],neg:[],pmh:[],pmhO:'',sx:'',alg:'NKDA',algT:'',meds:'',acoag:false,smk:'',alc:'',vs:{},pe:{},plan:[],planT:''};
-const vsBad=(k,v)=>{v=parseFloat(v);if(isNaN(v))return false;return k==='sbp'?(v<90||v>180):k==='hr'?(v<50||v>120):k==='rr'?(v<10||v>24):k==='bt'?(v<35.5||v>38):k==='spo2'?v<94:k==='gcs'?v<15:false};
-function recText(p){
-  const r=recOf(p),L=[],v=r.vs,gcs=(+v.e||0)+(+v.v||0)+(+v.m||0);
-  L.push(`【主訴】${r.cc||'—'}${r.onset?`（${r.onset}）`:''}`);
-  const hp=[];if(r.hpi.trim())hp.push(r.hpi.trim());
-  if(r.sym.length)hp.push('伴隨症狀：'+r.sym.join('、')+'。');
-  if(r.neg.length)hp.push('否認：'+r.neg.join('、')+'。');
-  L.push(`【現病史】${hp.join(' ')||'—'}`);
-  const pm=[...r.pmh,...(r.pmhO.trim()?[r.pmhO.trim()]:[])];
-  L.push(`【過去史】${pm.length?pm.join('、'):'無特殊'}${r.sx.trim()?`；手術史：${r.sx.trim()}`:''}`);
-  L.push(`【過敏】${r.alg==='NKDA'?'無已知藥物過敏':(r.algT.trim()||'有（未填寫）')}`);
-  L.push(`【用藥】${r.meds.trim()||'無'}${r.acoag?'（使用抗凝血劑）':''}`);
-  if(r.smk||r.alc)L.push(`【個人史】${[r.smk&&'抽菸：'+r.smk,r.alc&&'飲酒：'+r.alc].filter(Boolean).join('；')}`);
-  const vv=[(v.sbp||v.dbp)?`BP ${v.sbp||'?'}/${v.dbp||'?'}`:'',v.hr&&`HR ${v.hr}`,v.rr&&`RR ${v.rr}`,v.bt&&`BT ${v.bt}°C`,v.spo2&&`SpO2 ${v.spo2}%`,gcs?`GCS E${v.e||'?'}V${v.v||'?'}M${v.m||'?'}${gcs&&v.e&&v.v&&v.m?`=${gcs}`:''}`:'',v.pain!==undefined&&v.pain!==''&&`疼痛 ${v.pain}/10`].filter(Boolean);
-  L.push(`【生命徵象】${vv.join('，')||'—'}`);
-  const pe=REC_PE.map(([k,n])=>{const e=r.pe[k];return e&&e.s==='N'?`${k}：${n}`:e&&e.s==='A'?`${k}：${e.t||'異常（未描述）'}`:null}).filter(Boolean);
-  L.push(`【理學檢查】\n${pe.length?pe.map(x=>'  '+x).join('\n'):'  —'}`);
-  const dx=(p.dx||[]).map(d=>(d.ro?'R/O ':'')+(d.code||'')+(d.name?' '+d.name:'')).join('；');
-  L.push(`【評估】${p.imp||dx||'—'}`);
-  const pl=[...r.plan,...(r.planT.trim()?[r.planT.trim()]:[])];
-  L.push(`【處置計畫】${pl.join('、')||'—'}`);
-  return L.join('\n');
-}
-function renderRec(p,tb){
-  const r=recOf(p),v=r.vs,ch=(k,x,cls='')=>`<button type="button" class="rc ${cls} ${(r[k]||[]).includes(x)?'on':''}" data-rk="${k}" data-v="${esc(x)}">${esc(x)}</button>`;
-  const sk=symKey(r.cc||p.cc),sy=REC_SYM[sk];
-  const vin=(k,u,w)=>`<input type="text" inputmode="decimal" data-vs="${k}" value="${esc(v[k]??'')}" ${w?`style="width:${w}px"`:''} class="${vsBad(k,v[k])?'bad':''}"><span class="u">${u}</span>`;
-  tb.innerHTML=`<div class="rec"><div class="col">
-  <fieldset class="fs"><legend>主訴 / 現病史</legend>
-    <div class="g"><span class="lb">主訴</span><input type="text" data-rf="cc" value="${esc(r.cc)}" style="flex:1;min-width:140px"><span class="lb" style="min-width:auto">發作時間</span><input type="text" data-rf="onset" value="${esc(r.onset)}" placeholder="例：3小時前" size="12"></div>
-    <div class="g"><span class="lb">伴隨症狀</span>${sy.map(x=>ch('sym',x)).join('')}</div>
-    <div class="g"><span class="lb">否認</span>${sy.map(x=>ch('neg',x,'ab')).join('')}</div>
-    <textarea data-rf="hpi" rows="2" placeholder="現病史描述…（可按下方範本帶入句型）">${esc(r.hpi)}</textarea>
-    <div class="g"><span class="lb">句型範本</span><button type="button" class="rc" data-tpl="胸痛">胸痛</button><button type="button" class="rc" data-tpl="腹痛">腹痛</button><button type="button" class="rc" data-tpl="預設">通用</button></div>
-  </fieldset>
-  <fieldset class="fs"><legend>過去史 / 過敏 / 用藥</legend>
-    <div class="g"><span class="lb">過去史</span>${REC_PMH.map(x=>ch('pmh',x)).join('')}<input type="text" data-rf="pmhO" value="${esc(r.pmhO)}" placeholder="其他疾病" size="14"></div>
-    <div class="g"><span class="lb">手術史</span><input type="text" data-rf="sx" value="${esc(r.sx)}" style="flex:1" placeholder="例：2019 膽囊切除"></div>
-    <div class="g"><span class="lb">過敏</span><button type="button" class="rc nk ${r.alg==='NKDA'?'on':''}" data-alg="NKDA">無已知過敏</button><button type="button" class="rc ab ${r.alg==='有'?'on':''}" data-alg="有">有過敏</button>${r.alg==='有'?`<input type="text" data-rf="algT" value="${esc(r.algT)}" placeholder="藥物／反應" style="flex:1">`:''}</div>
-    <div class="g"><span class="lb">目前用藥</span><input type="text" data-rf="meds" value="${esc(r.meds)}" style="flex:1" placeholder="藥名、劑量（可空白＝無）"><button type="button" class="rc ab ${r.acoag?'on':''}" data-acoag="1">抗凝血劑</button></div>
-    <div class="g"><span class="lb">抽菸</span>${['無','戒菸','偶爾','每日'].map(x=>`<button type="button" class="rc ${r.smk===x?'on':''}" data-smk="${x}">${x}</button>`).join('')}<span class="lb" style="min-width:auto;margin-left:8px">飲酒</span>${['無','偶爾','每日'].map(x=>`<button type="button" class="rc ${r.alc===x?'on':''}" data-alc="${x}">${x}</button>`).join('')}</div>
-  </fieldset>
-  <fieldset class="fs"><legend>生命徵象</legend>
-    <div class="g vs"><span class="lb">BP</span>${vin('sbp','',46)}/${vin('dbp','mmHg',46)}<span class="lb" style="min-width:auto">HR</span>${vin('hr','/min')}<span class="lb" style="min-width:auto">RR</span>${vin('rr','/min')}<span class="lb" style="min-width:auto">BT</span>${vin('bt','°C')}<span class="lb" style="min-width:auto">SpO2</span>${vin('spo2','%')}</div>
-    <div class="g vs"><span class="lb">GCS</span>E${vin('e','',34)}V${vin('v','',34)}M${vin('m','',34)}<span class="lb" style="min-width:auto">疼痛</span>${vin('pain','/10',40)}</div>
-  </fieldset>
-  <fieldset class="fs"><legend>理學檢查</legend>
-    <div class="g"><button type="button" class="rc nk" data-peall="1">全部帶入正常</button><button type="button" class="rc" data-peclr="1">清除</button></div>
-    <div class="pe">${REC_PE.map(([k,n])=>{const e=r.pe[k]||{};return `<span>${k}</span><span><button type="button" class="rc nk ${e.s==='N'?'on':''}" data-pe="${k}" data-s="N">正常</button> <button type="button" class="rc ab ${e.s==='A'?'on':''}" data-pe="${k}" data-s="A">異常</button></span>${e.s==='A'?`<input type="text" data-pet="${k}" value="${esc(e.t||'')}" placeholder="描述異常發現">`:`<span class="lbl" style="opacity:.6">${e.s==='N'?esc(n):''}</span>`}`}).join('')}</div>
-  </fieldset>
-  <fieldset class="fs"><legend>處置計畫</legend>
-    <div class="g">${REC_PLAN.map(x=>ch('plan',x)).join('')}</div>
-    <textarea data-rf="planT" rows="2" placeholder="其他處置／備註">${esc(r.planT)}</textarea>
-  </fieldset>
-  </div><div class="col"><fieldset class="fs"><legend>病歷預覽（自動產生）</legend>
-    <div class="prev" id="recPrev"></div>
-    <div class="g" style="margin-top:6px"><button type="button" class="btn primary" id="recSave">存入病程</button><button type="button" class="btn" id="recCopy">複製文字</button></div>
-    <div class="lbl">診斷與 Impression 取自「診斷」頁籤。</div></fieldset></div></div>`;
-  recPrev(p);
-}
-function recPrev(p){const e=$('#recPrev');if(e)e.textContent=recText(p)}
-function recClick(e){
-  const t=e.target.closest('button');if(!t)return false;const p=cur(),r=recOf(p);let re=true;
-  const tb=$('#tb'),st=tb.scrollTop;
-  if(t.dataset.rk){const k=t.dataset.rk,a=r[k],i=a.indexOf(t.dataset.v);
-    if(i<0){a.push(t.dataset.v);if(k==='sym')r.neg=r.neg.filter(x=>x!==t.dataset.v);if(k==='neg')r.sym=r.sym.filter(x=>x!==t.dataset.v)}else a.splice(i,1)}
-  else if(t.dataset.alg)r.alg=t.dataset.alg;
-  else if(t.dataset.acoag)r.acoag=!r.acoag;
-  else if(t.dataset.smk)r.smk=r.smk===t.dataset.smk?'':t.dataset.smk;
-  else if(t.dataset.alc)r.alc=r.alc===t.dataset.alc?'':t.dataset.alc;
-  else if(t.dataset.pe){const k=t.dataset.pe,e2=r.pe[k]=r.pe[k]||{};e2.s=e2.s===t.dataset.s?'':t.dataset.s}
-  else if(t.dataset.peall){REC_PE.forEach(([k])=>{if(!(r.pe[k]&&r.pe[k].s==='A'))r.pe[k]={s:'N'}})}
-  else if(t.dataset.peclr)r.pe={};
-  else if(t.dataset.tpl){const x=REC_HPI_EX[t.dataset.tpl];r.hpi=r.hpi.trim()?r.hpi.trim()+'\n'+x:x}
-  else if(t.id==='recSave'){
-    p.notes.push({t:'【病歷】\n'+recText(p),at:new Date().toLocaleString('zh-TW',{hour12:false})});
-    save();toast('已存入病程');return true}
-  else if(t.id==='recCopy'){try{navigator.clipboard.writeText(recText(p));toast('已複製')}catch(_){toast('此瀏覽器無法複製')}return true}
-  else re=false;
-  if(!re)return false;
-  save();renderRec(p,tb);tb.scrollTop=st;return true;
-}
-function recInput(e){
-  const t=e.target,p=cur();if(!p||!t.closest('.rec'))return false;const r=recOf(p);
-  if(t.dataset.rf)r[t.dataset.rf]=t.value;
-  else if(t.dataset.vs){r.vs[t.dataset.vs]=t.value.trim();t.classList.toggle('bad',vsBad(t.dataset.vs,t.value))}
-  else if(t.dataset.pet){(r.pe[t.dataset.pet]=r.pe[t.dataset.pet]||{s:'A'}).t=t.value}
-  else return false;
-  save();recPrev(p);return true;
-}
 
-/* ===== 五級檢傷（TTAS 示意資料，非正式判定標準）===== */
-const TG={
- resp:[[1,'重度呼吸窘迫(<90%)'],[2,'中度呼吸窘迫(<92%)'],[3,'輕度呼吸窘迫(92-94%)']],
- hemo:[[1,'休克'],[2,'血行動力循環不足'],[3,'血壓或心跳有異於病人之平常數值，但血行動力穩定']],
- cons:[[1,'無意識(GCS3-8)'],[2,'意識程度改變(GCS9-13)'],[3,'輕微意識改變(GCS14)']],
- fever:[[2,'發燒(免疫功能缺陷)'],[2,'發燒疑似敗血症，伴隨任一徵象(中度呼吸窘迫、血行動力不足、意識改變)'],[3,'發燒(看起來有病容)'],[4,'發燒(看起來無病容)']],
- pain:[[2,'重度疼痛(8-10)'],[3,'中度疼痛(4-7)'],[4,'輕度疼痛(<4)']],
- bleed:[[1,'大量出血，血行動力不穩'],[2,'中度出血，持續出血不止'],[3,'輕度出血，已止血'],[4,'輕微出血']],
- chr:[[4,'慢性或反覆性症狀，生命徵象正常，無其他急性徵象'],[5,'慢性症狀，無急性變化／回診、拿藥、開證明']]
-};
-const TRI=[
- ['呼吸系統',[['呼吸道阻塞/異物',['resp'],[[1,'完全呼吸道阻塞']]],['呼吸喘/呼吸困難',['resp']],['咳嗽',['resp','fever','chr']],['咳血',['bleed','resp']],['胸痛(呼吸性)',['pain','resp']],['喘鳴',['resp']]]],
- ['心臟血管系統',[['胸痛(心因性)',['hemo','pain'],[[1,'心跳停止/無脈搏'],[2,'典型心因性胸痛，疑急性冠心症']]],['心悸',['hemo'],[[2,'心律不整伴血行動力不穩']]],['高血壓',['chr'],[[2,'血壓>220/130 伴器官症狀'],[3,'血壓>180/110 無症狀']]],['水腫',['resp','chr']],['暈厥',['cons','hemo']]]],
- ['腸胃系統',[['腹痛',['hemo','pain'],[[2,'疑急腹症（腹膜炎徵象）']]],['噁心/嘔吐',['hemo'],[[3,'持續嘔吐，輕度脫水'],[4,'噁心嘔吐，可進食']]],['腹瀉',['hemo'],[[3,'脫水'],[4,'輕度腹瀉']]],['吐血/解黑便',['bleed','hemo']],['便秘',['chr'],[[4,'腹脹便秘']]],['吞嚥困難/異物',['resp'],[[3,'吞嚥困難']]]]],
- ['神經系統',[['意識程度改變',['cons']],['混亂',['cons']],['眩暈/頭暈',['hemo','chr'],[[3,'中度眩暈合併嘔吐']]],['頭痛',['pain'],[[2,'突發劇烈頭痛(雷擊樣)'],[2,'頭痛合併局部神經學缺損'],[3,'頭痛合併發燒、頸部僵硬']]],['抽搐',[],[[1,'持續抽搐'],[2,'抽搐後意識未恢復'],[3,'抽搐後恢復，意識清楚']]],['步態不穩/運動失調',['chr'],[[3,'急性發作']]],['震顫',['chr']],['肢體無力',['chr'],[[2,'急性單側無力']]],['知覺喪失/感覺異常',['chr'],[[2,'急性單側麻木']]],['中風症狀',[],[[2,'中風症狀，發作 4.5 小時內'],[3,'中風症狀，發作超過 4.5 小時或已緩解']]]]],
- ['骨骼系統',[['肢體疼痛',['pain'],[[2,'肢體缺血徵象']]],['疑似骨折',[],[[2,'開放性骨折/明顯變形，神經血管受損'],[3,'閉鎖性骨折'],[4,'輕微扭傷挫傷']]],['背痛',['pain'],[[2,'疑似脊髓壓迫']]],['關節腫痛',['pain'],[[3,'紅腫熱痛，疑感染']]],['頭部外傷',['cons'],[[2,'高能量創傷機轉'],[3,'頭部外傷，意識清楚'],[4,'輕微頭部撞傷']]],['撕裂傷/割傷',['bleed']],['車禍/高處墜落',['hemo'],[[2,'高能量創傷機轉']]],['燒燙傷',[],[[2,'大面積或呼吸道燒傷'],[3,'中度燒燙傷'],[4,'輕度燒燙傷']]]]],
- ['泌尿系統',[['排尿困難/頻尿',['fever'],[[4,'輕微不適']]],['血尿',['bleed']],['側腹痛/腰痛',['pain'],[[3,'疑腎絞痛']]],['尿滯留',[],[[3,'急性尿滯留，膀胱脹痛']]],['陰囊疼痛',['pain'],[[2,'疑睪丸扭轉']]]]],
- ['皮膚系統',[['皮疹',['fever'],[[2,'疑嚴重藥物過敏/史蒂文生強生症候群'],[4,'局部皮疹']]],['蕁麻疹/過敏',['resp'],[[2,'過敏反應伴呼吸或血行動力異常'],[4,'局部蕁麻疹']]],['膿瘍/蜂窩性組織炎',['fever'],[[3,'擴散性紅腫熱痛'],[4,'局部膿瘍']]],['傷口換藥/拆線',[],[[5,'傷口換藥/拆線']]]]],
- ['耳鼻喉系統',[['耳痛',['pain','fever']],['喉嚨痛',['fever'],[[3,'疑會厭炎，流口水'],[4,'喉嚨痛']]],['鼻出血',['bleed']],['流鼻水/鼻塞',[],[[4,'上呼吸道感染症狀'],[5,'輕微鼻塞']]],['聽力喪失',[],[[3,'突發性聽力喪失']]],['耳鼻異物',[],[[3,'耳鼻異物']]]]],
- ['婦產科',[['陰道出血',['bleed','hemo'],[[2,'懷孕合併出血']]],['下腹痛',['pain'],[[2,'疑子宮外孕']]],['懷孕相關問題',[],[[2,'懷孕超過 20 週，宮縮或破水'],[3,'懷孕未滿 20 週不適']]],['性侵害',[],[[2,'性侵害，需緊急處置'],[3,'性侵害，生命徵象穩定']]]]],
- ['心理健康',[['自殺意念/行為',[],[[2,'自殺行為，具立即危險'],[3,'自殺意念，無具體計畫']]],['焦慮/恐慌',[],[[3,'恐慌發作'],[4,'焦慮']]],['暴力/攻擊',[],[[2,'有暴力傾向，無法控制'],[3,'激動但可配合']]],['精神症狀',[],[[3,'幻覺妄想']]]]],
- ['物質誤用',[['酒精中毒',['cons'],[[3,'醉酒，意識尚清'],[4,'輕微酒精戒斷']]],['藥物過量/中毒',['cons','hemo'],[[2,'疑似服毒/過量']]],['藥物戒斷',[],[[3,'戒斷症狀明顯']]]]],
- ['一般和其他',[['發燒',['fever','resp']],['虛弱/全身無力',['hemo','chr']],['疼痛',['pain']],['血糖異常',['cons'],[[2,'血糖<60 有症狀'],[3,'血糖>400'],[4,'血糖偏高無症狀']]],['脫水',['hemo']],['回診/拿藥/開證明',[],[[5,'回診拿藥/開診斷書']]]]]
+const Chart=(()=>{
+let root,S,PT,tab='note',t0s='';
+const $=q=>root.querySelector(q),$$=q=>[...root.querySelectorAll(q)];
+const TT=[[1,'復甦'],[2,'危急'],[3,'緊急'],[4,'次緊急'],[5,'非緊急']];
+const get=p=>p.split('.').reduce((o,k)=>o?.[k],S);
+function setp(p,v){const ks=p.split('.'),l=ks.pop();ks.reduce((o,k)=>o[k]??(o[k]={}),S)[l]=v}
+const isTr=()=>S.mode==='tr';
+const dxl=()=>isTr()?S.tr.dx:S.dx;
+const T=(cat,n,icd,o)=>({cat,n,icd,loc:[],side:false,q:[],sym:[],ext:[],pe:[],dx:[],...o,dx:(o.dx||[]).map(s=>s.split('|'))});
+const TPL=[
+ T('心肺','胸痛','R07.9',{loc:['胸骨後','左前胸','右前胸','背部','上腹'],q:['壓迫感','刺痛','灼熱','撕裂樣','悶痛'],sym:['冒冷汗','呼吸困難','噁心','放射至左手','放射至下顎','放射至背部','心悸','暈厥','咳嗽','隨呼吸加重','隨活動加重','單側小腿腫痛'],pe:['心臟','胸/肺','四肢'],dx:['急性冠心症 (ACS)|I24.9','急性心肌梗塞|I21.9','不穩定型心絞痛|I20.0','肺栓塞|I26.99','主動脈剝離|I71.00','氣胸|J93.9','胃食道逆流|K21.9','胸壁疼痛|R07.89','胸痛 原因未明|R07.9']}),
+ T('心肺','呼吸困難','R06.0',{q:['喘鳴','胸悶','端坐呼吸','陣發性夜間喘'],sym:['咳嗽','咳痰','發燒','胸痛','下肢水腫','喘鳴','咳血','過敏接觸史','單側小腿腫痛'],pe:['胸/肺','心臟','四肢'],dx:['肺炎|J18.9','氣喘/COPD 急性發作|J44.1','急性心衰竭|I50.9','肺栓塞|I26.99','氣胸|J93.9','過敏性反應|T78.2XXA']}),
+ T('心肺','咳嗽','R05',{sym:['發燒','咳痰','喘鳴','咳血','胸痛','喉嚨痛','流鼻水','夜間盜汗','確診者接觸史'],pe:['胸/肺','耳鼻喉'],dx:['上呼吸道感染|J06.9','急性支氣管炎|J20.9','肺炎|J18.9','流感|J11.1','COVID-19|U07.1']}),
+ T('心肺','心悸','R00.2',{sym:['胸痛','暈厥','呼吸困難','頭暈','冒冷汗','咖啡因/藥物','甲狀腺疾病史'],ext:[['發作持續時間','text']],pe:['心臟'],dx:['心房顫動|I48.91','上心室頻脈|I47.1','心悸|R00.2','焦慮|F41.9']}),
+ T('心肺','暈厥','R55',{sym:['前驅症狀（頭暈/黑朦）','心悸','胸痛','抽搐樣動作','久站/脫水','排尿或咳嗽時','排便時','暈厥時受傷'],ext:[['暈厥發生時間','time']],pe:['心臟','神經'],dx:['血管迷走神經性暈厥|R55','姿位性低血壓|I95.1','心律不整|I49.9','脫水|E86.0']}),
+ T('腹部','腹痛','R10.9',{loc:['右上腹','上腹','左上腹','右側腹','臍周','左側腹','右下腹','下腹','左下腹','全腹'],q:['絞痛','悶痛','刺痛','燒灼感'],sym:['噁心','嘔吐','腹瀉','便秘','發燒','血便','解尿疼痛','食慾不振','放射至背部','黃疸','停止排氣排便'],pe:['腹部','泌尿生殖/婦科'],dx:['急性闌尾炎|K35.80','急性腸胃炎|A09','急性膽囊炎|K81.0','膽結石|K80.20','急性胰臟炎|K85.90','腸阻塞|K56.60','憩室炎|K57.92','輸尿管結石|N20.1','泌尿道感染|N39.0','消化性潰瘍|K27.9','腹痛 原因未明|R10.9']}),
+ T('腹部','噁心嘔吐','R11.2',{sym:['腹痛','腹瀉','發燒','頭痛','吐血','頭暈','食物不潔史','膽汁或糞臭嘔吐'],pe:['腹部'],dx:['急性腸胃炎|A09','脫水|E86.0','腸阻塞|K56.60']}),
+ T('腹部','腹瀉','R19.7',{sym:['血便','發燒','嘔吐','腹痛','食物不潔史','近期使用抗生素','旅遊史','同餐者發病'],pe:['腹部'],dx:['急性腸胃炎|A09','脫水|E86.0']}),
+ T('腹部','吐血/解黑便','K92.2',{sym:['吐血','黑便','血便','上腹痛','暈厥','酒精使用','NSAID 使用','肝硬化病史'],ext:[['最近一次出血時間','time']],pe:['腹部','一般外觀'],dx:['上消化道出血|K92.2','消化性潰瘍出血|K27.4','食道靜脈曲張出血|I85.01','痔瘡|K64.9']}),
+ T('神經','頭痛','R51',{loc:['前額','頭頂','枕部','單側','全頭'],side:true,q:['搏動性','壓迫性','爆裂樣（雷擊）','刺痛'],sym:['噁心嘔吐','畏光','頸部僵硬','發燒','視力模糊','肢體無力','言語不清','意識改變'],pe:['神經','頭頸','眼'],dx:['偏頭痛|G43.909','緊縮型頭痛|G44.209','蜘蛛網膜下出血|I60.9','腦膜炎|G03.9','鼻竇炎|J01.90','頭痛|R51']}),
+ T('神經','頭暈','R42',{q:['天旋地轉','頭重腳輕','昏沉'],sym:['噁心嘔吐','耳鳴','聽力下降','肢體無力','言語不清','複視','胸痛','心悸','暈厥','姿勢改變時加重'],pe:['神經','耳鼻喉','眼'],dx:['良性陣發性姿勢性眩暈|H81.10','前庭神經炎|H81.20','腦中風|I63.9','姿位性低血壓|I95.1','頭暈|R42']}),
+ T('神經','意識改變','R41.82',{sym:['發燒','頭部外傷','抽搐','肢體無力','言語不清','藥物或酒精','低血糖病史','嘔吐','近期感染'],ext:[['最後正常時間','time']],pe:['神經','精神狀態','一般外觀'],dx:['代謝性腦病變|G93.41','腦中風|I63.9','低血糖|E16.2','敗血症|A41.9','藥物中毒|T50.904A']}),
+ T('神經','抽搐','R56.9',{sym:['意識喪失','咬舌','尿失禁','發燒','頭部外傷','癲癇病史','停藥或漏藥','酒精戒斷','發作後嗜睡'],ext:[['抽搐發生時間','time'],['持續時間（分鐘）','num']],pe:['神經'],dx:['癲癇發作|G40.909','熱性痙攣|R56.00','低血糖|E16.2','酒精戒斷|F10.239']}),
+ T('神經','單側無力/言語不清','R29.90',{sym:['顏面歪斜','單側肢體無力','言語不清','單側麻木','視野缺損','突發頭暈','吞嚥困難','頭痛'],ext:[['最後正常時間','time']],pe:['神經'],dx:['缺血性腦中風|I63.9','腦出血|I61.9','暫時性腦缺血|G45.9','低血糖|E16.2','Bell 氏麻痺|G51.0']}),
+ T('感染','發燒','R50.9',{sym:['畏寒寒顫','咳嗽','喉嚨痛','解尿疼痛','腹瀉','皮疹','頭痛','肌肉痠痛','傷口紅腫','確診者接觸史'],pe:['一般外觀','胸/肺','耳鼻喉'],dx:['上呼吸道感染|J06.9','肺炎|J18.9','泌尿道感染|N39.0','流感|J11.1','蜂窩性組織炎|L03.90','敗血症|A41.9','發燒 原因未明|R50.9']}),
+ T('感染','小兒發燒','R50.9',{sym:['活動力下降','進食減少','嘔吐','腹瀉','咳嗽','流鼻水','拉耳朵','皮疹','抽搐','尿量減少'],ext:[['體重（kg）','num'],['發燒天數','num'],['疫苗','sel',['完整','未完整','不詳']]],pe:['一般外觀','耳鼻喉','胸/肺','腹部'],dx:['上呼吸道感染|J06.9','中耳炎|H66.90','急性腸胃炎|A09','泌尿道感染|N39.0','熱性痙攣|R56.00','腸病毒|B34.1']}),
+ T('感染','喉嚨痛','J02.9',{sym:['發燒','吞嚥困難','流口水','聲音沙啞','咳嗽','頸部腫脹','張口困難'],pe:['耳鼻喉','頭頸'],dx:['急性咽炎|J02.9','扁桃腺炎|J03.90','扁桃腺周圍膿瘍|J36','上呼吸道感染|J06.9']}),
+ T('骨骼/皮膚/五官','背痛','M54.9',{loc:['頸','胸椎','腰椎','薦髂','單側腰'],side:true,q:['刺痛','痠痛','放射至下肢'],sym:['下肢無力','下肢麻木','大小便失禁或解不出','發燒','夜間痛','體重減輕','癌症病史'],pe:['背部/脊椎','神經','骨骼肌肉'],dx:['下背痛/腰椎扭傷|M54.50','椎間盤突出|M51.26','坐骨神經痛|M54.30','腎結石|N20.0','主動脈剝離|I71.00']}),
+ T('骨骼/皮膚/五官','肢體疼痛/腫脹（非外傷）','M79.60',{loc:['肩','上臂','肘','前臂','腕','手','髖','大腿','膝','小腿','踝','足'],side:true,sym:['腫脹','發紅發熱','麻木','無力','發燒','小腿壓痛','痛風病史','近期長途旅行'],pe:['骨骼肌肉','四肢','皮膚'],dx:['痛風|M10.9','蜂窩性組織炎|L03.90','深部靜脈栓塞|I82.409','關節炎|M19.90','肌肉痛|M79.10','肢體疼痛|M79.60']}),
+ T('骨骼/皮膚/五官','皮疹/過敏','R21',{sym:['搔癢','呼吸困難','喉嚨緊','嘴唇腫脹','噁心嘔吐','發燒','新藥或新食物','蚊蟲叮咬','帶狀分佈疼痛'],pe:['皮膚','胸/肺','耳鼻喉'],dx:['蕁麻疹|L50.9','過敏性反應|T78.2XXA','接觸性皮膚炎|L25.9','帶狀皰疹|B02.9','蜂窩性組織炎|L03.90']}),
+ T('骨骼/皮膚/五官','眼睛不適','H57.9',{side:true,q:['異物感','刺痛','脹痛'],sym:['視力下降','紅眼','分泌物','畏光','頭痛','噁心嘔吐','配戴隱形眼鏡','化學物質接觸'],pe:['眼','頭頸'],dx:['結膜炎|H10.9','角膜炎或潰瘍|H16.9','急性青光眼|H40.20','麥粒腫|H00.019','視網膜剝離|H33.20']}),
+ T('骨骼/皮膚/五官','耳鼻喉不適','H93.9',{loc:['耳','鼻','口腔','喉'],side:true,sym:['耳痛','耳漏','聽力下降','耳鳴','鼻塞','流鼻血','鼻竇壓痛','發燒','異物'],pe:['耳鼻喉','頭頸'],dx:['中耳炎|H66.90','外耳炎|H60.9','鼻出血|R04.0','鼻竇炎|J01.90','耳鳴|H93.19']}),
+ T('泌尿/婦科','解尿疼痛/血尿','R30.0',{loc:['下腹','腰側','會陰'],side:true,sym:['頻尿','急尿','血尿','發燒','噁心嘔吐','腰痛','尿液混濁','結石病史','無法解尿'],pe:['腹部','泌尿生殖/婦科','背部/脊椎'],dx:['泌尿道感染|N39.0','腎盂腎炎|N10','輸尿管結石|N20.1','尿滯留|R33.9','攝護腺炎|N41.9','副睪炎|N45.1']}),
+ T('泌尿/婦科','陰道出血/婦科','N93.9',{sym:['下腹痛','頭暈','大量出血','組織排出','發燒','異常分泌物','性行為後出血','噁心'],ext:[['末次月經','date'],['可能懷孕','sel',['否','是','不確定']]],pe:['腹部','泌尿生殖/婦科'],dx:['異常子宮出血|N93.9','流產|O03.9','子宮外孕|O00.90','骨盆腔發炎|N73.9','卵巢囊腫|N83.20']}),
+ T('精神/中毒/代謝','精神/自傷','F99',{sym:['自傷意念','自傷行為','幻聽幻覺','妄想','失眠','情緒低落','躁動攻擊','酒精或藥物使用','精神科病史'],pe:['精神狀態','一般外觀'],dx:['急性焦慮|F41.0','憂鬱|F32.9','精神病症狀|F29','恐慌發作|F41.0']}),
+ T('精神/中毒/代謝','中毒/藥物過量','T50.904A',{sym:['自傷意圖','意外誤食','酒精','嘔吐','意識改變','瞳孔異常','抽搐'],ext:[['服用時間','time'],['物質名稱','text']],pe:['一般外觀','神經','精神狀態'],dx:['藥物過量|T50.904A','酒精中毒|F10.129','一氧化碳中毒|T58.91XA','農藥中毒|T60.91XA','藥物副作用|T88.7XXA']}),
+ T('精神/中毒/代謝','高血壓/血糖異常','R73.9',{sym:['頭痛','胸痛','視力模糊','多尿口渴','噁心嘔吐','頭暈','漏服藥物','感染症狀'],ext:[['自測數值','text']],pe:['一般外觀','神經'],dx:['高血壓急症|I16.1','高血壓|I10','高血糖|R73.9','糖尿病酮酸中毒|E11.10','低血糖|E16.2']}),
+ T('精神/中毒/代謝','全身虛弱無力','R53.1',{sym:['發燒','食慾不振','體重減輕','嘔吐腹瀉','進食或喝水減少','頭暈','胸痛','呼吸困難','單側肢體無力','言語不清','尿量減少','黑便或血便','新開藥物或調整劑量','近期感染','多尿口渴','睡眠或情緒改變'],ext:[['無力範圍','sel',['全身','雙下肢','近端為主','遠端為主']],['持續天數','num']],pe:['一般外觀','神經','心臟','胸/肺','腹部'],dx:['脫水|E86.0','電解質異常|E87.8','低血鉀|E87.6','高血鉀|E87.5','貧血|D64.9','低血糖|E16.2','急性腎損傷|N17.9','泌尿道感染|N39.0','肺炎|J18.9','敗血症|A41.9','急性冠心症 (ACS)|I24.9','缺血性腦中風|I63.9','疲倦|R53.83']})
 ];
-const TRI_WHY=['','病人主訴與電腦判斷不符','生命徵象與判斷依據不符','病情變化/再評估','臨床經驗判斷','家屬／病人反映','其他'];
-const triBasis=c=>{const a=[...(c[2]||[])];(c[1]||[]).forEach(g=>a.push(...TG[g]));return a.map((x,i)=>[...x,i]).sort((a,b)=>a[0]-b[0]||a[2]-b[2])};
-const triGuess=cc=>/胸/.test(cc)?'心臟血管系統':/腹|胃|腸|嘔|瀉/.test(cc)?'腸胃系統':/喘|咳|呼吸/.test(cc)?'呼吸系統':/頭|暈|中風|無力|抽|意識/.test(cc)?'神經系統':/傷|骨|折|跌|撞|車禍|痛/.test(cc)?'骨骼系統':/尿|腰/.test(cc)?'泌尿系統':'一般和其他';
-let TT=null;
-function openTri(){
-  const p=cur();if(!p)return;
-  const o=p.tri||{};
-  TT={pid:p.id,cat:o.cat||triGuess(p.cc),cc:o.cc||'',basis:o.basis||'',auto:o.auto||p.lvl,mod:p.lvl,reason:o.reason||'',note:o.note||'',init:p.lvl,iauto:o.auto||p.lvl};
-  let m=$('#triModal');if(!m){m=document.createElement('div');m.id='triModal';m.className='tm';document.body.appendChild(m);
-    m.addEventListener('click',triClick);m.addEventListener('input',e=>{if(e.target.id==='triNote')TT.note=e.target.value});
-    m.addEventListener('change',e=>{if(e.target.id==='triWhy')TT.reason=e.target.value})}
-  m.classList.add('show');triRender();
+const TP=Object.fromEntries(TPL.map(t=>[t.n,t]));
+const DXNT=Object.fromEntries(TPL.flatMap(t=>t.dx).map(d=>[d[0],d[1]]));
+
+const SYS={'一般外觀':['急性病容','蒼白','盜汗','脫水貌','躁動','黃疸'],'頭頸':['頸部僵硬','頸靜脈怒張','淋巴結腫大','頭皮傷口'],'眼':['視力下降','結膜充血','瞳孔異常','眼壓高','角膜混濁'],'耳鼻喉':['耳膜紅或穿孔','鼻出血','扁桃腺腫大或膿','口腔潰瘍','懸壅垂偏移'],
+ '心臟':['心律不整','心雜音','心音遙遠','周邊灌流差'],'胸/肺':['囉音 (rales)','哮鳴 (wheeze)','呼吸音減弱','使用呼吸輔助肌','胸壁壓痛'],'腹部':['右下腹壓痛','上腹壓痛','反彈痛','腹部僵硬','腸音減弱','CVA 敲痛','腹脹'],
+ '背部/脊椎':['脊椎壓痛','CVA 敲痛','肌肉痙攣','SLR 陽性'],'骨骼肌肉':['關節腫脹','活動受限','壓痛','變形','關節積液'],'四肢':['水腫','小腿壓痛','脈搏減弱','發紺'],
+ '神經':['單側無力','言語不清','顏面不對稱','感覺異常','腦神經異常','步態不穩','小腦徵象','頸部僵硬'],'皮膚':['皮疹','蜂窩性組織炎','傷口','紫斑','黃疸'],'泌尿生殖/婦科':['恥骨上壓痛','睪丸腫痛','陰道出血','子宮頸擺動痛','附屬器壓痛'],'精神狀態':['定向感異常','幻覺或妄想','自傷意念','情緒激動','思考混亂']};
+const PMH=['無特殊病史','高血壓','糖尿病','冠心症','心衰竭','心房顫動','中風','慢性腎臟病','COPD/氣喘','癌症','肝硬化','癲癇','洗腎'];
+const ALG=['無已知過敏','青黴素類','磺胺類','NSAIDs','顯影劑','海鮮','乳膠'];
+const MEDS=['無規則用藥','抗凝血劑','抗血小板藥','降血壓藥','降血糖藥/胰島素','支氣管擴張劑','類固醇','精神科用藥'];
+const SOC=['抽菸','喝酒','檳榔','藥物濫用'];
+const EXCL={pmh:'無特殊病史',alg:'無已知過敏',med:'無規則用藥'};
+
+/* ---------- 外傷範本 ---------- */
+const MOI={
+ '機車/自行車事故':{det:{'角色':['駕駛/騎士','後座乘客'],'安全帽':['有戴','未戴','不詳'],'碰撞對象':['汽車','機車','大型車','固定物','自摔'],'估計速度':['<30 km/h','30-60 km/h','>60 km/h','不詳'],'拋飛或拖行':['無','拋飛','拖行']},hr:{'估計速度':['>60 km/h'],'拋飛或拖行':['拋飛','拖行']}},
+ '汽車事故':{det:{'角色':['駕駛','乘客'],'安全帶':['有','無','不詳'],'氣囊':['未爆開','爆開','不詳'],'碰撞方向':['正面','側面','後方','翻覆'],'彈出車外':['無','有'],'同車有人死亡':['無','有','不詳'],'估計速度':['<30 km/h','30-60 km/h','>60 km/h','不詳']},hr:{'碰撞方向':['翻覆'],'彈出車外':['有'],'同車有人死亡':['有'],'估計速度':['>60 km/h']}},
+ '行人被撞':{det:{'撞擊車種':['汽車','機車','大型車'],'估計速度':['<30 km/h','30-60 km/h','>60 km/h','不詳'],'被拖行或輾壓':['無','有']},hr:{'估計速度':['>60 km/h'],'被拖行或輾壓':['有']}},
+ '墜落':{det:{'高度':['<2 m','2-5 m','>5 m'],'著地部位':['頭','足','臀/背','側身','不詳'],'原因':['意外','工作','自傷','不詳']},hr:{'高度':['>5 m'],'著地部位':['頭']}},
+ '跌倒（平地）':{det:{'跌倒前有暈眩或昏倒':['無','有','不詳'],'撞擊部位':['頭','上肢','髖部','其他'],'原因':['滑倒絆倒','頭暈','不詳']},hr:{}},
+ '重物壓砸/夾傷':{det:{'受壓部位':['軀幹','肢體','頭頸'],'受壓時間':['<30 分','30-60 分','>1 小時']},hr:{'受壓部位':['軀幹','頭頸'],'受壓時間':['>1 小時']}},
+ '銳器傷':{det:{'器械':['刀','玻璃','金屬','其他'],'受傷部位':['頭頸','軀幹','肢體']},hr:{'受傷部位':['頭頸','軀幹']}},
+ '鈍器/毆打':{det:{'受傷部位':['頭頸','軀幹','肢體']},hr:{}},
+ '槍傷/爆炸':{det:{'受傷部位':['頭頸','軀幹','肢體']},hr:{'受傷部位':['頭頸','軀幹','肢體']}},
+ '燒燙傷':{det:{'原因':['火焰','熱液','化學','電擊'],'估計 TBSA':['<10%','10-20%','>20%'],'密閉空間或吸入傷':['無','有']},hr:{'估計 TBSA':['>20%'],'密閉空間或吸入傷':['有']}},
+ '異物/化學物濺入':{det:{'部位':['眼','耳','鼻','咽喉','食道/吞入'],'物質':['金屬或玻璃','化學物','食物或骨頭','昆蟲','電池或磁鐵','其他']},hr:{'物質':['電池或磁鐵','化學物']}},
+ '動物咬傷':{det:{'動物':['犬','貓','蛇','其他'],'部位':['頭頸','手','其他']},hr:{}},
+ '運動傷害':{det:{'項目':['球類','跑跳','騎乘','其他']},hr:{}}
+};
+const EMS=['頸圈固定','背板固定','止血帶','加壓包紮','給氧','靜脈輸液','骨盆束帶','夾板固定','現場心肺復甦'];
+const ABCDE=[
+ {t:'A 呼吸道 / 頸椎',g:[['呼吸道','s',['通暢可說話','部分阻塞','完全阻塞','已插管或氣切']],['頸椎','s',['已固定','未固定']],['頸椎壓痛','s',['無','有','無法評估']]]},
+ {t:'B 呼吸',g:[['呼吸音','s',['雙側正常','左側減弱','右側減弱','雙側減弱']],['胸壁','m',['皮下氣腫','反常呼吸 (flail)','開放性胸傷','氣管偏移','頸靜脈怒張']]]},
+ {t:'C 循環 / 出血',g:[['外出血','s',['無','可控制','持續出血']],['末梢灌流','s',['正常','蒼白濕冷']],['脈搏','s',['橈動脈可觸及','僅頸或股動脈','無脈搏']],['骨盆','s',['穩定','不穩定','疼痛']],['eFAST','s',['未做','陰性','陽性']],['eFAST 陽性部位','m',['心包','右上腹','左上腹','骨盆','左胸腔','右胸腔'],'eFAST','陽性']]},
+ {t:'D 神經',g:[['GCS','gcs'],['瞳孔','s',['等大對光正常','不等大','雙側散大固定']],['肢體活動','s',['四肢可動','單側無力','下肢無力','四肢無力']]]},
+ {t:'E 暴露 / 環境',g:[['全身暴露檢查','s',['已完成','未完成']],['翻身檢查背部','s',['已完成','未完成','暫不翻身']],['體溫狀態','s',['正常','低體溫']]]}];
+const ABC_REQ=['呼吸道','頸椎','呼吸音','外出血','脈搏','eFAST','瞳孔','肢體活動'];
+const LIMB={f:['擦傷','挫傷','撕裂傷','疑似骨折','疑似脫位','變形','腫脹','活動受限','開放性傷口','遠端脈搏減弱','感覺或運動異常'],side:['左','右']};
+const REG={
+ '頭部/頭皮':{f:['頭皮撕裂傷','頭皮血腫','顱骨凹陷','顱底骨折徵象（浣熊眼/Battle 徵象）','耳鼻出血或腦脊髓液漏']},
+ '臉部':{f:['面骨壓痛','牙齒斷裂','眼周瘀青','鼻出血或鼻骨變形','臉部撕裂傷']},
+ '眼':{side:['左','右','雙側'],sites:[],f:['視力下降','眼瞼撕裂傷','疑似眼球破裂','角膜擦傷（螢光染色陽性）','前房出血','結膜下出血','瞳孔變形','眼窩周圍瘀青','眼球運動受限','眼內異物','化學灼傷']},
+ '耳':{side:['左','右','雙側'],sites:[],f:['耳廓撕裂傷','耳廓血腫','外耳道出血','耳膜穿孔','聽力下降','耳後瘀青（Battle 徵象）','耳內異物']},
+ '鼻':{f:['鼻出血','鼻骨變形','鼻骨壓痛','鼻中隔血腫','腦脊髓液鼻漏','鼻內異物']},
+ '口腔/牙齒':{f:['牙齒斷裂','牙齒脫位或脫落','牙齦撕裂傷','舌或口腔撕裂傷','下頜壓痛或咬合不正','張口困難','口內持續出血']},
+ '咽喉':{f:['異物感','吞嚥疼痛','聲音沙啞','皮下氣腫','呼吸喘鳴','流口水']},
+ '頸部':{f:['頸椎中線壓痛','氣管偏移','皮下氣腫','頸部血腫','穿刺傷']},
+ '胸部':{f:['肋骨壓痛','胸壁挫傷','皮下氣腫','反常呼吸','穿刺傷','呼吸音減弱']},
+ '腹部':{f:['腹部壓痛','反彈痛','腹部僵硬','腹脹','安全帶痕','穿刺傷']},
+ '骨盆/會陰':{f:['骨盆擠壓痛','骨盆不穩定','會陰血腫','尿道口出血','直腸出血']},
+ '背部/脊椎':{f:['脊椎壓痛','階梯狀變形','背部撕裂傷','肌肉壓痛','下肢神經異常']},
+ '上肢':{...LIMB,sites:['肩','上臂','肘','前臂','腕','手']},
+ '下肢':{...LIMB,sites:['髖','大腿','膝','小腿','踝','足']},
+ '全身皮膚':{f:['多處擦傷','瘀青','燒燙傷','咬傷','異物']}};
+const TRDX=[['頭部鈍傷','S09.90'],['腦震盪','S06.0X0A'],['頭皮撕裂傷','S01.00XA'],['外傷性顱內出血','S06.9X0A'],['臉部撕裂傷','S01.80XA'],['鼻骨骨折','S02.2XXA'],['頸椎扭傷','S13.4XXA'],['肋骨骨折','S22.39XA'],['外傷性氣胸','S27.0XXA'],['肺挫傷','S27.329A'],['腹部鈍傷','S39.91XA'],['脾臟撕裂傷','S36.039A'],['肝臟撕裂傷','S36.119A'],['骨盆骨折','S32.9XXA'],['腰椎骨折','S32.009A'],['鎖骨骨折','S42.009A'],['肱骨骨折','S42.309A'],['橈骨遠端骨折','S52.509A'],['前臂骨折','S52.90XA'],['股骨骨折','S72.90XA'],['脛腓骨骨折','S82.90XA'],['踝部骨折','S82.899A'],['踝部扭傷','S93.409A'],['肢體挫傷','T14.8XXA'],['擦傷','T14.8XXA'],['撕裂傷（需縫合）','T14.8XXA'],['燒燙傷','T30.0'],['動物咬傷','W54.0XXA'],['角膜擦傷','S05.00XA'],['眼挫傷','S05.10XA'],['眼瞼撕裂傷','S01.119A'],['眼部外傷','S05.90XA'],['化學性眼灼傷','T26.60XA'],['眼內異物','T15.90XA'],['外耳外傷','S01.30XA'],['外傷性耳膜穿孔','S09.20XA'],['耳內異物','T16.9XXA'],['鼻外傷','S09.92XA'],['鼻出血','R04.0'],['鼻內異物','T17.1XXA'],['牙齒斷裂','S02.5XXA'],['牙齒脫位','S03.2XXA'],['口腔撕裂傷','S01.512A'],['下顎骨折','S02.60XA'],['咽喉異物','T17.2XXA'],['食道異物（吞入）','T18.108A'],['多重創傷','T07.XXXA']];
+const DXTR=Object.fromEntries(TRDX);
+/* 外傷主訴 → 傷處檢查部位。選了主訴就優先列出對應部位，沒選則列出全部。 */
+const TRCC=[['一般',[['頭部','頭部/頭皮'],['臉部','臉部'],['頸部','頸部'],['胸部','胸部'],['腹部','腹部'],['背部/脊椎','背部/脊椎'],['骨盆','骨盆/會陰'],['上肢','上肢'],['下肢','下肢'],['皮膚傷口/燒燙傷','全身皮膚']]],
+ ['五官科',[['眼外傷','眼'],['耳外傷','耳'],['鼻外傷','鼻'],['口腔/牙齒外傷','口腔/牙齒'],['咽喉/異物','咽喉']]]];
+const TRMAP=Object.fromEntries(TRCC.flatMap(g=>g[1]));
+const regPrio=()=>{const r=S.tr.cc.map(c=>TRMAP[c]).filter(Boolean);return r.length?Object.keys(REG).filter(k=>r.includes(k)):Object.keys(REG)};
+
+/* ---------- 範本查詢 ---------- */
+const cur=()=>S.cc.map(n=>TP[n]).filter(Boolean);
+const uni=k=>[...new Set(cur().flatMap(t=>t[k]))];
+const uniExt=()=>{const m=new Map();cur().forEach(t=>t.ext.forEach(e=>{if(!m.has(e[0]))m.set(e[0],e)}));return [...m.values()]};
+const prio=()=>['一般外觀',...uni('pe').filter(x=>x!=='一般外觀')];
+
+/* ---------- 元件 ---------- */
+const btn=(attr,v,on,cls)=>`<button type="button" class="chip ${on?'on':''} ${cls||''}" ${attr} data-v="${esc(v)}">${esc(v)}</button>`;
+const cm=(p,v,cls)=>btn(`data-m="${esc(p)}"`,v,(get(p)||[]).includes(v),cls);
+const cs=(p,v,cls)=>btn(`data-s="${esc(p)}"`,v,get(p)===v,cls);
+const F=(l,h)=>`<div class="f"><label>${l}</label>${h}</div>`;
+const inp=(p,type,ph,st)=>`<input type="${type}" data-i="${esc(p)}" value="${esc(get(p)??'')}" placeholder="${esc(ph||'')}" style="${st||''}">`;
+const ago=t=>{if(!t)return'';const[h,m]=t.split(':').map(Number),n=new Date(),d=new Date();d.setHours(h,m,0,0);if(d>n)d.setDate(d.getDate()-1);const mm=Math.round((n-d)/60000);return mm<60?`約 ${mm} 分鐘前`:`約 ${Math.floor(mm/60)} 小時 ${mm%60} 分前`};
+const ro=()=>{const l=S.tri.lvl;return `<div class="f sub"><span class="tri" data-l="${l}">檢傷 ${l} 級 · ${TT[l-1][1]}</span> <span class="mono">${t0s}</span> · ${S.tri.mode} · 檢傷主訴：${esc(S.tri.cc0.join('、'))}</div>`};
+
+function peRows(root,list,lbl,defs){
+ return list.map((s,i)=>{const e=get(root+'.'+s)||{},d=defs[s],fx=Array.isArray(d)?{f:d}:d,p=root+'.'+s;
+  return `<div class="pe ${i?'':'first'}"><div class="sys">${s}</div><div>
+   <div class="seg"><button type="button" class="n ${e.st==='n'?'on':''}" data-act="seg" data-p="${esc(p)}" data-st="n">${lbl[0]}</button><button type="button" class="a ${e.st==='a'?'on':''}" data-act="seg" data-p="${esc(p)}" data-st="a">${lbl[1]}</button></div>
+   ${e.st==='a'?`<div class="fx">
+     ${fx.side?`<div class="chips" style="margin-bottom:6px">${fx.side.map(v=>cm(p+'.side',v)).join('')}${(fx.sites||[]).map(v=>cm(p+'.site',v)).join('')}</div>`:''}
+     <div class="chips">${fx.f.map(v=>cm(p+'.f',v,'ab')).join('')}</div></div>`:''}
+  </div></div>`}).join('')}
+
+/* ---------- 表單：非外傷 ---------- */
+function buildNt(){
+ const ts=cur(),locs=uni('loc'),qs=uni('q'),sy=uni('sym'),ex=uniExt(),side=ts.some(t=>t.side);
+ const cats=[...new Set(TPL.map(t=>t.cat))],pr=prio(),others=Object.keys(SYS).filter(x=>!pr.includes(x));
+ const extH=ex.map(([l,ty,op])=>F(l,ty==='sel'?`<div class="chips">${op.map(v=>cs('hpi.ext.'+l,v)).join('')}</div>`:inp('hpi.ext.'+l,ty==='num'?'number':ty,'', 'max-width:200px'))).join('');
+ return `
+ <section class="card" id="s-tri"><h2>① 主訴確認 <small>檢傷由護理師完成，此處不需重填</small></h2>${ro()}
+  <div class="f"><label>醫師確認主訴（可複選，第一項為主要主訴；選項依主訴自動帶出）</label>
+   ${cats.map(k=>`<div class="grp">${k}</div><div class="chips">${TPL.filter(t=>t.cat===k).map(t=>cm('cc',t.n)).join('')}</div>`).join('')}
+   <input data-i="ccText" value="${esc(S.ccText)}" placeholder="其他主訴（自由文字，選填）" style="width:100%;margin-top:10px"></div>
+ </section>
+ <section class="card" id="s-hpi"><h2>② 現在病史 <small>${esc(S.cc.join('、'))}</small></h2>
+  ${F('症狀開始',`<div class="row"><input type="number" min="0" inputmode="numeric" data-i="hpi.on" value="${esc(S.hpi.on)}" style="width:90px"><div class="chips">${['分鐘','小時','天','週'].map(v=>cs('hpi.unit',v)).join('')}</div><span>前</span></div>`)}
+  ${F('變化趨勢',`<div class="chips">${['加重','持平','改善','間歇'].map(v=>cs('hpi.course',v)).join('')}</div>`)}
+  ${locs.length?F('部位',`<div class="chips">${locs.map(v=>cm('hpi.loc',v)).join('')}</div>`):''}
+  ${side?F('側別',`<div class="chips">${['左','右','雙側','正中'].map(v=>cs('hpi.side',v)).join('')}</div>`):''}
+  ${locs.length||qs.length?F('疼痛指數 NRS',`<div class="nrs">${[...Array(11).keys()].map(i=>`<button type="button" class="${S.hpi.nrs===i?'on':''}" data-act="nrs" data-n="${i}">${i}</button>`).join('')}</div>`):''}
+  ${qs.length?F('性質',`<div class="chips">${qs.map(v=>cm('hpi.q',v)).join('')}</div>`):''}
+  ${F('伴隨症狀（點一次＝有，再點一次＝否認，第三次＝清除）',`<div class="chips">${sy.length?sy.map(v=>{const s=S.hpi.sym[v];return `<button type="button" class="chip ${s==1?'on':s==-1?'neg':''}" data-act="sym" data-v="${esc(v)}">${s==1?'＋ ':s==-1?'－ ':''}${esc(v)}</button>`}).join(''):'<span class="hint">請先選擇主訴</span>'}</div>`)}
+  ${extH}
+  ${F('補充（選填）',`<textarea data-i="hpi.note" rows="2" style="width:100%" placeholder="例如：休息 10 分鐘未緩解">${esc(S.hpi.note)}</textarea>`)}
+ </section>
+ <section class="card" id="s-bg"><h2>③ 病史背景</h2>
+  ${F('過去病史',`<div class="chips">${PMH.map(v=>cm('pmh',v)).join('')}</div>`)}
+  ${F('過敏',`<div class="chips">${ALG.map(v=>cm('alg',v)).join('')}</div>`)}
+  ${F('目前用藥',`<div class="chips">${MEDS.map(v=>cm('med',v)).join('')}</div>`)}
+  ${F('個人史',`<div class="chips">${SOC.map(v=>cm('soc',v)).join('')}</div>`)}
+  ${F('手術史',inp('surg','text','例如：2019 膽囊切除','width:100%'))}
+ </section>
+ <section class="card" id="s-pe"><h2>④ 理學檢查 <small><button type="button" class="btn" data-act="allN">優先系統全部設為正常</button></small></h2>
+  ${peRows('pe',pr,['正常','異常'],SYS)}
+  <details class="more"><summary>其他系統（${others.length}）</summary>${peRows('pe',others,['正常','異常'],SYS)}</details>
+ </section>`+dxSec(5)}
+
+/* ---------- 表單：外傷 ---------- */
+function buildTr(){
+ const T_=S.tr,moiH=T_.moi.map(m=>{const M=MOI[m];return Object.keys(M.det).length?`<div class="sub"><h3>${m}：細節（紅色＝高風險）</h3>${Object.entries(M.det).map(([l,ops])=>F(l,`<div class="chips">${ops.map(v=>cs(`tr.det.${m}.${l}`,v,(M.hr[l]||[]).includes(v)?'hr':'')).join('')}</div>`)).join('')}</div>`:''}).join('');
+ const abc=ABCDE.map(st=>`<div class="sub"><h3>${st.t}</h3>${st.g.map(g=>{
+   if(g[1]==='gcs'){const tot=+T_.gcs.e+ +T_.gcs.v+ +T_.gcs.m;return F('GCS',`<div class="gcs">${[['e','E 睜眼',4],['v','V 語言',5],['m','M 動作',6]].map(([k,l,n])=>`<div><small class="hint">${l}</small><br><select data-gcs="${k}">${Array.from({length:n},(_,i)=>n-i).map(x=>`<option ${+T_.gcs[k]===x?'selected':''}>${x}</option>`).join('')}</select></div>`).join('')}<div class="tot">= ${tot}</div></div>`)}
+   if(g[3]&&T_.abc[g[3]]!==g[4])return'';
+   return F(g[0],`<div class="chips">${g[2].map(v=>g[1]==='m'?cm('tr.abc.'+g[0],v,'ab'):cs('tr.abc.'+g[0],v)).join('')}</div>`)}).join('')}</div>`).join('');
+ return `
+ <section class="card" id="s-tri"><h2>① 受傷經過 <small>檢傷由護理師完成，此處不需重填</small></h2>${ro()}
+  <div class="f"><label>醫師確認外傷主訴（可複選，選了之後傷處檢查會優先列出對應部位）</label>${TRCC.map(([g,xs])=>`<div class="grp">${g}</div><div class="chips">${xs.map(x=>cm('tr.cc',x[0])).join('')}</div>`).join('')}</div>
+  ${F('受傷時間',`<div class="row">${inp('tr.time','time','','width:130px')}<span class="hint" id="agoT">${ago(T_.time)}</span></div>`)}
+  ${F('受傷機轉（可複選）',`<div class="chips">${Object.keys(MOI).map(v=>cm('tr.moi',v)).join('')}</div>`)}
+  ${moiH}
+  ${F('意識喪失',`<div class="chips">${['無','有','不詳'].map(v=>cs('tr.loc',v)).join('')}</div>`)}
+  ${F('飲酒 / 藥物',`<div class="chips">${['無','酒精','藥物','不詳'].map(v=>cs('tr.alc',v)).join('')}</div>`)}
+  ${F('到院前處置',`<div class="chips">${EMS.map(v=>cm('tr.ems',v)).join('')}</div>`)}
+ </section>
+ <section class="card" id="s-abc"><h2>② 初步評估 <small>ABCDE</small></h2>${abc}</section>
+ <section class="card" id="s-reg"><h2>③ 傷處檢查 <small><button type="button" class="btn" data-act="allN">未填部位全部設為無傷</button></small></h2>
+  ${peRows('tr.reg',regPrio(),['無傷','有傷'],REG)}
+  ${regPrio().length<Object.keys(REG).length?`<details class="more"><summary>其他部位（${Object.keys(REG).length-regPrio().length}）</summary>${peRows('tr.reg',Object.keys(REG).filter(k=>!regPrio().includes(k)),['無傷','有傷'],REG)}</details>`:''}</section>
+ <section class="card" id="s-bg"><h2>④ 病史 <small>AMPLE</small></h2>
+  ${F('過敏 (A)',`<div class="chips">${ALG.map(v=>cm('alg',v)).join('')}</div>`)}
+  ${F('目前用藥 (M)，請特別確認抗凝血藥',`<div class="chips">${MEDS.map(v=>cm('med',v)).join('')}</div>`)}
+  ${F('過去病史 (P)',`<div class="chips">${PMH.map(v=>cm('pmh',v)).join('')}</div>`)}
+  ${F('最後進食時間 (L)',inp('tr.meal','time','','width:130px'))}
+  ${F('破傷風疫苗',`<div class="chips">${['10 年內曾接種','超過 10 年或不詳','需追加（髒傷口 >5 年）','本次已給予'].map(v=>cs('tr.teta',v)).join('')}</div>`)}
+ </section>`+dxSec(5)}
+
+function dxSec(n){
+ const pool=isTr()?TRDX:[...new Map(cur().flatMap(t=>t.dx).concat(S.cc.length?[]:[]).map(d=>[d[0],d])).values()];
+ const sel=dxl().map(d=>d[0]);
+ return `<section class="card" id="s-dx"><h2>⑤ 診斷 <small>${isTr()?'外傷診斷':'依主訴列出常見診斷'}</small></h2>
+ <div class="dx">${dxl().map((d,i)=>`<div><span class="mono">${d[1]||'—'}</span><b>${esc(d[0])}</b>${i==0?'<span class="pri">主診斷</span>':`<button type="button" data-act="dxup" data-i="${i}" title="設為主診斷">↑</button>`}<button type="button" data-act="dxdel" data-i="${i}" aria-label="移除">✕</button></div>`).join('')||'<div class="none">尚未選擇診斷</div>'}</div>
+ <div class="chips">${pool.filter(d=>!sel.includes(d[0])).map(d=>`<button type="button" class="chip" data-act="dxadd" data-v="${esc(d[0])}" data-c="${esc(d[1])}">${esc(d[0])}<small>${d[1]}</small></button>`).join('')}</div>
+ <input id="dxFree" list="dxlist" placeholder="搜尋其他診斷，或輸入自由文字後按 Enter" style="width:100%;margin-top:10px"></section>`}
+
+function prune(){const sy=uni('sym'),lo=uni('loc'),qs=uni('q');
+ Object.keys(S.hpi.sym).forEach(k=>{if(!sy.includes(k))delete S.hpi.sym[k]});S.hpi.loc=S.hpi.loc.filter(x=>lo.includes(x));S.hpi.q=S.hpi.q.filter(x=>qs.includes(x));
+ const ex=uniExt().map(e=>e[0]);Object.keys(S.hpi.ext).forEach(k=>{if(!ex.includes(k))delete S.hpi.ext[k]});if(!cur().some(t=>t.side))S.hpi.side='';
+ const keep=new Set(prio());Object.keys(S.pe).forEach(k=>{if(!S.pe[k]?.st)delete S.pe[k]})}
+function addDx(n,c){if(!n||dxl().some(d=>d[0]===n))return;dxl().push([n,c||'']);}
+/* ---------- 提醒 ---------- */
+const num=v=>v===''||v==null||isNaN(+v)?null:+v;
+function alertsNt(){const A=[],cc=S.cc.join('|'),sx=k=>S.hpi.sym[k]===1;
+ if(cc.includes('胸痛')&&sx('放射至背部')&&sx('冒冷汗'))A.push(['crit','胸痛合併背部放射與冒冷汗','考慮主動脈剝離，使用抗凝血/抗血小板前先排除']);
+ if(cc.includes('胸痛')&&sx('放射至左手')&&sx('冒冷汗'))A.push(['warn','典型缺血性胸痛特徵','考慮 ACS，確認心電圖與 Troponin 已處理']);
+ if(cc.includes('胸痛')&&sx('單側小腿腫痛'))A.push(['warn','胸痛合併單側小腿腫痛','考慮肺栓塞']);
+ if(cc.includes('頭痛')&&S.hpi.q.includes('爆裂樣（雷擊）'))A.push(['crit','雷擊樣頭痛','考慮蜘蛛網膜下出血']);
+ if(['頭暈','頭痛'].some(x=>cc.includes(x))&&(sx('肢體無力')||sx('言語不清')))A.push(['crit','疑似腦中風症狀','記錄最後正常時間']);
+ if(cc.includes('全身虛弱無力')&&(sx('單側肢體無力')||sx('言語不清')))A.push(['crit','全身虛弱合併單側無力或言語不清','考慮腦中風，記錄最後正常時間']);
+ if(cc.includes('全身虛弱無力')&&(sx('胸痛')||sx('呼吸困難')))A.push(['warn','全身虛弱合併胸痛或呼吸困難','考慮 ACS、肺栓塞或心衰竭']);
+ if(cc.includes('全身虛弱無力')&&(sx('黑便或血便')))A.push(['warn','全身虛弱合併黑便或血便','評估貧血與消化道出血']);
+ if(cc.includes('單側無力/言語不清'))A.push(['warn','疑似腦中風','確認最後正常時間與是否在治療時間窗內']);
+ uniExt().forEach(([l])=>{if(l.includes('最後正常時間')&&!S.hpi.ext[l])A.push(['warn','尚未填寫「'+l+'」','中風/意識改變評估必要資訊']);});
+ if(cc.includes('陰道出血/婦科')&&S.hpi.ext['可能懷孕']==='是')A.push(['warn','可能懷孕合併陰道出血','考慮子宮外孕或流產']);
+ if(cc.includes('小兒發燒')&&!S.hpi.ext['體重（kg）'])A.push(['warn','小兒尚未填寫體重','用藥劑量需要']);
+ if(cc.includes('精神/自傷')&&(sx('自傷意念')||sx('自傷行為')))A.push(['crit','自傷意念或行為','進行自殺風險評估並確保安全']);
+ if(cc.includes('吐血/解黑便')&&(S.med.includes('抗凝血劑')||S.med.includes('抗血小板藥')))A.push(['warn','出血合併使用抗凝血/抗血小板藥','評估逆轉與輸血需求']);
+ if(S.alg.length===0)A.push(['warn','過敏史未填','開藥前須確認']);
+ if(!S.dx.length)A.push(['warn','尚未填寫診斷','']);
+ return A}
+function alertsTr(){const A=[],t=S.tr,a=t.abc,gcs=+t.gcs.e+ +t.gcs.v+ +t.gcs.m,hit=[];
+ t.moi.forEach(m=>{const M=MOI[m],d=t.det[m]||{};Object.entries(M.hr).forEach(([l,vs])=>{if(vs.includes(d[l]))hit.push(m+'：'+l+' '+d[l])})});
+ if(hit.length)A.push(['crit','高風險受傷機轉',hit.join('；')+'。建議評估是否啟動創傷小組']);
+ if(['部分阻塞','完全阻塞'].includes(a['呼吸道']))A.push(['crit','呼吸道異常：'+a['呼吸道'],'立即處理呼吸道']);
+ if(a['頸椎']==='未固定'||a['頸椎壓痛']==='有'||gcs<15)A.push(['warn','維持頸椎保護','頸椎壓痛、意識改變或機轉高風險時，未排除前持續固定']);
+ if(['左側減弱','右側減弱','雙側減弱'].includes(a['呼吸音']))A.push(['crit','呼吸音減弱（'+a['呼吸音']+'）','評估張力性氣胸/血胸']);
+ if((a['胸壁']||[]).length)A.push(['crit','胸壁異常：'+a['胸壁'].join('、'),'']);
+ if(a['外出血']==='持續出血')A.push(['crit','持續外出血','立即止血']);
+ if(a['末梢灌流']==='蒼白濕冷'||['僅頸或股動脈','無脈搏'].includes(a['脈搏']))A.push(['crit','循環不穩徵象','評估休克與出血來源']);
+ if(a['骨盆']==='不穩定')A.push(['crit','骨盆不穩定','骨盆束帶，評估骨盆出血']);
+ if(a['eFAST']==='陽性')A.push(['crit','eFAST 陽性'+((a['eFAST 陽性部位']||[]).length?'：'+a['eFAST 陽性部位'].join('、'):''),'評估內出血與手術需求']);
+ if(gcs<=8)A.push(['crit','GCS '+gcs,'評估氣道保護']);
+ if(['不等大','雙側散大固定'].includes(a['瞳孔']))A.push(['crit','瞳孔異常：'+a['瞳孔'],'評估顱內壓升高']);
+ if(a['肢體活動']&&a['肢體活動']!=='四肢可動')A.push(['crit','肢體活動異常：'+a['肢體活動'],'評估脊髓或腦部損傷']);
+ if((S.med.includes('抗凝血劑')||S.med.includes('抗血小板藥'))&&t.reg['頭部/頭皮']?.st==='a')A.push(['warn','使用抗凝血藥合併頭部受傷','考慮頭部電腦斷層']);
+ Object.entries(t.reg).forEach(([r,e])=>{if(e.st==='a'&&['遠端脈搏減弱','感覺或運動異常','開放性傷口'].some(x=>(e.f||[]).includes(x)))A.push(['warn',r+'：可能危及肢體或開放性傷口','確認神經血管狀態，開放性骨折須盡早抗生素']);});
+ const R=(r,f)=>(t.reg[r]?.f||[]).includes(f);
+ if(R('眼','疑似眼球破裂'))A.push(['crit','疑似眼球破裂','避免加壓與沖洗，以硬質眼罩保護，立即眼科會診']);
+ if(R('眼','化學灼傷'))A.push(['crit','眼睛化學灼傷','立即大量沖洗並測 pH，再眼科會診']);
+ if(R('眼','視力下降')||R('眼','前房出血'))A.push(['warn','外傷後視力下降或前房出血','建議眼科會診']);
+ if(R('鼻','鼻中隔血腫'))A.push(['warn','鼻中隔血腫','需引流以免軟骨壞死，耳鼻喉科會診']);
+ if(R('鼻','腦脊髓液鼻漏')||R('頭部/頭皮','耳鼻出血或腦脊髓液漏'))A.push(['crit','疑似顱底骨折或腦脊髓液漏','避免鼻胃管與鼻腔填塞，考慮頭部電腦斷層']);
+ if(R('口腔/牙齒','牙齒脫位或脫落'))A.push(['warn','牙齒脫落','恆牙盡快處理（保存於牛奶或生理食鹽水），牙科會診']);
+ if(R('口腔/牙齒','口內持續出血')||R('口腔/牙齒','張口困難'))A.push(['warn','口腔出血或張口困難','評估呼吸道與下顎骨折']);
+ if(R('咽喉','呼吸喘鳴')||R('咽喉','皮下氣腫')||R('咽喉','流口水'))A.push(['crit','咽喉異常：呼吸道風險','準備處理困難呼吸道，耳鼻喉科會診']);
+ if(R('耳','耳膜穿孔')||R('耳','聽力下降'))A.push(['warn','耳外傷合併聽力下降或耳膜穿孔','耳鼻喉科門診追蹤']);
+ if(t.moi.includes('異物/化學物濺入')&&(t.det['異物/化學物濺入']||{})['物質']==='電池或磁鐵')A.push(['crit','電池或磁鐵異物','耳鼻或食道電池需緊急移除']);
+ if(ABC_REQ.some(k=>!a[k]))A.push(['warn','初步評估 ABCDE 尚未完成','']);
+ if(!t.teta&&Object.values(t.reg).some(e=>e.st==='a'&&(e.f||[]).some(f=>/撕裂|開放|穿刺|擦傷|咬/.test(f))))A.push(['warn','有傷口，尚未確認破傷風疫苗','']);
+ if(S.alg.length===0)A.push(['warn','過敏史未填','開藥前須確認']);
+ if(!t.dx.length)A.push(['warn','尚未填寫診斷','']);
+ return A}
+const alerts=()=>isTr()?alertsTr():alertsNt();
+
+/* ---------- 完成度 ---------- */
+const STEPS={nt:[['tri','主訴確認'],['hpi','現在病史'],['bg','病史背景'],['pe','理學檢查'],['dx','診斷']],tr:[['tri','受傷經過'],['abc','初步評估'],['reg','傷處檢查'],['bg','病史'],['dx','診斷']]};
+function section(){const bg=S.pmh.length&&S.alg.length&&S.med.length;
+ if(isTr()){const t=S.tr,n=ABC_REQ.filter(k=>t.abc[k]).length,rp=regPrio(),r=rp.filter(k=>t.reg[k]?.st).length;
+  return {tri:t.time&&t.moi.length?2:(t.time||t.moi.length?1:0),abc:n===ABC_REQ.length?2:n?1:0,reg:r===rp.length?2:r?1:0,bg:bg&&t.teta?2:(S.pmh.length+S.alg.length+S.med.length?1:0),dx:t.dx.length?2:0}}
+ const pr=prio(),peN=pr.filter(s=>S.pe[s]?.st).length,pain=uni('loc').length||uni('q').length,ex=uniExt();
+ const hpiOk=S.hpi.on&&(!pain||S.hpi.nrs!=null)&&Object.keys(S.hpi.sym).length>=2&&ex.every(e=>S.hpi.ext[e[0]]);
+ return {tri:S.cc.length?2:0,hpi:hpiOk?2:(S.hpi.on?1:0),bg:bg?2:(S.pmh.length+S.alg.length+S.med.length?1:0),pe:peN===pr.length?2:peN?1:0,dx:S.dx.length?2:0}}
+
+/* ---------- 輸出 ---------- */
+const H=(L,t,b)=>L.push(`<h4>${t}</h4><p>${b?esc(b):'<span class="empty">（未填）</span>'}</p>`);
+function sections(){const L=[];
+ const bgTxt=S.pmh.length||S.alg.length||S.med.length?`PMH：${S.pmh.join('、')||'—'}\n過敏：${S.alg.join('、')||'—'}\n用藥：${S.med.join('、')||'—'}`:'';
+ const dxTxt=dxl().map((d,i)=>`${i+1}. ${d[0]}${d[1]?' ('+d[1]+')':''}`).join('\n');
+ if(!isTr()){
+  const h=S.hpi,sym=Object.entries(h.sym),pos=sym.filter(x=>x[1]==1).map(x=>x[0]),neg=sym.filter(x=>x[1]==-1).map(x=>x[0]);
+  H(L,'主訴 CC',[...S.cc,S.ccText].filter(Boolean).join('、')+`　檢傷 ${S.tri.lvl} 級，${S.tri.mode}`);
+  let t='';if(S.cc.length){t=`${PT.age} 歲${PT.sex==='女'?'女':'男'}性，${h.on?h.on+h.unit+'前開始':''}${S.cc[0]}`;
+   if(h.loc.length)t+=`，位置${h.side||''}${h.loc.join('、')}`;if(h.course)t+=`，${h.course}`;
+   if((uni('loc').length||uni('q').length)&&h.nrs!=null)t+=`，疼痛 NRS ${h.nrs}/10`;if(h.q.length)t+=`，性質為${h.q.join('、')}`;t+='。';
+   if(pos.length)t+=`伴隨${pos.join('、')}。`;if(neg.length)t+=`否認${neg.join('、')}。`;
+   const ex=Object.entries(h.ext).filter(x=>x[1]);if(ex.length)t+=ex.map(x=>`${x[0]}：${x[1]}`).join('；')+'。';if(h.note)t+=h.note}
+  H(L,'現在病史 HPI',t);
+  H(L,'過去史 / 過敏 / 用藥',bgTxt+(bgTxt&&(S.soc.length||S.surg)?`\n個人史：${S.soc.join('、')||'—'}\n手術史：${S.surg||'—'}`:''));
+  H(L,'理學檢查 PE',Object.entries(S.pe).filter(x=>x[1].st).map(([s,e])=>`${s}：${e.st==='n'?'正常':((e.f||[]).join('、')||'異常（未註明）')}`).join('\n'));
+ }else{const t=S.tr,a=t.abc,gcs=+t.gcs.e+ +t.gcs.v+ +t.gcs.m;
+  H(L,'主訴 CC',[...S.tri.cc0,...t.cc].join('、')+`　檢傷 ${S.tri.lvl} 級，${S.tri.mode}`);
+  H(L,'受傷經過',t.moi.length||t.time?[`受傷時間：${t.time||'—'}${t.time?'（'+ago(t.time)+'）':''}`,...t.moi.map(m=>`機轉：${m}${Object.entries(t.det[m]||{}).filter(x=>x[1]).map(x=>`　${x[0]}：${x[1]}`).join('')}`),`意識喪失：${t.loc||'—'}　飲酒/藥物：${t.alc||'—'}`,`到院前處置：${t.ems.join('、')||'無'}`].join('\n'):'');
+  const ab=ABCDE.map(st=>{const p=st.g.map(g=>{if(g[1]==='gcs')return `GCS E${t.gcs.e}V${t.gcs.v}M${t.gcs.m}=${gcs}`;const v=a[g[0]];const s=Array.isArray(v)?v.join('、'):v;return s?`${g[0]} ${s}`:null}).filter(Boolean);return p.length?`${st.t[0]}：${p.join('；')}`:null}).filter(Boolean);
+  H(L,'初步評估 Primary Survey',ab.join('\n'));
+  H(L,'傷處檢查 Secondary Survey',Object.entries(t.reg).filter(x=>x[1].st).map(([r,e])=>e.st==='n'?`${r}：無傷`:`${r}${(e.side||[]).length||(e.site||[]).length?'（'+[...(e.side||[]),...(e.site||[])].join('')+'）':''}：${(e.f||[]).join('、')||'有傷（未註明）'}`).join('\n'));
+  H(L,'病史 AMPLE',bgTxt+`\n最後進食：${t.meal||'—'}\n破傷風疫苗：${t.teta||'—'}`)}
+ H(L,'診斷 Dx',dxTxt);return L}
+const note=()=>sections().join('');
+function noteText(){const d=document.createElement('div');d.innerHTML=note().replace(/<h4>/g,'\n【').replace(/<\/h4>/g,'】\n');return d.textContent.trim()}
+function json(){const n=num;
+ const reg=(o)=>Object.fromEntries(Object.entries(o).filter(x=>x[1].st).map(([s,e])=>[s,{status:e.st==='n'?'normal':'abnormal',findings:e.f||[],side:e.side||[],site:e.site||[]}]));
+ const dx=dxl().map((d,i)=>({name:d[0],icd10:d[1]||null,primary:i===0}));
+ if(!isTr()){const h=S.hpi;return JSON.stringify({chart_type:'non_trauma',triage:{ttas_level:S.tri.lvl,arrival_mode:S.tri.mode},
+  chief_complaint:S.cc.map((c,i)=>({text:c,icd10:TP[c]?.icd,primary:i===0})).concat(S.ccText?[{text:S.ccText}]:[]),
+  hpi:{onset:{value:n(h.on),unit:h.unit,relative:'ago'},course:h.course,location:h.loc,laterality:h.side||null,pain_nrs:h.nrs,quality:h.q,
+   symptoms_present:Object.keys(h.sym).filter(k=>h.sym[k]==1),symptoms_denied:Object.keys(h.sym).filter(k=>h.sym[k]==-1),extra:h.ext,free_text:h.note||null},
+  history:{pmh:S.pmh,allergies:S.alg,medications:S.med,social:S.soc,surgical:S.surg||null},physical_exam:reg(S.pe),diagnoses:dx},null,1)}
+ const t=S.tr,gcs=+t.gcs.e+ +t.gcs.v+ +t.gcs.m;
+ return JSON.stringify({chart_type:'trauma',triage:{ttas_level:S.tri.lvl,arrival_mode:S.tri.mode},chief_complaints:[...S.tri.cc0,...t.cc],
+  injury:{time:t.time||null,mechanisms:t.moi.map(m=>({type:m,details:t.det[m]||{},high_risk:Object.entries(MOI[m].hr).some(([l,vs])=>vs.includes((t.det[m]||{})[l]))})),loss_of_consciousness:t.loc||null,alcohol_drug:t.alc||null,prehospital:t.ems},
+  primary_survey:{...t.abc,gcs:{e:+t.gcs.e,v:+t.gcs.v,m:+t.gcs.m,total:gcs}},secondary_survey:reg(t.reg),
+  ample:{allergies:S.alg,medications:S.med,past_history:S.pmh,last_meal:t.meal||null,tetanus:t.teta||null},diagnoses:dx},null,1)}
+
+
+function blank(p){
+  const trm=/傷|撞|跌|車禍|割|骨折|摔|墜/.test(p.cc),m=TPL.find(t=>t.n.split('/').some(w=>p.cc.includes(w)));
+  return {mode:trm?'tr':'nt',tri:{lvl:p.lvl,mode:'自行就醫',cc0:[p.cc]},cc:m?[m.n]:[],ccText:'',
+    hpi:{on:'',unit:'小時',course:'',nrs:null,loc:[],side:'',q:[],sym:{},ext:{},note:''},pmh:[],alg:[],med:[],soc:[],surg:'',pe:{},dx:[],
+    tr:{cc:[],time:'',loc:'',alc:'',moi:[],det:{},ems:[],abc:{},gcs:{e:'4',v:'5',m:'6'},reg:{},meal:'',teta:'',dx:[]}}}
+function rebuild(){const y=root.scrollTop;$('#form').innerHTML=isTr()?buildTr():buildNt();
+  $('#dxlist').innerHTML=Object.keys(isTr()?DXTR:DXNT).map(k=>`<option value="${esc(k)}">`).join('');root.scrollTop=y}
+function paint(A=alerts()){
+  $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  $('#pane').innerHTML=tab==='note'?`<div class="note">${note()}</div>`:tab==='json'?`<pre class="json">${esc(json())}</pre>`:
+   (A.length?A.map(a=>`<div class="alert ${a[0]}"><b>${esc(a[1])}</b>${esc(a[2])}</div>`).join(''):'<div class="none">目前沒有提醒</div>')}
+function syncDx(){dxl().forEach(d=>{if(d[1]&&!PT.dx.some(x=>x.code===d[1])&&PT.dx.length<7)PT.dx.push({code:d[1],ro:false,cc:false,name:d[0]})})}
+function update(){
+  S.tri.lvl=PT.lvl;S.tri.cc0=[PT.cc];const l=S.tri.lvl;
+  $('#triBadge').innerHTML=`<span class="tri" data-l="${l}">檢傷 ${l} 級 · ${TT[l-1][1]}</span>`;
+  $$('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.mode===S.mode));
+  $('#chart').classList.toggle('is-tr',isTr());
+  const sec=section(),st=STEPS[S.mode],done=st.filter(s=>sec[s[0]]==2).length;
+  $('#steps').innerHTML=st.map(([k,n])=>`<a href="#s-${k}" class="${sec[k]==2?'done':sec[k]==1?'part':''}" data-k="${k}"><i>${sec[k]==2?'✓':''}</i>${n}</a>`).join('')+
+   `<div class="prog">完成度 ${done}/5<div><span style="width:${done/5*100}%"></span></div></div>`;
+  const A=alerts(),an=$('#alertN');an.hidden=!A.length;an.textContent=A.length;paint(A);
+  syncDx();save()}
+function onClick(e){
+  const nav=e.target.closest('nav.steps a');if(nav){e.preventDefault();const el=$('#s-'+nav.dataset.k);if(el)el.scrollIntoView({block:'start'});return}
+  const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(b.id==='fullBtn'){document.getElementById('detail').classList.toggle('full');fullLbl();return}
+  if(b.id==='copyNote'){copy(noteText(),'已複製病歷文字');return}
+  if(b.id==='copyJson'){copy(json(),'已複製 JSON');return}
+  if(b.id==='saveNote'){PT.notes.push({t:'【病歷】\n'+noteText(),at:new Date().toLocaleString('zh-TW',{hour12:false})});save();toast('已存入病程');return}
+  if(d.mode){S.mode=d.mode;rebuild();update();root.scrollTop=0;return}
+  if(d.m){const a=[...(get(d.m)||[])],i=a.indexOf(d.v);i<0?a.push(d.v):a.splice(i,1);setp(d.m,a);
+    const rt=d.m,x=EXCL[rt];if(x){if(i<0&&d.v===x)setp(rt,[x]);else if(d.v!==x)setp(rt,get(rt).filter(y=>y!==x))}
+    if(rt==='cc'){if(!S.cc.length)S.cc=[d.v];prune()}}
+  else if(d.s){setp(d.s,get(d.s)===d.v?'':d.v)}
+  else if(d.act==='nrs'){S.hpi.nrs=+d.n}
+  else if(d.act==='sym'){const c=S.hpi.sym[d.v]||0,n=c===0?1:c===1?-1:0;n?S.hpi.sym[d.v]=n:delete S.hpi.sym[d.v]}
+  else if(d.act==='seg'){const o={...(get(d.p)||{})};o.st=o.st===d.st?'':d.st;if(o.st!=='a'){o.f=[];o.site=[];o.side=[]}setp(d.p,o)}
+  else if(d.act==='allN'){const rt=isTr()?'tr.reg':'pe',list=isTr()?regPrio():prio();list.forEach(s=>{if(!get(rt+'.'+s)?.st)setp(rt+'.'+s,{st:'n'})})}
+  else if(d.act==='dxadd'){addDx(d.v,d.c)}
+  else if(d.act==='dxdel'){dxl().splice(+d.i,1)}
+  else if(d.act==='dxup'){const[x]=dxl().splice(+d.i,1);dxl().unshift(x)}
+  else if(d.t){tab=d.t;paint();return}
+  else return;
+  rebuild();update()}
+function onInput(e){const t=e.target;
+  if(t.dataset.i!==undefined)setp(t.dataset.i,t.value);else return;
+  const a=$('#agoT');if(a)a.textContent=ago(S.tr.time);update()}
+function onChange(e){const t=e.target;
+  if(t.dataset.gcs){S.tr.gcs[t.dataset.gcs]=t.value;rebuild();update()}
+  else if(t.id==='dxFree'){const v=t.value.trim();if(v){const m=isTr()?DXTR:DXNT;addDx(v,m[v]);rebuild();update();$('#dxFree').focus()}}}
+function fullLbl(){const f=document.getElementById('detail').classList.contains('full'),b=$('#fullBtn');if(b)b.textContent=f?'✕ 縮小':'⛶ 放大病歷'}
+function copy(txt,m){(navigator.clipboard?.writeText(txt)||Promise.reject()).then(()=>toast(m),()=>{tab='json';paint();toast('無法自動複製，請手動選取')})}
+function render(p,el){
+  root=el;PT=p;S=p.chart=p.chart||blank(p);S.tri=S.tri||{lvl:p.lvl,mode:'自行就醫',cc0:[p.cc]};
+  t0s=new Date(p.arrive).toTimeString().slice(0,5);
+  root.innerHTML=`<div class="chart" id="chart"><div class="cbar">
+    <div class="modebar"><span>病歷類型</span><div class="seg" id="modeSeg"><button type="button" class="nt" data-mode="nt">非外傷</button><button type="button" class="tr" data-mode="tr">外傷</button></div></div>
+    <div id="triBadge"></div><nav class="steps" id="steps"></nav><button type="button" class="btn" id="fullBtn"></button></div>
+    <div class="cgrid"><main id="form"></main>
+    <aside class="out"><div class="tabs" id="tabs"><button data-t="note" class="on">病歷預覽</button><button data-t="alerts">提醒<span class="n" id="alertN" hidden></span></button><button data-t="json">結構化資料</button></div>
+    <div class="pane" id="pane"></div>
+    <div class="foot"><button class="btn" id="saveNote">存入病程</button><button class="btn" id="copyNote">複製文字</button><button class="btn" id="copyJson">複製 JSON</button></div></aside></div>
+    <datalist id="dxlist"></datalist></div>`;
+  root.onclick=e=>{if(!e.target.closest('.chart'))return;onClick(e);e.stopPropagation()};
+  root.oninput=e=>{if(!e.target.closest('.chart'))return;onInput(e);e.stopPropagation()};
+  root.onchange=e=>{if(!e.target.closest('.chart'))return;onChange(e);e.stopPropagation()};
+  rebuild();update();fullLbl();
 }
-function triRender(){
-  const m=$('#triModal'),p=cur()||{},T=TT;
-  const cats=TRI.find(c=>c[0]===T.cat)||TRI[0],cc=cats[1].find(c=>c[0]===T.cc);
-  const bs=cc?triBasis(cc):[];
-  m.innerHTML=`<div class="tmb"><div class="tt"><b class="cross">✚</b>請選擇檢傷類別（五級檢傷）　<span style="font-size:14px;opacity:.8">${esc(p.name||'')}｜${esc(p.cc||'')}</span><button class="x" data-tx="cancel">×</button></div>
-  <div class="tri3">
-    <div class="cl c1"><div class="h">大分類</div>${TRI.map(c=>`<div class="it ${c[0]===T.cat?'on':''}" data-tcat="${c[0]}">${c[0]}</div>`).join('')}</div>
-    <div class="cl c2"><div class="h">主訴</div>${cats[1].map(c=>`<div class="it ${c[0]===T.cc?'on':''}" data-tcc="${esc(c[0])}">${esc(c[0])}</div>`).join('')}</div>
-    <div class="cl c3"><div class="h">判斷依據</div>${cc?bs.map(b=>`<div class="it tl${b[0]} ${b[1]===T.basis?'on':''}" data-tb="${esc(b[1])}" data-tl="${b[0]}">${esc(b[1])}</div>`).join(''):'<div class="emp">請先選擇主訴</div>'}</div>
-  </div>
-  <div class="tmf">
-    <div><div class="lv"><span class="bx tl${T.auto}">${T.auto}</span>←電腦分級</div>
-      <div class="cur" style="margin-top:10px">目前級數：<span class="bx tl${T.init}">${T.init}</span></div></div>
-    <div>
-      <div class="lv">修改後分級　<span class="bx tl${T.mod}">${T.mod}</span>　預修改分級→ ${[1,2,3,4,5].map(n=>`<button class="pick tl${n} ${T.mod===n?'on':''}" data-tmod="${n}">${n}</button>`).join('')}</div>
-      <div class="lv" style="margin-top:6px">修改原因說明 <select id="triWhy" style="flex:1;min-width:220px">${TRI_WHY.map(w=>`<option ${w===T.reason?'selected':''}>${w}</option>`).join('')}</select></div>
-      <textarea id="triNote" placeholder="備註（選填）">${esc(T.note)}</textarea>
-      <div class="btns" style="flex-direction:row;margin-top:6px;justify-content:flex-end"><button class="g" data-tx="reset">重設</button><button data-tx="save">儲存</button><button data-tx="cancel">取消</button></div>
-    </div></div></div>`;
-}
-function triClick(e){
-  const t=e.target.closest('[data-tcat],[data-tcc],[data-tb],[data-tmod],[data-tx]');
-  if(!t){if(e.target.id==='triModal')closeTri();return}
-  const T=TT;
-  if(t.dataset.tcat){T.cat=t.dataset.tcat;T.cc='';T.basis=''}
-  else if(t.dataset.tcc){T.cc=t.dataset.tcc;T.basis=''}
-  else if(t.dataset.tb){T.basis=t.dataset.tb;T.auto=+t.dataset.tl;T.mod=T.auto}
-  else if(t.dataset.tmod)T.mod=+t.dataset.tmod;
-  else if(t.dataset.tx==='cancel'){closeTri();return}
-  else if(t.dataset.tx==='reset'){T.cat=triGuess(cur().cc);T.cc='';T.basis='';T.auto=T.iauto;T.mod=T.init;T.reason='';T.note=''}
-  else if(t.dataset.tx==='save'){
-    const p=cur();
-    if(T.mod!==T.auto&&!T.reason){toast('修改分級需選擇「修改原因說明」');return}
-    const old=p.lvl;p.lvl=T.mod;
-    p.tri={cat:T.cat,cc:T.cc,basis:T.basis,auto:T.auto,mod:T.mod,reason:T.reason,note:T.note};
-    p.notes.push({t:`檢傷：${T.cat}${T.cc?'／'+T.cc:''}${T.basis?'｜'+T.basis:''}；電腦分級 ${T.auto}、${old===T.mod?'維持':'修改為'} ${T.mod}${T.reason?'（'+T.reason+(T.note?'：'+T.note:'')+'）':''}`,at:new Date().toLocaleString('zh-TW',{hour12:false})});
-    save();closeTri();renderList();renderDetail();toast(`檢傷已儲存：${T.mod} 級`);return}
-  triRender();
-}
-function closeTri(){const m=$('#triModal');if(m)m.classList.remove('show');TT=null}
+return {render};
+})();
 function renderDx(){
   const p=cur(),el=$('#dxs');if(!el)return;
   let h='';
@@ -1072,7 +1347,6 @@ function renderDx(){
 document.addEventListener('click',e=>{
   const t=e.target;
   if(t.dataset&&t.dataset.tab==='檢傷'&&cur()){openTri();return}
-  if(S.tab==='病歷'&&t.closest&&t.closest('.rec')&&recClick(e))return;
   if(t.dataset.dirv!==undefined&&t.closest('#dirMenu')){const id=t.closest('#dirMenu').dataset.pid;closeDir();setDir(id,t.dataset.dirv);return}
   if(t.id==='themeBtn'){THEME=THEME==='dark'?'dim':'dark';try{localStorage.setItem('er-theme',THEME)}catch(_){}applyTheme();return}
   const dtd=t.closest('td.dir:not(.auto)');
@@ -1142,7 +1416,6 @@ function addDx(code,name,quiet){
   p.dx.push(e);save();const i=$('#icd');if(i){i.value='';$('#sug').style.display='none'}renderDx();return true;
 }
 document.addEventListener('input',e=>{
-  if(S.tab==='病歷'&&recInput(e))return;
   if(e.target.id==='q'){S.q=e.target.value;renderList()}
   if(e.target.id==='fId'){S.fId=e.target.value;renderList()}
   if(e.target.id==='fSeq'){S.fSeq=e.target.value;renderList()}

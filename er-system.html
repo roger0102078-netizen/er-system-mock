@@ -288,6 +288,8 @@ table.emr .st.Y{background:#7cc3cc;color:#0b3a42}table.emr .st.N{background:#e3d
 table.emr .st.P{background:#8cc46a;color:#1f4a10}table.emr .st.O{background:#e8998a;color:#5a1a10}
 table.emr .stay.s1{color:#b3261e}table.emr .stay.s2{color:#a84f00}table.emr .stay.s3{color:#1b5a9a}table.emr .stay.s4{color:#000}
 table.emr td.dir{cursor:pointer}
+table.emr td.dir.auto{cursor:default}table.emr td.dir.auto:hover{background:none;outline:none}
+.cons{color:#6a2f8f}body.dark .cons{color:#d6a8ff}
 table.emr td.dir:hover{background:rgba(255,255,255,.35);outline:1px dashed #5b7a60}
 .side{background:#a7b6a3;border-left:1px solid #93a690;color:#17221a}
 .side .f span{color:#1f3a25}.side .f input{background:#e9eee6;border-color:#84997f;color:#111}
@@ -587,12 +589,15 @@ let patients=(()=>{
     q.id=String(101+i).padStart(4,'0');
     q.mrn=String(10000000+(parseInt(q.id,10)*7919003)%89999999).padStart(8,'0');
   });
+  /* 會診：有開立會診者，動向欄由系統自動顯示「會診某科」，不需手動選 */
+  const CD={A:['心臟內科','神經內科'],B:['神經內科','胸腔內科','腸胃內科'],C:['腸胃內科','腎臟科'],D:['外科','神經外科'],E:['骨科'],F:['感染科'],觀察:['腸胃內科','心臟內科'],ICU待床:['神經內科']};
+  for(const q of out){if(q.dir==='等照會'){const a=CD[q.zone]||['內科'];q.consults=[{dept:a[parseInt(q.id,10)%a.length],note:'',at:q.arrive+36e5,done:false}];q.dir=''}}
   /* 範例：模擬一起事故的大量傷患，分散在各區（旗標與區域無關） */
   let m=0;for(const q of out){if(m<8&&['A','B','D','E'].includes(q.zone)&&/機車|擦撞|外傷|撞傷|跌倒|傷|割/.test(q.cc)){q.mci=['重','中','輕','中','輕','重','輕','中'][m];m++}}
   return out;
 })();
-try{const s=localStorage.getItem('er-mock-v8');if(s)patients=JSON.parse(s)}catch(e){}
-const save=()=>{try{localStorage.setItem('er-mock-v8',JSON.stringify(patients))}catch(e){}};
+try{const s=localStorage.getItem('er-mock-v9');if(s)patients=JSON.parse(s)}catch(e){}
+const save=()=>{try{localStorage.setItem('er-mock-v9',JSON.stringify(patients))}catch(e){}};
 
 /* ===== 狀態 ===== */
 const S={zone:'全部',view:'list',sort:'id',fId:'',fSeq:'',fBed:'',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'診斷'};
@@ -600,6 +605,11 @@ const $=s=>document.querySelector(s);
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)};
 const fmtH=h=>h<1?Math.round(h*60)+' 分':h<48?h.toFixed(1)+' 時':(h/24).toFixed(1)+' 天';
 const hrs=p=>(Date.now()-p.arrive)/H;
+const CDEPTS=['外科','骨科','神經外科','心臟內科','神經內科','胸腔內科','腸胃內科','腎臟科','感染科','內分泌科','血液腫瘤科','婦產科','泌尿科','整形外科','眼科','耳鼻喉科','精神科','兒科','牙科'];
+const activeCons=p=>(p.consults||[]).filter(c=>!c.done);
+const dirCell=p=>{const c=activeCons(p);
+  return c.length?`<td class="dir auto" title="會診中（系統自動顯示）"><b class="cons">會診${c.map(x=>x.dept).join('、')}</b></td>`
+    :`<td class="dir" title="點擊選擇動向">${p.dir||'<span style="opacity:.45">—</span>'}</td>`};
 const stayCls=h=>h<1?'s1':h<2?'s2':h<4?'s3':'s4';
 
 setInterval(()=>{$('#clock').textContent=new Date().toLocaleString('zh-TW',{hour12:false})},1000);
@@ -661,7 +671,7 @@ function renderList(){
     $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號 <small>到院</small></th><th>床號</th><th>狀態</th><th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>主責醫師</th><th>負責護理師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
     L.map((p,i)=>(S.zone==='大'&&(i===0||L[i-1].mci!==p.mci)?`<tr class="grp t${p.mci}"><td colspan="${S.ho?21:20}">大量傷患｜${p.mci}級（${L.filter(x=>x.mci===p.mci).length} 位）</td></tr>`:'')+`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
       <td title="到院 ${new Date(p.arrive).toLocaleString('zh-TW',{hour12:false})}"><b>${p.id}</b> <small class="arr">${new Date(p.arrive).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</small></td><td><b>${p.bed}</b></td><td>${stat(p)}</td><td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
-      <td class="dir" title="點擊選擇動向">${p.dir||'<span style="opacity:.45">—</span>'}</td><td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.nur}</td>
+      ${dirCell(p)}<td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.nur}</td>
       ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k])}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
   }
   $('#hoN').textContent=S.checked.size;
@@ -717,6 +727,14 @@ function renderTab(){
       </div>
     </fieldset>`;
     renderDx();
+  }else if(S.tab==='會診'){
+    const cs=p.consults||[],tm=t=>new Date(t).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    tb.innerHTML=`<fieldset class="fs"><legend>開立會診</legend>
+      <div class="row"><select id="cDept">${CDEPTS.map(d=>`<option>${d}</option>`).join('')}</select>
+      <input class="search" id="cNote" placeholder="會診事由（選填）" style="flex:1;min-width:160px">
+      <button class="btn primary" id="cAdd">開立會診</button></div>
+      <div class="lbl" style="margin-top:6px">開立後，清單的「動向」會自動顯示「會診＋科別」；全部完成後恢復原本動向。</div></fieldset>
+      <fieldset class="fs"><legend>會診紀錄</legend>${cs.length?cs.map((c,i)=>`<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line)"><b style="min-width:84px">${c.dept}</b><span style="flex:1">${c.note||''}</span><span class="lbl">${tm(c.at)}</span>${c.done?'<span class="lbl">已完成</span>':`<b class="cons">會診中</b><button class="btn" data-cdone="${i}">完成會診</button>`}</div>`).join(''):'<div class="lbl">尚無會診紀錄</div>'}</fieldset>`;
   }else if(S.tab==='病程'){
     tb.innerHTML=`<div class="row"><textarea id="nt" rows="2" placeholder="輸入病程紀錄…" style="flex:1"></textarea><button class="btn primary" id="addNt">新增</button></div>
     <div id="nts">${p.notes.map(n=>`<div class="note">${n.t}<br><small>${n.at}</small></div>`).reverse().join('')||'<div class="empty">尚無病程紀錄</div>'}</div>`;
@@ -747,7 +765,7 @@ document.addEventListener('click',e=>{
   const t=e.target;
   if(t.dataset.dirv!==undefined&&t.closest('#dirMenu')){const id=t.closest('#dirMenu').dataset.pid;closeDir();setDir(id,t.dataset.dirv);return}
   if(t.id==='themeBtn'){THEME=THEME==='dark'?'dim':'dark';try{localStorage.setItem('er-theme',THEME)}catch(_){}applyTheme();return}
-  const dtd=t.closest('td.dir');
+  const dtd=t.closest('td.dir:not(.auto)');
   if(dtd){openDir(dtd.closest('tr').dataset.id,e.clientX,e.clientY);return}
   closeDir();
   if(t.dataset.z){S.zone=t.dataset.z;renderChips();renderList();return}
@@ -761,6 +779,15 @@ document.addEventListener('click',e=>{
   if(row&&!t.matches('input')){
     if(S.ho&&S.view==='card'&&false){}
     S.sel=row.dataset.id;S.tab=S.tab||'診斷';renderList();renderDetail();return}
+  if(t.id==='cAdd'){
+    const p=cur(),d=$('#cDept').value,n=$('#cNote').value.trim();
+    (p.consults=p.consults||[]).push({dept:d,note:n,at:Date.now(),done:false});
+    p.notes.push({t:`開立會診：${d}${n?'（'+n+'）':''}`,at:new Date().toLocaleString('zh-TW',{hour12:false})});
+    save();renderTab();renderList();toast(`已開立會診：${d}`);return}
+  if(t.dataset.cdone!==undefined){
+    const p=cur(),c=p.consults[+t.dataset.cdone];c.done=true;c.doneAt=Date.now();
+    p.notes.push({t:`會診完成：${c.dept}`,at:new Date().toLocaleString('zh-TW',{hour12:false})});
+    save();renderTab();renderList();return}
   if(t.id==='dToggle'){S.dmin=!S.dmin;renderDetail();return}
   if(t.dataset.icd){openIcd(t.dataset.icd);return}
   if(t.id==='icdClose'||t.id==='icdModal'){closeIcd();return}

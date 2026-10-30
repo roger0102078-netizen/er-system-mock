@@ -506,6 +506,39 @@ body.dark .rc{background:#2a3a30}body.dark .rc:hover{background:#34483b}
 body.dark .rec input,body.dark .rec textarea,body.dark .rec select,body.dark .rec .prev{background:#1f2a24}
 body.dark .rec .vs input.bad{background:#6a2b25;color:#ffd9d4}
 @media(max-width:1000px){.rec{grid-template-columns:1fr}}
+
+/* ===== 五級檢傷視窗 ===== */
+.tm{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:none;align-items:center;justify-content:center}
+.tm.show{display:flex}
+.tmb{background:#e8efe2;border:2px solid #3b5a3a;border-radius:6px;width:min(980px,96vw);max-height:94vh;overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.4);color:#12210f}
+.tmb .tt{display:flex;align-items:center;gap:8px;background:#f4f7f0;padding:5px 10px;font-size:16px;border-bottom:1px solid #9bb391}
+.tmb .tt .x{margin-left:auto;border:0;background:none;font-size:22px;cursor:pointer;color:inherit}
+.tmb .tt b.cross{color:#d22;font-size:20px}
+.tri3{display:grid;grid-template-columns:150px 1.1fr 1.5fr;height:300px;border-bottom:1px solid #9bb391;background:#cfe0c6}
+.tri3 .cl{overflow:auto;border-right:1px solid #9bb391}
+.tri3 .cl:last-child{border-right:0}
+.tri3 .h{position:sticky;top:0;background:#16168a;color:#fff;padding:2px 6px;font-size:14px;z-index:1}
+.tri3 .it{padding:3px 6px;border-bottom:1px solid #b5c9ab;cursor:pointer;font-size:15px;line-height:1.35}
+.tri3 .c1 .it{background:#cfd4cc}.tri3 .c2 .it{background:#efcfa6}
+.tri3 .it:hover{filter:brightness(1.07)}
+.tri3 .it.on{outline:2px solid #1b4fd6;outline-offset:-2px;font-weight:800}
+.tri3 .it.red{color:#d11}
+.tl1{background:#f78df0}.tl2{background:#ff8a2a}.tl3{background:#ffee44}.tl4{background:#86e870}.tl5{background:#84e8f2}
+.tri3 .emp{padding:10px;opacity:.6;font-size:14px}
+.tmf{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;padding:8px 12px;align-items:start}
+.tmf .lv{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:15px}
+.tmf .bx{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;font-size:24px;font-weight:800;border-radius:4px;border:1px solid #6b8a62}
+.tmf .pick{width:46px;height:46px;font-size:26px;font-weight:800;border:2px solid transparent;border-radius:4px;cursor:pointer;color:#222}
+.tmf .pick.on{border-color:#123;box-shadow:0 0 0 2px #fff inset}
+.tmf select,.tmf textarea{border:1px solid #6b8a62;border-radius:4px;background:#fffbe0;font:inherit;padding:3px 6px;color:#111}
+.tmf textarea{width:100%;box-sizing:border-box;height:76px;resize:vertical}
+.tmf .btns{display:flex;flex-direction:column;gap:8px}
+.tmf .btns button{background:#0f8a82;color:#fff;border:0;border-radius:3px;font-size:18px;font-weight:800;padding:8px 22px;cursor:pointer}
+.tmf .btns button.g{background:#8a8f88}
+.tmf .btns button:hover{filter:brightness(1.1)}
+.tmf .cur{display:flex;align-items:center;gap:8px}
+body.dark .tmb{background:#26332b;color:#e6efe8;border-color:#6b8a62}
+body.dark .tmb .tt{background:#2e3d33}
 </style>
 
 </head>
@@ -939,6 +972,84 @@ function recInput(e){
   else return false;
   save();recPrev(p);return true;
 }
+
+/* ===== 五級檢傷（TTAS 示意資料，非正式判定標準）===== */
+const TG={
+ resp:[[1,'重度呼吸窘迫(<90%)'],[2,'中度呼吸窘迫(<92%)'],[3,'輕度呼吸窘迫(92-94%)']],
+ hemo:[[1,'休克'],[2,'血行動力循環不足'],[3,'血壓或心跳有異於病人之平常數值，但血行動力穩定']],
+ cons:[[1,'無意識(GCS3-8)'],[2,'意識程度改變(GCS9-13)'],[3,'輕微意識改變(GCS14)']],
+ fever:[[2,'發燒(免疫功能缺陷)'],[2,'發燒疑似敗血症，伴隨任一徵象(中度呼吸窘迫、血行動力不足、意識改變)'],[3,'發燒(看起來有病容)'],[4,'發燒(看起來無病容)']],
+ pain:[[2,'重度疼痛(8-10)'],[3,'中度疼痛(4-7)'],[4,'輕度疼痛(<4)']],
+ bleed:[[1,'大量出血，血行動力不穩'],[2,'中度出血，持續出血不止'],[3,'輕度出血，已止血'],[4,'輕微出血']],
+ chr:[[4,'慢性或反覆性症狀，生命徵象正常，無其他急性徵象'],[5,'慢性症狀，無急性變化／回診、拿藥、開證明']]
+};
+const TRI=[
+ ['呼吸系統',[['呼吸道阻塞/異物',['resp'],[[1,'完全呼吸道阻塞']]],['呼吸喘/呼吸困難',['resp']],['咳嗽',['resp','fever','chr']],['咳血',['bleed','resp']],['胸痛(呼吸性)',['pain','resp']],['喘鳴',['resp']]]],
+ ['心臟血管系統',[['胸痛(心因性)',['hemo','pain'],[[1,'心跳停止/無脈搏'],[2,'典型心因性胸痛，疑急性冠心症']]],['心悸',['hemo'],[[2,'心律不整伴血行動力不穩']]],['高血壓',['chr'],[[2,'血壓>220/130 伴器官症狀'],[3,'血壓>180/110 無症狀']]],['水腫',['resp','chr']],['暈厥',['cons','hemo']]]],
+ ['腸胃系統',[['腹痛',['hemo','pain'],[[2,'疑急腹症（腹膜炎徵象）']]],['噁心/嘔吐',['hemo'],[[3,'持續嘔吐，輕度脫水'],[4,'噁心嘔吐，可進食']]],['腹瀉',['hemo'],[[3,'脫水'],[4,'輕度腹瀉']]],['吐血/解黑便',['bleed','hemo']],['便秘',['chr'],[[4,'腹脹便秘']]],['吞嚥困難/異物',['resp'],[[3,'吞嚥困難']]]]],
+ ['神經系統',[['意識程度改變',['cons']],['混亂',['cons']],['眩暈/頭暈',['hemo','chr'],[[3,'中度眩暈合併嘔吐']]],['頭痛',['pain'],[[2,'突發劇烈頭痛(雷擊樣)'],[2,'頭痛合併局部神經學缺損'],[3,'頭痛合併發燒、頸部僵硬']]],['抽搐',[],[[1,'持續抽搐'],[2,'抽搐後意識未恢復'],[3,'抽搐後恢復，意識清楚']]],['步態不穩/運動失調',['chr'],[[3,'急性發作']]],['震顫',['chr']],['肢體無力',['chr'],[[2,'急性單側無力']]],['知覺喪失/感覺異常',['chr'],[[2,'急性單側麻木']]],['中風症狀',[],[[2,'中風症狀，發作 4.5 小時內'],[3,'中風症狀，發作超過 4.5 小時或已緩解']]]]],
+ ['骨骼系統',[['肢體疼痛',['pain'],[[2,'肢體缺血徵象']]],['疑似骨折',[],[[2,'開放性骨折/明顯變形，神經血管受損'],[3,'閉鎖性骨折'],[4,'輕微扭傷挫傷']]],['背痛',['pain'],[[2,'疑似脊髓壓迫']]],['關節腫痛',['pain'],[[3,'紅腫熱痛，疑感染']]],['頭部外傷',['cons'],[[2,'高能量創傷機轉'],[3,'頭部外傷，意識清楚'],[4,'輕微頭部撞傷']]],['撕裂傷/割傷',['bleed']],['車禍/高處墜落',['hemo'],[[2,'高能量創傷機轉']]],['燒燙傷',[],[[2,'大面積或呼吸道燒傷'],[3,'中度燒燙傷'],[4,'輕度燒燙傷']]]]],
+ ['泌尿系統',[['排尿困難/頻尿',['fever'],[[4,'輕微不適']]],['血尿',['bleed']],['側腹痛/腰痛',['pain'],[[3,'疑腎絞痛']]],['尿滯留',[],[[3,'急性尿滯留，膀胱脹痛']]],['陰囊疼痛',['pain'],[[2,'疑睪丸扭轉']]]]],
+ ['皮膚系統',[['皮疹',['fever'],[[2,'疑嚴重藥物過敏/史蒂文生強生症候群'],[4,'局部皮疹']]],['蕁麻疹/過敏',['resp'],[[2,'過敏反應伴呼吸或血行動力異常'],[4,'局部蕁麻疹']]],['膿瘍/蜂窩性組織炎',['fever'],[[3,'擴散性紅腫熱痛'],[4,'局部膿瘍']]],['傷口換藥/拆線',[],[[5,'傷口換藥/拆線']]]]],
+ ['耳鼻喉系統',[['耳痛',['pain','fever']],['喉嚨痛',['fever'],[[3,'疑會厭炎，流口水'],[4,'喉嚨痛']]],['鼻出血',['bleed']],['流鼻水/鼻塞',[],[[4,'上呼吸道感染症狀'],[5,'輕微鼻塞']]],['聽力喪失',[],[[3,'突發性聽力喪失']]],['耳鼻異物',[],[[3,'耳鼻異物']]]]],
+ ['婦產科',[['陰道出血',['bleed','hemo'],[[2,'懷孕合併出血']]],['下腹痛',['pain'],[[2,'疑子宮外孕']]],['懷孕相關問題',[],[[2,'懷孕超過 20 週，宮縮或破水'],[3,'懷孕未滿 20 週不適']]],['性侵害',[],[[2,'性侵害，需緊急處置'],[3,'性侵害，生命徵象穩定']]]]],
+ ['心理健康',[['自殺意念/行為',[],[[2,'自殺行為，具立即危險'],[3,'自殺意念，無具體計畫']]],['焦慮/恐慌',[],[[3,'恐慌發作'],[4,'焦慮']]],['暴力/攻擊',[],[[2,'有暴力傾向，無法控制'],[3,'激動但可配合']]],['精神症狀',[],[[3,'幻覺妄想']]]]],
+ ['物質誤用',[['酒精中毒',['cons'],[[3,'醉酒，意識尚清'],[4,'輕微酒精戒斷']]],['藥物過量/中毒',['cons','hemo'],[[2,'疑似服毒/過量']]],['藥物戒斷',[],[[3,'戒斷症狀明顯']]]]],
+ ['一般和其他',[['發燒',['fever','resp']],['虛弱/全身無力',['hemo','chr']],['疼痛',['pain']],['血糖異常',['cons'],[[2,'血糖<60 有症狀'],[3,'血糖>400'],[4,'血糖偏高無症狀']]],['脫水',['hemo']],['回診/拿藥/開證明',[],[[5,'回診拿藥/開診斷書']]]]]
+];
+const TRI_WHY=['','病人主訴與電腦判斷不符','生命徵象與判斷依據不符','病情變化/再評估','臨床經驗判斷','家屬／病人反映','其他'];
+const triBasis=c=>{const a=[...(c[2]||[])];(c[1]||[]).forEach(g=>a.push(...TG[g]));return a.map((x,i)=>[...x,i]).sort((a,b)=>a[0]-b[0]||a[2]-b[2])};
+const triGuess=cc=>/胸/.test(cc)?'心臟血管系統':/腹|胃|腸|嘔|瀉/.test(cc)?'腸胃系統':/喘|咳|呼吸/.test(cc)?'呼吸系統':/頭|暈|中風|無力|抽|意識/.test(cc)?'神經系統':/傷|骨|折|跌|撞|車禍|痛/.test(cc)?'骨骼系統':/尿|腰/.test(cc)?'泌尿系統':'一般和其他';
+let TT=null;
+function openTri(){
+  const p=cur();if(!p)return;
+  const o=p.tri||{};
+  TT={pid:p.id,cat:o.cat||triGuess(p.cc),cc:o.cc||'',basis:o.basis||'',auto:o.auto||p.lvl,mod:p.lvl,reason:o.reason||'',note:o.note||'',init:p.lvl,iauto:o.auto||p.lvl};
+  let m=$('#triModal');if(!m){m=document.createElement('div');m.id='triModal';m.className='tm';document.body.appendChild(m);
+    m.addEventListener('click',triClick);m.addEventListener('input',e=>{if(e.target.id==='triNote')TT.note=e.target.value});
+    m.addEventListener('change',e=>{if(e.target.id==='triWhy')TT.reason=e.target.value})}
+  m.classList.add('show');triRender();
+}
+function triRender(){
+  const m=$('#triModal'),p=cur()||{},T=TT;
+  const cats=TRI.find(c=>c[0]===T.cat)||TRI[0],cc=cats[1].find(c=>c[0]===T.cc);
+  const bs=cc?triBasis(cc):[];
+  m.innerHTML=`<div class="tmb"><div class="tt"><b class="cross">✚</b>請選擇檢傷類別（五級檢傷）　<span style="font-size:14px;opacity:.8">${esc(p.name||'')}｜${esc(p.cc||'')}</span><button class="x" data-tx="cancel">×</button></div>
+  <div class="tri3">
+    <div class="cl c1"><div class="h">大分類</div>${TRI.map(c=>`<div class="it ${c[0]===T.cat?'on':''}" data-tcat="${c[0]}">${c[0]}</div>`).join('')}</div>
+    <div class="cl c2"><div class="h">主訴</div>${cats[1].map(c=>`<div class="it ${c[0]===T.cc?'on':''}" data-tcc="${esc(c[0])}">${esc(c[0])}</div>`).join('')}</div>
+    <div class="cl c3"><div class="h">判斷依據</div>${cc?bs.map(b=>`<div class="it tl${b[0]} ${b[1]===T.basis?'on':''}" data-tb="${esc(b[1])}" data-tl="${b[0]}">${esc(b[1])}</div>`).join(''):'<div class="emp">請先選擇主訴</div>'}</div>
+  </div>
+  <div class="tmf">
+    <div><div class="lv"><span class="bx tl${T.auto}">${T.auto}</span>←電腦分級</div>
+      <div class="cur" style="margin-top:10px">目前級數：<span class="bx tl${T.init}">${T.init}</span></div></div>
+    <div>
+      <div class="lv">修改後分級　<span class="bx tl${T.mod}">${T.mod}</span>　預修改分級→ ${[1,2,3,4,5].map(n=>`<button class="pick tl${n} ${T.mod===n?'on':''}" data-tmod="${n}">${n}</button>`).join('')}</div>
+      <div class="lv" style="margin-top:6px">修改原因說明 <select id="triWhy" style="flex:1;min-width:220px">${TRI_WHY.map(w=>`<option ${w===T.reason?'selected':''}>${w}</option>`).join('')}</select></div>
+      <textarea id="triNote" placeholder="備註（選填）">${esc(T.note)}</textarea>
+      <div class="btns" style="flex-direction:row;margin-top:6px;justify-content:flex-end"><button class="g" data-tx="reset">重設</button><button data-tx="save">儲存</button><button data-tx="cancel">取消</button></div>
+    </div></div></div>`;
+}
+function triClick(e){
+  const t=e.target.closest('[data-tcat],[data-tcc],[data-tb],[data-tmod],[data-tx]');
+  if(!t){if(e.target.id==='triModal')closeTri();return}
+  const T=TT;
+  if(t.dataset.tcat){T.cat=t.dataset.tcat;T.cc='';T.basis=''}
+  else if(t.dataset.tcc){T.cc=t.dataset.tcc;T.basis=''}
+  else if(t.dataset.tb){T.basis=t.dataset.tb;T.auto=+t.dataset.tl;T.mod=T.auto}
+  else if(t.dataset.tmod)T.mod=+t.dataset.tmod;
+  else if(t.dataset.tx==='cancel'){closeTri();return}
+  else if(t.dataset.tx==='reset'){T.cat=triGuess(cur().cc);T.cc='';T.basis='';T.auto=T.iauto;T.mod=T.init;T.reason='';T.note=''}
+  else if(t.dataset.tx==='save'){
+    const p=cur();
+    if(T.mod!==T.auto&&!T.reason){toast('修改分級需選擇「修改原因說明」');return}
+    const old=p.lvl;p.lvl=T.mod;
+    p.tri={cat:T.cat,cc:T.cc,basis:T.basis,auto:T.auto,mod:T.mod,reason:T.reason,note:T.note};
+    p.notes.push({t:`檢傷：${T.cat}${T.cc?'／'+T.cc:''}${T.basis?'｜'+T.basis:''}；電腦分級 ${T.auto}、${old===T.mod?'維持':'修改為'} ${T.mod}${T.reason?'（'+T.reason+(T.note?'：'+T.note:'')+'）':''}`,at:new Date().toLocaleString('zh-TW',{hour12:false})});
+    save();closeTri();renderList();renderDetail();toast(`檢傷已儲存：${T.mod} 級`);return}
+  triRender();
+}
+function closeTri(){const m=$('#triModal');if(m)m.classList.remove('show');TT=null}
 function renderDx(){
   const p=cur(),el=$('#dxs');if(!el)return;
   let h='';
@@ -960,6 +1071,7 @@ function renderDx(){
 /* ===== 事件 ===== */
 document.addEventListener('click',e=>{
   const t=e.target;
+  if(t.dataset&&t.dataset.tab==='檢傷'&&cur()){openTri();return}
   if(S.tab==='病歷'&&t.closest&&t.closest('.rec')&&recClick(e))return;
   if(t.dataset.dirv!==undefined&&t.closest('#dirMenu')){const id=t.closest('#dirMenu').dataset.pid;closeDir();setDir(id,t.dataset.dirv);return}
   if(t.id==='themeBtn'){THEME=THEME==='dark'?'dim':'dark';try{localStorage.setItem('er-theme',THEME)}catch(_){}applyTheme();return}

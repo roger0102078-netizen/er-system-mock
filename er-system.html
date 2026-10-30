@@ -266,6 +266,93 @@ fieldset.fs{background:#e4eddf;border-color:#a9bba3}
 .zh{background:#c9dcc2}
 .occ{background:#eef4ea}
 .chip,.seg button{background:#eef4ea}
+
+/* ===== 護眼配色（預設）：中低亮度灰綠，避免大面積白色 ===== */
+:root{--bg:#b4c2b0;--panel:#c6d2c2;--ink:#17221a;--muted:#3f5044;--line:#93a690;--sel:#ebe0a0;--accent:#2f6b45;--accent-soft:#b2c4ad}
+body{background:#b4c2b0;color:#17221a}
+.menubar,.filterbar{background:#d8cf8e;color:#3b3500}
+.filterbar{border-top:1px solid #bdb36d}
+.rg{background:#e4dca6;border-color:#bdb36d}
+.filterbar .search{background:#eef0e4;border-color:#bdb36d;color:#222}
+.filterbar .btn{background:#e4dca6;border-color:#bdb36d;color:#3b3500}
+.seg{border-color:#93a690}.seg button{background:#c6d2c2;color:#17221a}.seg button.on{background:#2f6b45;color:#fff}
+.legend{background:#bccab8;border-bottom:1px solid #93a690;color:#3f5044}
+table.emr{background:#c3d0bf;color:#101a13}
+table.emr th{background:#9fb39a;color:#10200f;border-bottom:1px solid #84997f}
+table.emr td{border-bottom:1px solid #a9bba5}
+table.emr tbody tr:nth-child(even){background:#b9c7b5}
+table.emr tbody tr:hover{background:#aac0a5}
+table.emr tbody tr.sel{background:#e6da92}
+table.emr .arr{color:#3f5044}
+table.emr .st.Y{background:#7cc3cc;color:#0b3a42}table.emr .st.N{background:#e3d36a;color:#4a3f00}
+table.emr .st.P{background:#8cc46a;color:#1f4a10}table.emr .st.O{background:#e8998a;color:#5a1a10}
+table.emr .stay.s1{color:#b3261e}table.emr .stay.s2{color:#a84f00}table.emr .stay.s3{color:#1b5a9a}table.emr .stay.s4{color:#000}
+table.emr td.dir{cursor:pointer}
+table.emr td.dir:hover{background:rgba(255,255,255,.35);outline:1px dashed #5b7a60}
+.side{background:#a7b6a3;border-left:1px solid #93a690;color:#17221a}
+.side .f span{color:#1f3a25}.side .f input{background:#e9eee6;border-color:#84997f;color:#111}
+.side .lg{background:#d8cf8e;border-color:#bdb36d;color:#3b3500}
+.detail{background:#a7b6a3;border-top:2px solid #84997f}
+.detail .pbar{background:#9fb39a;color:#10200f}
+.fkeys,.detail .tabbody{background:#a7b6a3}
+.fk{background:#cbd6c7;border-color:#84997f;color:#17221a}.fk:hover{background:#dbe5d8}
+.fk.on{background:#2f5f94;border-color:#2f5f94;color:#fff}
+fieldset.fs{background:#b9c7b5;border-color:#84997f}fieldset.fs legend{color:#3f5044}
+.dxr .code,.dxr .desc,.dxl input{background:#e9eee6;border-color:#84997f;color:#111}
+textarea,#imp,#icd{background:#e9eee6!important;color:#101a13!important;border-color:#84997f}
+.shortbar{background:#a9b9d3;border-top:1px solid #8ea1c0}
+.shortbar button{background:#d5e0f2;border-color:#8ea1c0;color:#1d3a6e}
+.card{background:#cbd6c7;border-color:#93a690}.card .cc{color:#2d3d31}.card.sel{background:#e6da92}
+.zh{background:#9fb39a}.occ{background:#c6d2c2}
+.pbar select,.pbar input{background:#e9eee6;color:#111}
+.sug{background:#e9eee6;color:#111}.note{background:#c6d2c2}
+.dirmenu{position:fixed;z-index:70;background:#e9eee6;color:#17221a;border:1px solid #5b7a60;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:4px 0;max-height:86vh;overflow:auto;min-width:150px}
+.dirmenu div{padding:6px 22px;cursor:pointer;font-size:14px}
+.dirmenu div:hover{background:#2f6b45;color:#fff}
+.dirmenu div.cur{font-weight:700;background:#d8e6d2}
+.dirmenu div.clr{color:#7a3b32;border-top:1px solid #c0ccbb;margin-top:2px}
+
+/* ===== 夜間（深色）===== */
+body.dark{--bg:#1c251f;--panel:#25302a;--ink:#d6e0d8;--muted:#9fb2a4;--line:#3b4b40;--sel:#4d4a22;--accent:#6fbf8a;--accent-soft:#2e4034;background:#1c251f;color:#d6e0d8}
+body.dark .menubar,body.dark .filterbar{background:#3a3820;color:#e6dfa8}
+body.dark .filterbar{border-top-color:#55512a}
+body.dark .rg{background:#4a4727;border-color:#66622f}
+body.dark .filterbar .search{background:#2a2f22;border-color:#66622f;color:#e6dfa8}
+body.dark .filterbar .btn{background:#4a4727;border-color:#66622f;color:#e6dfa8}
+body.dark .seg{border-color:#3b4b40}body.dark .seg button{background:#2c3830;color:#d6e0d8}body.dark .seg button.on{background:#3f7a55;color:#fff}
+body.dark .legend{background:#222c26;border-bottom-color:#3b4b40;color:#9fb2a4}
+body.dark table.emr{background:#25302a;color:#d6e0d8}
+body.dark table.emr th{background:#36493c;color:#d6e0d8;border-bottom-color:#4a5f50}
+body.dark table.emr td{border-bottom-color:#33423a}
+body.dark table.emr tbody tr:nth-child(even){background:#212b25}
+body.dark table.emr tbody tr:hover{background:#30403a}
+body.dark table.emr tbody tr.sel{background:#4d4a22}
+body.dark table.emr .arr{color:#9fb2a4}
+body.dark table.emr .st.Y{background:#2d7480;color:#dff5f8}body.dark table.emr .st.N{background:#857818;color:#fff6bf}
+body.dark table.emr .st.P{background:#3f7a2a;color:#e4f6d8}body.dark table.emr .st.O{background:#8f3a2c;color:#ffe6df}
+body.dark table.emr .stay.s1{color:#ff7b72}body.dark table.emr .stay.s2{color:#ffa94d}body.dark table.emr .stay.s3{color:#6cb4ff}body.dark table.emr .stay.s4{color:#eef2ee}
+body.dark table.emr td.dir:hover{background:rgba(255,255,255,.1);outline-color:#8fb89a}
+body.dark .side{background:#202a24;border-left-color:#3b4b40;color:#d6e0d8}
+body.dark .side .f span{color:#aec3b3}body.dark .side .f input{background:#151c17;border-color:#46594c;color:#d6e0d8}
+body.dark .side .lg{background:#3a3820;border-color:#66622f;color:#e6dfa8}
+body.dark .detail{background:#202a24;border-top-color:#46594c}
+body.dark .detail .pbar{background:#2e4034;color:#d6e0d8}
+body.dark .fkeys,body.dark .detail .tabbody{background:#202a24;color:#d6e0d8}
+body.dark .fk{background:#2f3d34;border-color:#46594c;color:#d6e0d8}body.dark .fk:hover{background:#3a4b40}
+body.dark .fk.on{background:#3b6ea5;border-color:#3b6ea5;color:#fff}
+body.dark fieldset.fs{background:#25302a;border-color:#46594c}body.dark fieldset.fs legend{color:#9fb2a4}
+body.dark .dxr .code,body.dark .dxr .desc,body.dark .dxl input{background:#151c17;border-color:#46594c;color:#d6e0d8}
+body.dark .dxr .desc .en{color:#9fb2a4}
+body.dark textarea,body.dark #imp,body.dark #icd{background:#151c17!important;color:#d6e0d8!important;border-color:#46594c}
+body.dark .shortbar{background:#243044;border-top-color:#35496a}
+body.dark .shortbar button{background:#2f4468;border-color:#4a6590;color:#cfe0ff}
+body.dark .card{background:#2a352e;border-color:#3b4b40}body.dark .card .cc{color:#b6c6ba}body.dark .card.sel{background:#4d4a22}
+body.dark .zh{background:#2e4034}body.dark .occ{background:#25302a}
+body.dark .pbar select,body.dark .pbar input{background:#151c17;color:#d6e0d8}
+body.dark .sug{background:#1c251f;color:#d6e0d8}body.dark .note{background:#25302a}
+body.dark .dirmenu{background:#25302a;color:#d6e0d8;border-color:#6fbf8a}
+body.dark .dirmenu div:hover{background:#3f7a55}body.dark .dirmenu div.cur{background:#30403a}
+body.dark .dirmenu div.clr{color:#ff9c90;border-top-color:#3b4b40}
 </style>
 
 </head>
@@ -288,6 +375,7 @@ fieldset.fs{background:#e4eddf;border-color:#a9bba3}
     <button data-v="card">卡片</button>
   </div>
   <span class="sp"></span>
+  <button class="btn" id="themeBtn" title="切換護眼／夜間配色">☾ 夜間</button>
   <button class="btn warn" id="hoBtn">交班</button>
 </div>
 
@@ -407,7 +495,7 @@ let patients=(()=>{
    ICU待床:[['敗血症、低血壓','A41.9'],['呼吸衰竭，插管','J44.1'],['腦出血','I61.9'],['急性心肌梗塞','I21.9']]
   };
   const LV={A:[1,1,2,2,2,3],B:[2,2,2,3,3],C:[3,3,4,4,4,5],D:[3,3,4,4,5],E:[3,4,4,5],F:[3,4,4],觀察:[3,3,4],ICU待床:[1,1,2]};
-  const DIR={A:['','','會診外科','會診心臟科'],B:['','等住院','會診神內','等ICU',''],C:['','','等住院',''],D:['','會診外科','','等住院'],E:['','會診骨科','等住院',''],F:['','','隔離中'],觀察:['等住院','等照會','追蹤中'],ICU待床:['等ICU']};
+  const DIR={A:['','','等檢查','等照會'],B:['','等住院','等照會','等ICU',''],C:['','','等住院',''],D:['','等縫合','','等住院'],E:['','等檢查','等住院',''],F:['','','觀察後續追蹤'],觀察:['等住院','等照會','觀察後續追蹤'],ICU待床:['等ICU']};
   const N={A:20,B:20,C:21,D:19,E:20,F:8,觀察:10,ICU待床:3};
   // 每區固定 2 位主責醫師、4 位護理師
   const ZD={A:[0,1],B:[2,3],C:[4,5],D:[6,7],E:[0,2],F:[1,3],觀察:[4,6],ICU待床:[0,2]};
@@ -440,8 +528,8 @@ let patients=(()=>{
   let m=0;for(const q of out){if(m<8&&['A','B','D','E'].includes(q.zone)&&/機車|擦撞|外傷|撞傷|跌倒|傷|割/.test(q.cc)){q.mci=true;m++}}
   return out;
 })();
-try{const s=localStorage.getItem('er-mock-v6');if(s)patients=JSON.parse(s)}catch(e){}
-const save=()=>{try{localStorage.setItem('er-mock-v6',JSON.stringify(patients))}catch(e){}};
+try{const s=localStorage.getItem('er-mock-v7');if(s)patients=JSON.parse(s)}catch(e){}
+const save=()=>{try{localStorage.setItem('er-mock-v7',JSON.stringify(patients))}catch(e){}};
 
 /* ===== 狀態 ===== */
 const S={zone:'全部',view:'list',sort:'id',fId:'',fSeq:'',fBed:'',q:'',dyn:false,ho:false,checked:new Set(),sel:null,tab:'診斷'};
@@ -508,7 +596,7 @@ function renderList(){
     $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號 <small>到院</small></th><th>床號</th><th>狀態</th><th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>主責醫師</th><th>負責護理師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
     L.map(p=>`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
       <td title="到院 ${new Date(p.arrive).toLocaleString('zh-TW',{hour12:false})}"><b>${p.id}</b> <small class="arr">${new Date(p.arrive).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</small></td><td><b>${p.bed}</b></td><td>${stat(p)}</td><td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
-      <td>${p.dir}</td><td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.nur}</td>
+      <td class="dir" title="點擊選擇動向">${p.dir||'<span style="opacity:.45">—</span>'}</td><td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td><td>${p.nur}</td>
       ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k])}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
   }
   $('#hoN').textContent=S.checked.size;
@@ -592,6 +680,11 @@ function renderDx(){
 /* ===== 事件 ===== */
 document.addEventListener('click',e=>{
   const t=e.target;
+  if(t.dataset.dirv!==undefined&&t.closest('#dirMenu')){const id=t.closest('#dirMenu').dataset.pid;closeDir();setDir(id,t.dataset.dirv);return}
+  if(t.id==='themeBtn'){THEME=THEME==='dark'?'dim':'dark';try{localStorage.setItem('er-theme',THEME)}catch(_){}applyTheme();return}
+  const dtd=t.closest('td.dir');
+  if(dtd){openDir(dtd.closest('tr').dataset.id,e.clientX,e.clientY);return}
+  closeDir();
   if(t.dataset.z){S.zone=t.dataset.z;renderChips();renderList();return}
   if(t.dataset.sort){S.sort=t.dataset.sort;renderList();return}
   if(t.closest('#viewSeg')&&t.dataset.v){
@@ -666,6 +759,31 @@ document.addEventListener('keydown',e=>{
   if(e.target.id==='icd'&&e.key==='Enter'){const f=document.querySelector('#sug [data-code]');if(f)addDx(f.dataset.code,f.dataset.name)}
 });
 
+/* ===== 動向選單 ===== */
+const DIRS=['看診中','等決定','等照會','等洗腎','等手術','等住院','等ICU','洗腎中','回家','觀察後續追蹤','等縫合','等轉院','等檢查','手術中','外出處置中'];
+function closeDir(){const m=$('#dirMenu');if(m)m.remove()}
+function openDir(id,x,y){
+  closeDir();
+  const p=patients.find(q=>q.id===id);if(!p)return;
+  const m=document.createElement('div');m.className='dirmenu';m.id='dirMenu';m.dataset.pid=id;
+  m.innerHTML=DIRS.map(d=>`<div data-dirv="${d}" class="${d===p.dir?'cur':''}">${d}</div>`).join('')+`<div data-dirv="" class="clr">清除動向</div>`;
+  document.body.appendChild(m);
+  const w=m.offsetWidth,h=m.offsetHeight;
+  m.style.left=Math.max(4,Math.min(x,innerWidth-w-4))+'px';
+  m.style.top=Math.max(4,Math.min(y,innerHeight-h-4))+'px';
+}
+function setDir(id,v){
+  const p=patients.find(q=>q.id===id);if(!p)return;
+  const old=p.dir;p.dir=v;
+  p.notes.push({t:`動向：${old||'無'} → ${v||'無'}`,at:new Date().toLocaleString('zh-TW',{hour12:false})});
+  save();renderList();toast(`${p.bed} ${p.name}：${v||'已清除動向'}`);
+}
+
+/* ===== 配色主題 ===== */
+let THEME='dim';try{THEME=localStorage.getItem('er-theme')||'dim'}catch(e){}
+function applyTheme(){document.body.classList.toggle('dark',THEME==='dark');$('#themeBtn').textContent=THEME==='dark'?'☀ 護眼':'☾ 夜間'}
+applyTheme();
+
 /* ===== 診斷查詢工具（icd/） ===== */
 const ICD_PAGE={all:'icd/all-icd10-search.html',trauma:'icd/trauma-icd10.html'};
 function icdSearch(){const w=$('#icdSearchFrame').contentWindow;if(!w.icdQuery)throw 0;return w}
@@ -683,7 +801,8 @@ window.addEventListener('message',e=>{
   toast(`已加入 ${n} 項診斷`+(n<d.items.length?`（${d.items.length-n} 項重複或超過上限）`:''));
   if(n&&!d.keep)closeIcd();
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeIcd()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeIcd();closeDir()}});
+document.getElementById('listwrap').addEventListener('scroll',closeDir);
 
 /* ===== 交班 ===== */
 function fillSel(id,arr,first){$(id).innerHTML=(first?`<option value="">${first}</option>`:'')+arr.map(d=>`<option>${d}</option>`).join('')}

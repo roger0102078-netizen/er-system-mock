@@ -220,6 +220,22 @@ fieldset.fs legend{color:#6b7a6d}
 .shortbar{background:#e7eefa;border-top:1px solid #d2deef;padding:8px 10px;gap:8px}
 .shortbar button{background:#fff;border:1px solid #c3d2ea;border-radius:6px;color:#2a4a8a;font-weight:600;padding:4px 22px}
 .detail .pbar select,.detail .pbar input{border-radius:6px}
+
+/* ===== 緊湊卡片 + 可收合下半部 ===== */
+.cards{grid-template-columns:repeat(auto-fill,minmax(184px,1fr));gap:6px}
+.card{padding:4px 8px 5px;border-radius:6px}
+.card .r1{gap:5px}
+.card .bed{font-size:13px;min-width:30px}
+.card .nm{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .as{font-size:11px}
+.card .tri{width:18px;height:18px;font-size:11px;border-radius:5px}
+.card .cc{margin:1px 0 2px;font-size:12.5px;min-height:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#4a5a4c}
+.card .staff{border-top:0;padding-top:0;gap:8px;font-size:11px}
+.zone{margin-bottom:8px}
+.zh{margin:0 0 4px;padding:3px 8px;gap:8px;font-size:13px}
+#view .cards,#view .zone{padding:0 8px}
+.detail.min{height:auto;min-height:0}
+.detail.min .fkeys,.detail.min .tabbody,.detail.min .shortbar{display:none}
 </style>
 
 </head>
@@ -470,7 +486,7 @@ const FK1=['病歷','檢傷','診斷','病程','查詢','檢驗','報查','累�
 const FK2=['照相','護理紀錄','VTS','ICU空','ICU待床','提報','待床','流程','鎮靜評估','兒少保','DNR','影像流程','緊急醫療','醫雲','在宅'];
 function renderDetail(){
   const p=cur(), d=$('#detail');
-  d.classList.toggle('none',!p);
+  d.classList.toggle('none',!p);d.classList.toggle('min',!!S.dmin);
   if(!p){d.innerHTML=`<div class="empty" style="padding:10px">請從上方清單選擇病人</div>`;return}
   d.innerHTML=`
   <div class="pbar">
@@ -483,6 +499,7 @@ function renderDetail(){
     <span><span class="k">主責醫師</span><b>${p.doc}</b></span><span><span class="k">護理師</span><b>${p.nur}</b></span>
     <span><span class="k">停留</span><span id="stayNow">${fmtH(hrs(p))}</span></span>
     <label style="color:#b3261e;font-weight:600"><input type="checkbox" id="mciCk" ${p.mci?'checked':''}> 大量傷患</label>
+    <button class="btn" id="dToggle" style="margin-left:auto;padding:2px 12px">${S.dmin?'▲ 展開':'▼ 收合'}</button>
   </div>
   <div class="fkeys">${FK1.concat(FK2).map(t=>`<button class="fk ${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>
   <div class="tabbody" id="tb"></div>
@@ -550,6 +567,7 @@ document.addEventListener('click',e=>{
   if(row&&!t.matches('input')){
     if(S.ho&&S.view==='card'&&false){}
     S.sel=row.dataset.id;S.tab=S.tab||'診斷';renderList();renderDetail();return}
+  if(t.id==='dToggle'){S.dmin=!S.dmin;renderDetail();return}
   if(t.dataset.icd){openIcd(t.dataset.icd);return}
   if(t.id==='icdClose'||t.id==='icdModal'){closeIcd();return}
   if(t.dataset.tab){S.tab=t.dataset.tab;renderDetail();return}

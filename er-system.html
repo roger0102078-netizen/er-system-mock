@@ -1786,8 +1786,16 @@ function blank(p){
     tr:{cc:[],time:'',loc:'',alc:'',moi:[],det:{},ems:[],abc:{},gcs:{e:'4',v:'5',m:'6'},reg:{},meal:'',teta:'',dx:[]}}}
 function paint(A=alerts()){
   $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-  $('#pane').innerHTML=tab==='note'?`<div class="note">${note()}</div>`:tab==='json'?`<pre class="json">${esc(json())}</pre>`:
+  $('#pane').innerHTML=tab==='saved'?savedHtml():tab==='note'?`<div class="note">${note()}</div>`:tab==='json'?`<pre class="json">${esc(json())}</pre>`:
    (A.length?A.map(a=>`<div class="alert ${a[0]}"><b>${esc(a[1])}</b>${esc(a[2])}</div>`).join(''):'<div class="none">目前沒有提醒</div>')}
+function savedHtml(){const v=S.saved;
+  if(!v)return '<div class="none">尚未存檔。填完病歷後按「💾 存檔」，內容會存成現病史（Present Illness）並寫入病程，之後可在這裡直接修改。</div>';
+  return `<div class="hint" style="margin:0 0 6px">已存檔　${esc(v.at)}　（可直接修改文字）</div><textarea id="savedTxt" rows="18" style="width:100%">${esc(v.text)}</textarea>
+  <div class="row" style="margin-top:8px"><button type="button" class="btn pri" id="savedApply">儲存修改</button><button type="button" class="btn" id="savedRefresh">以目前表單重新產生</button></div>`}
+function doSave(txt,msg){const at=new Date().toLocaleString('zh-TW',{hour12:false});S.saved={text:txt,at};
+  const body='【現病史 Present Illness】\n'+txt,n=PT.notes.find(x=>x.cid==='chart');
+  if(n){n.t=body;n.at=at+'（更新）'}else PT.notes.push({t:body,at,cid:'chart'});
+  tab='saved';save();paint();toast(msg)}
 function syncDx(){dxl().forEach(d=>{if(d[1]&&!PT.dx.some(x=>x.code===d[1])&&PT.dx.length<7)PT.dx.push({code:d[1],ro:false,cc:false,name:d[0]})})}
 function update(){
   S.tri.lvl=PT.lvl;S.tri.cc0=[PT.cc];const l=S.tri.lvl;
@@ -1807,7 +1815,9 @@ function onClick(e){
   if(b.id==='kbBtn'){$('#kb').hidden=!$('#kb').hidden;return}
   if(b.id==='copyNote'){copy(noteText(),'已複製病歷文字');return}
   if(b.id==='copyJson'){copy(json(),'已複製 JSON');return}
-  if(b.id==='saveNote'){PT.notes.push({t:'【病歷】\n'+noteText(),at:new Date().toLocaleString('zh-TW',{hour12:false})});save();toast('已存入病程');return}
+  if(b.id==='saveNote'||b.id==='saveBtn'){doSave(noteText(),S.saved?'已更新存檔':'已存檔，並寫入病程');return}
+  if(b.id==='savedApply'){const t=$('#savedTxt').value;doSave(t,'已儲存修改');return}
+  if(b.id==='savedRefresh'){doSave(noteText(),'已用目前表單重新產生並存檔');return}
   if(b.id==='nlAi'){runAi();return}
   if(b.id==='nlRule'){runRule();return}
   if(b.id==='nlStop'){nlCtl?.abort();return}
@@ -1833,6 +1843,7 @@ function onClick(e){
   rebuild();update()}
 function onInput(e){const t=e.target;
   if(t.id==='nlText'){S.nl=t.value;return}
+  if(t.id==='savedTxt'){S.saved.text=t.value;return}
   if(t.dataset.i!==undefined)setp(t.dataset.i,t.value);else if(t.dataset.oth!==undefined)S.oth[t.dataset.oth]=t.value;else return;
   const a=$('#agoT');if(a)a.textContent=ago(S.tr.time);update()}
 function onChange(e){const t=e.target;
@@ -1868,7 +1879,7 @@ function render(p,el){
   root.innerHTML=`<div class="chart" id="chart"><div class="cbar">
     <div class="modebar"><span>病歷類型</span><div class="seg" id="modeSeg"><button type="button" class="nt" data-mode="nt">非外傷</button><button type="button" class="tr" data-mode="tr">外傷</button></div></div>
     <button type="button" class="btn" id="kbBtn" aria-controls="kb">快速鍵 ?</button>
-    <div id="triBadge"></div><nav class="steps" id="steps"></nav><button type="button" class="btn" id="fullBtn"></button></div>
+    <div id="triBadge"></div><nav class="steps" id="steps"></nav><button type="button" class="btn pri" id="saveBtn">💾 存檔</button><button type="button" class="btn" id="fullBtn"></button></div>
     <div id="kb" class="kb" hidden>
   <b>鍵盤快速鍵</b>
   <dl>
@@ -1885,9 +1896,9 @@ function render(p,el){
   </dl>
 </div>
     <div class="cgrid"><main><div id="nl"></div><div id="form"></div></main>
-    <aside class="out"><div class="tabs" id="tabs"><button data-t="note" class="on">病歷預覽</button><button data-t="alerts">提醒<span class="n" id="alertN" hidden></span></button><button data-t="json">結構化資料</button></div>
+    <aside class="out"><div class="tabs" id="tabs"><button data-t="note" class="on">病歷預覽</button><button data-t="saved">已存檔</button><button data-t="alerts">提醒<span class="n" id="alertN" hidden></span></button><button data-t="json">結構化資料</button></div>
     <div class="pane" id="pane"></div>
-    <div class="foot"><button class="btn" id="saveNote">存入病程</button><button class="btn" id="copyNote">複製文字</button><button class="btn" id="copyJson">複製 JSON</button></div></aside></div>
+    <div class="foot"><button class="btn pri" id="saveNote">💾 存檔（現病史）</button><button class="btn" id="copyNote">複製文字</button><button class="btn" id="copyJson">複製 JSON</button></div></aside></div>
     <datalist id="dxlist"></datalist></div>`;
   root.onclick=e=>{if(!e.target.closest('.chart'))return;onClick(e);e.stopPropagation()};
   root.oninput=e=>{if(!e.target.closest('.chart'))return;onInput(e);e.stopPropagation()};

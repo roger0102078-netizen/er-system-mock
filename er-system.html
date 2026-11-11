@@ -1672,7 +1672,7 @@ function startObs(){if(obs)return;obs=new MutationObserver(ms=>{if(LANG==='zh')r
   for(const m of ms){if(m.type==='childList')m.addedNodes.forEach(trTree);else if(m.type==='characterData')trText(m.target);else if(m.type==='attributes')trAttrs(m.target)}});
  obs.observe(root,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:ATTRS})}
 function setPt(){const p=pi();
- $('#ptAge').textContent=[p.age===''?'':p.age+Z(' '+p.unit,{'歲':' y','月':' mo','天':' d'}[p.unit]||''),p.sex?Z(p.sex,p.sex==='男'?(isPd()?'boy':'male'):(isPd()?'girl':'female')):'',p.wt?p.wt+' kg':''].filter(Boolean).join(' · ')}
+ $('#ptAge').textContent=[p.age===''?'':p.age+Z(' '+p.unit,{'歲':' y','月':' mo','天':' d'}[p.unit]||''),p.sex?Z(p.sex,p.sex==='男'?(isPd()?'boy':'male'):(isPd()?'girl':'female')):''].filter(Boolean).join(' · ')}
 function applyLang(){restoreZh();if(LANG!=='zh')trTree(root)}
 Object.assign(EN,{'側腹絞痛':'Flank colicky pain','左側腰腹':'Left flank','右側腰腹':'Right flank','腎絞痛':'Renal colic','坐立不安':'Restlessness','放射至鼠蹊':'Radiates to groin','陣發性':'Intermittent'});
 const TT=[[1,'復甦'],[2,'危急'],[3,'緊急'],[4,'次緊急'],[5,'非緊急']];
@@ -1711,7 +1711,7 @@ const ro=()=>{const l=S.tri.lvl;
  return `<div class="f sub">${l!=null?`<span class="tri" data-l="${l}">${Z(`檢傷 ${l} 級 · ${TT[l-1][1]}`,`TTAS ${l} · ${V(TT[l-1][1])}`)}</span> · `:''}${S.tri.mode?esc(VU(S.tri.mode))+' · ':''}${Z('檢傷主訴：','Triage complaint: ')}${esc(S.tri.cc0.map(VU).join(Z('、',', ')))}</div>`};
 
 function basicInfo(){const k=pk(),p=pi();
- return `<div class="sub"><h3>${isPd()?'小兒基本資料':'病人基本資料'}</h3>${F('年齡',`<div class="row"><input type="number" min="0" step="any" inputmode="decimal" data-i="${k}.age" value="${esc(p.age)}" style="width:90px"><div class="chips">${['天','月','歲'].map(v=>cs(k+'.unit',v)).join('')}</div></div>`)}${F('性別',CH(k+'.sex',['男','女'].map(v=>cs(k+'.sex',v)).join('')))}${F('體重（kg）',inp(k+'.wt','number','','max-width:120px'))}</div>`}
+ return `<div class="sub"><h3>${isPd()?'小兒基本資料':'病人基本資料'}</h3>${F('年齡',`<div class="row"><input type="number" min="0" step="any" inputmode="decimal" data-i="${k}.age" value="${esc(p.age)}" style="width:90px"><div class="chips">${['天','月','歲'].map(v=>cs(k+'.unit',v)).join('')}</div></div>`)}${F('性別',CH(k+'.sex',['男','女'].map(v=>cs(k+'.sex',v)).join('')))}</div>`}
 function fnd(p,e,v){const f=(e.f||[]).includes(v),n=(e.n||[]).includes(v);return `<button type="button" class="chip ${f?'on ab':n?'neg':''}" data-act="fnd" data-p="${esc(p)}" data-v="${esc(v)}">${n?'－ ':''}${esc(v)}</button>`}
 function peRows(root,list,lbl,defs){
  return list.map((s,i)=>{const e=get(root+'.'+s)||{},d=defs[s],fx=Array.isArray(d)?{f:d}:d,p=root+'.'+s,chips=fx.f.map(v=>fnd(p,e,v)).join(''),nn=(e.n||[]).length;
@@ -1724,7 +1724,125 @@ function peRows(root,list,lbl,defs){
   </div></div>`}).join('')}
 
 /* ---------- 表單：非外傷 ---------- */
+/* ===== OHCA（到院前心跳停止）紀錄：A 事件、B 背景、C 急診到院資料 ===== */
+const ohcaOnly=()=>!!(S.ohca&&S.ohca.on);
+const OH_OPT={witness:['目擊者','救護人員目擊','無人目擊','不詳'],place:['住家','公共場所','安養機構'],bcpr:['有','無','不詳'],bcprWho:['家屬','路人','醫療人員'],
+ baed:['無','有，已電擊','有，未建議電擊','不詳'],rhythm:['VF/pVT','PEA','Asystole','已恢復自發循環 (ROSC)','不詳'],airway:['無','OPA/BVM','LMA/i-gel','氣管內管'],yn:['有','無','不詳'],
+ prodrome:['胸痛','呼吸困難','暈厥/頭暈','噁心嘔吐','抽搐','無前驅症狀','不詳'],etiology:['外傷（創傷性）','心因性（推測）','呼吸（窒息/溺水）','藥物過量/中毒','上吊','其他非心因性','不明'],
+ cpc:['CPC 1-2（可自理）','CPC 3-4（需依賴）','不詳'],dnr:['無','有 DNR/預立醫療決定','不詳'],edRhythm:['VF/pVT','PEA','Asystole','有脈搏心律'],edStatus:['CPR 進行中','已 ROSC']};
+const OH_EN={witness:{'目擊者':'witnessed by a bystander','救護人員目擊':'witnessed by EMS personnel','無人目擊':'unwitnessed','不詳':'of unknown witness status'},
+ place:{'住家':'at home','公共場所':'in a public place','安養機構':'in a nursing facility'},who:{'家屬':'a family member','路人':'a bystander','醫療人員':'a health care worker'},
+ rhythm:{'VF/pVT':'VF/pVT','PEA':'PEA','Asystole':'asystole','已恢復自發循環 (ROSC)':'return of spontaneous circulation (ROSC)','不詳':'unknown'},
+ airway:{'OPA/BVM':'an oropharyngeal airway with bag-valve-mask ventilation','LMA/i-gel':'a supraglottic airway (LMA/i-gel)','氣管內管':'an endotracheal tube'},
+ prodrome:{'胸痛':'chest pain','呼吸困難':'dyspnea','暈厥/頭暈':'syncope or dizziness','噁心嘔吐':'nausea and vomiting','抽搐':'seizure'},
+ etiology:{'外傷（創傷性）':'trauma (traumatic cardiac arrest)','心因性（推測）':'a presumed cardiac cause','呼吸（窒息/溺水）':'a respiratory cause (asphyxia or drowning)','藥物過量/中毒':'a drug overdose or poisoning','上吊':'hanging','其他非心因性':'another non-cardiac cause','不明':'an unknown cause'},
+ cpc:{'CPC 1-2（可自理）':'CPC 1-2 (independent)','CPC 3-4（需依賴）':'CPC 3-4 (dependent)'},edRhythm:{'VF/pVT':'VF/pVT','PEA':'PEA','Asystole':'asystole','有脈搏心律':'a rhythm with a pulse'}};
+const ohMin=(a,b)=>{if(!a||!b)return null;const[h1,m1]=a.split(':').map(Number),[h2,m2]=b.split(':').map(Number);if([h1,m1,h2,m2].some(isNaN))return null;let d=(h2*60+m2)-(h1*60+m1);if(d<0)d+=1440;return d};
+const ohPl=(n,u)=>`${n} ${u}${+n===1?'':'s'}`;
+function ohcaHint(){const o=S.ohca,a=ohMin(o.tCollapse,o.tEms),b=ohMin(o.tCollapse,o.tEd),c=ohMin(o.tEms,o.tEd);const x=[];
+ if(a!=null)x.push(`倒下 → 119 到達：${a} 分`);if(b!=null)x.push(`倒下 → 到院：${b} 分`);if(c!=null&&a!=null)x.push(`119 到達 → 到院：${c} 分`);return x.length?x.join('　·　'):'填入時間後，這裡會自動算出各段時間'}
+function ohcaSec(){const o=S.ohca;if(!o||!o.on)return '';
+ const sg=(k,opts)=>CH('ohca.'+k,opts.map(v=>cs('ohca.'+k,v)).join('')),tm=k=>`<div class="row">${inp('ohca.'+k,'time','','width:130px')}<button type="button" class="btn" data-act="now" data-p="ohca.${k}">現在</button></div>`,
+  nm=(k,u)=>`<div class="row">${inp('ohca.'+k,'number','','width:90px')}<span>${u}</span></div>`;
+ return `<section class="card" id="s-ohca"><h2>OHCA 紀錄 <small>到院前心跳停止　<button type="button" class="btn" data-act="ohca">關閉 OHCA</button></small></h2>
+  <div class="grp">A. 事件（到院前）</div>
+  ${F('發現情形',sg('witness',OH_OPT.witness))}
+  ${F('倒下或發現時間（24 小時制）',tm('tCollapse'))}
+  ${F('發生地點',sg('place',OH_OPT.place))}
+  ${F('路人 CPR',sg('bcpr',OH_OPT.bcpr))}
+  ${o.bcpr==='有'?F('路人 CPR：誰做的、約幾分鐘後開始',sg('bcprWho',OH_OPT.bcprWho)+`<div class="row" style="margin-top:6px"><span>約</span>${inp('ohca.bcprDelay','number','','width:80px')}<span>分鐘後開始</span></div>`):''}
+  ${F('路人 AED',sg('baed',OH_OPT.baed))}
+  ${o.baed==='有，已電擊'?F('路人 AED 電擊次數',nm('baedShocks','次')):''}
+  ${F('119 到達時間（24 小時制）',tm('tEms'))}
+  ${F('EMS 到達時初始心律',sg('rhythm',OH_OPT.rhythm))}
+  ${F('EMS 處置',`<div class="row"><span>電擊</span>${inp('ohca.emsShocks','number','','width:70px')}<span>次　Epinephrine</span>${inp('ohca.emsEpi','number','','width:70px')}<span>次</span></div>`)}
+  ${F('EMS 建立的呼吸道',sg('airway',OH_OPT.airway))}
+  ${F('機械 CPR',sg('mech',OH_OPT.yn))}
+  ${F('到院前 ROSC',sg('preRosc',OH_OPT.yn))}
+  ${o.preRosc==='有'?F('到院前 ROSC 時間',tm('tPreRosc')):''}
+  <div class="grp">B. 背景</div>
+  ${F('前驅症狀（可複選）',CH('ohca.prodrome',OH_OPT.prodrome.map(v=>cm('ohca.prodrome',v)).join('')))}
+  ${F('慢性病／過去病史（可複選）',CH('pmh',PMHX().map(v=>cm('pmh',v)).join('')))}
+  ${F('推測原因',sg('etiology',OH_OPT.etiology))}
+  ${F('病前功能',sg('cpc',OH_OPT.cpc))}
+  ${F('DNR 或預立醫療決定',sg('dnr',OH_OPT.dnr))}
+  <div class="grp">C. 急診到院資料</div>
+  ${F('到院時間（24 小時制）',tm('tEd'))}
+  ${F('到院時心律',sg('edRhythm',OH_OPT.edRhythm))}
+  ${F('到院時狀態',sg('edStatus',OH_OPT.edStatus))}
+  ${F('到院後電擊次數',nm('edShocks','次'))}
+  ${F('到院 CPR 總時間',nm('edCpr','分鐘'))}
+  ${isTr()?ohcaTrSec():''}
+  <div class="hint" id="ohHint" style="margin-top:8px">${ohcaHint()}</div></section>`}
+const OHX={parts:['頭頸','胸部','腹部','骨盆','四肢','背部/脊椎'],type:['鈍傷','穿刺傷','槍傷','燒燙傷'],fast:['未做','陰性','心包積液','腹腔積液','血胸/氣胸'],tube:['無','單側','雙側'],yn:['無','有']};
+const OHX_EN={parts:{'頭頸':'head and neck','胸部':'chest','腹部':'abdomen','骨盆':'pelvis','四肢':'extremities','背部/脊椎':'back or spine'},type:{'鈍傷':'blunt','穿刺傷':'penetrating (stab)','槍傷':'penetrating (gunshot)','燒燙傷':'burn'},fast:{'陰性':'no free fluid','心包積液':'pericardial fluid','腹腔積液':'intraperitoneal fluid','血胸/氣胸':'hemothorax or pneumothorax'}};
+function ohcaTrSec(){const o=S.ohca,sg=(k,opts)=>CH('ohca.'+k,opts.map(v=>cs('ohca.'+k,v)).join('')),tm=k=>`<div class="row">${inp('ohca.'+k,'time','','width:130px')}<button type="button" class="btn" data-act="now" data-p="ohca.${k}">現在</button></div>`;
+ return `<div class="grp">D. 外傷性心跳停止</div>
+  ${F('主要受傷部位（可複選）',CH('ohca.xParts',OHX.parts.map(v=>cm('ohca.xParts',v)).join('')))}
+  ${F('傷害類型',sg('xType',OHX.type))}
+  ${F('eFAST（可複選）',CH('ohca.xFast',OHX.fast.map(v=>cm('ohca.xFast',v)).join('')))}
+  ${F('胸管',sg('xTube',OHX.tube))}
+  ${F('針刺減壓',sg('xNeedle',OHX.yn))}
+  ${F('急救性開胸',sg('xThor',OHX.yn))}
+  ${o.xThor==='有'?F('開胸時間（24 小時制）',tm('xTThor')):''}
+  ${F('輸血',sg('xBlood',OHX.yn))}
+  ${o.xBlood==='有'?F('輸血量',`<div class="row"><span>pRBC</span>${inp('ohca.xRbc','number','','width:70px')}<span>U　FFP</span>${inp('ohca.xFfp','number','','width:70px')}<span>U</span></div>`):''}
+  ${F('Tranexamic acid',sg('xTxa',OHX.yn))}
+  ${F('骨盆束帶',sg('xBinder',OHX.yn))}
+  ${F('止血帶',sg('xTq',OHX.yn))}`}
+function ohcaTrProse(){const o=S.ohca;if(!isTr())return [];const s=[],E=OHX_EN,pt=(o.xParts||[]).map(x=>E.parts[x]).filter(Boolean);
+ if(o.xType||pt.length)s.push(`The injury was ${o.xType?E.type[o.xType]:'traumatic'}${pt.length?`, involving the ${andJ(pt)}`:''}.`);
+ const fs=(o.xFast||[]).filter(x=>x!=='未做');if(fs.length)s.push(`eFAST showed ${andJ(fs.map(x=>E.fast[x]))}.`);else if((o.xFast||[]).includes('未做'))s.push('eFAST was not performed.');
+ const y=[],n=[];
+ if(o.xTube==='單側')y.push('a unilateral chest tube');else if(o.xTube==='雙側')y.push('bilateral chest tubes');else if(o.xTube==='無')n.push('chest tube placement');
+ if(o.xNeedle==='有')y.push('needle decompression');
+ if(o.xThor==='有')y.push(`resuscitative thoracotomy${o.xTThor?' at '+o.xTThor:''}`);else if(o.xThor==='無')n.push('resuscitative thoracotomy');
+ if(o.xBlood==='有'){const u=[];if(o.xRbc!=='')u.push(`${o.xRbc} ${+o.xRbc===1?'unit':'units'} of packed red blood cells`);if(o.xFfp!=='')u.push(`${o.xFfp} ${+o.xFfp===1?'unit':'units'} of fresh frozen plasma`);y.push(u.length?`transfusion (${andJ(u)})`:'blood transfusion')}else if(o.xBlood==='無')n.push('blood transfusion');
+ if(o.xTxa==='有')y.push('tranexamic acid');if(o.xBinder==='有')y.push('a pelvic binder');if(o.xTq==='有')y.push('a tourniquet');
+ if(y.length)s.push(`Resuscitative interventions included ${andJ(y)}.`);if(n.length)s.push(`There was no ${andJ(n)}.`);return s}
+function ohcaTrAdd(add){const o=S.ohca;if(!isTr())return;add('主要受傷部位',o.xParts);add('傷害類型',o.xType);add('eFAST',o.xFast);add('胸管',o.xTube);add('針刺減壓',o.xNeedle);
+ add('急救性開胸',o.xThor?o.xThor+(o.xTThor?`（${o.xTThor}）`:''):'');add('輸血',o.xBlood?o.xBlood+(o.xRbc!==''||o.xFfp!==''?`（${[o.xRbc!==''?'pRBC '+o.xRbc+' U':'',o.xFfp!==''?'FFP '+o.xFfp+' U':''].filter(Boolean).join('、')}）`:''):'');
+ add('Tranexamic acid',o.xTxa);add('骨盆束帶',o.xBinder);add('止血帶',o.xTq)}
+function ohcaTrJson(){const o=S.ohca,n=v=>v===''?null:+v;return {injury_parts:o.xParts,injury_type:o.xType||null,efast:o.xFast,chest_tube:o.xTube||null,needle_decompression:o.xNeedle||null,resuscitative_thoracotomy:o.xThor||null,thoracotomy_time:o.xTThor||null,transfusion:o.xBlood||null,prbc_units:n(o.xRbc),ffp_units:n(o.xFfp),tranexamic_acid:o.xTxa||null,pelvic_binder:o.xBinder||null,tourniquet:o.xTq||null}}
+function ohcaProse(){const o=S.ohca;if(!o||!o.on)return '';const s=[],E=OH_EN,oth=k=>S.oth['ohca.'+k];
+ const pl=o.place?E.place[o.place]:(oth('place')?lcF(V(oth('place'))):''),wt=o.witness?E.witness[o.witness]:'';
+ s.push(`The patient suffered an out-of-hospital cardiac arrest${pl?' '+pl:''}${o.tCollapse?' at '+o.tCollapse:''}${wt?', and the arrest was '+wt:''}.`);
+ const pr=[...(o.prodrome||[]).filter(x=>E.prodrome[x]).map(x=>E.prodrome[x]),...(oth('prodrome')?[lcF(V(oth('prodrome')))]:[])];
+ if((o.prodrome||[]).includes('無前驅症狀'))s.push('There were no prodromal symptoms.');else if(pr.length)s.push(`Prodromal symptoms included ${andJ(pr)}.`);
+ if(o.bcpr==='有'){const w=o.bcprWho?E.who[o.bcprWho]:'';s.push(`Bystander CPR was performed${w?' by '+w:''}${o.bcprDelay!==''?` starting about ${ohPl(o.bcprDelay,'minute')} after the collapse`:''}.`)}
+ else if(o.bcpr==='無')s.push('No bystander CPR was performed.');else if(o.bcpr==='不詳')s.push('It is unknown whether bystander CPR was performed.');
+ if(o.baed==='有，已電擊')s.push(`A bystander AED was used${o.baedShocks!==''?` and delivered ${ohPl(o.baedShocks,'shock')}`:' and advised a shock'}.`);else if(o.baed==='有，未建議電擊')s.push('A bystander AED was applied but no shock was advised.');else if(o.baed==='無')s.push('No bystander AED was used.');
+ const a=ohMin(o.tCollapse,o.tEms);
+ if(o.tEms)s.push(`EMS arrived at ${o.tEms}${a!=null?` (${ohPl(a,'minute')} after the collapse)`:''}.`);
+ if(o.rhythm&&E.rhythm[o.rhythm])s.push(`The initial rhythm on EMS arrival was ${E.rhythm[o.rhythm]}.`);
+ const em=[];if(o.emsShocks!=='')em.push(+o.emsShocks===0?'no shocks':ohPl(o.emsShocks,'shock'));if(o.emsEpi!=='')em.push(`epinephrine ×${o.emsEpi}`);if(E.airway[o.airway])em.push(E.airway[o.airway]);if(o.mech==='有')em.push('mechanical CPR');
+ if(em.length)s.push(`Prehospital management included ${andJ(em)}.`);
+ if(o.preRosc==='有')s.push(`ROSC was achieved prehospital${o.tPreRosc?' at '+o.tPreRosc:''}.`);else if(o.preRosc==='無')s.push('ROSC was not achieved prehospital.');
+ {const pm=LL('pmh',S.pmh);if(S.pmh.includes('無特殊病史')&&pm.length===1)s.push('The patient has no significant past medical history.');else if(pm.length)s.push(`The past medical history includes ${andJ(pm.map(V).map(lcF))}.`)}
+ if(o.etiology&&E.etiology[o.etiology])s.push(`The arrest was attributed to ${E.etiology[o.etiology]}.`);else if(oth('etiology'))s.push(`The presumed cause was ${lcF(V(oth('etiology')))}.`);
+ if(E.cpc[o.cpc])s.push(`Baseline functional status was ${E.cpc[o.cpc]}.`);
+ if(o.dnr==='有 DNR/預立醫療決定')s.push('The patient has a DNR order or advance care decision.');else if(o.dnr==='無')s.push('The patient has no DNR order.');
+ const b=ohMin(o.tCollapse,o.tEd),ed=[];
+ if(o.tEd)ed.push(`The patient arrived at the ED at ${o.tEd}${b!=null?` (${ohPl(b,'minute')} after the collapse)`:''}${o.edStatus==='CPR 進行中'?' with CPR in progress':o.edStatus==='已 ROSC'?' with ROSC':''}.`);
+ else if(o.edStatus)ed.push(o.edStatus==='CPR 進行中'?'The patient arrived at the ED with CPR in progress.':'The patient arrived at the ED with ROSC.');
+ if(E.edRhythm[o.edRhythm])ed.push(`The rhythm on ED arrival was ${E.edRhythm[o.edRhythm]}.`);
+ if(o.edShocks!==''||o.edCpr!==''){const x=[];if(o.edShocks!=='')x.push(`${ohPl(o.edShocks,'shock')} ${+o.edShocks===1?'was':'were'} delivered`);if(o.edCpr!=='')x.push(`CPR continued for ${ohPl(o.edCpr,'minute')}`);ed.push(`In the ED, ${x.join(' and ')}.`)}
+ return s.concat(ed,ohcaTrProse()).join(' ')}
+function ohcaList(){const o=S.ohca;if(!o||!o.on)return '';const L=[],add=(k,v)=>{if(v!==''&&v!=null&&!(Array.isArray(v)&&!v.length))L.push(`${k}：${Array.isArray(v)?v.join('、'):v}`)},oth=k=>S.oth['ohca.'+k]||'';
+ add('發現情形',o.witness||oth('witness'));add('倒下或發現時間',o.tCollapse);add('發生地點',o.place||oth('place'));
+ add('路人 CPR',o.bcpr?o.bcpr+(o.bcpr==='有'?`${o.bcprWho?'（'+o.bcprWho:''}${o.bcprDelay!==''?(o.bcprWho?'，':'（')+'約 '+o.bcprDelay+' 分鐘後開始':''}${o.bcprWho||o.bcprDelay!==''?'）':''}`:''):'');
+ add('路人 AED',o.baed?o.baed+(o.baedShocks!==''?`（${o.baedShocks} 次）`:''):'');add('119 到達時間',o.tEms);add('EMS 初始心律',o.rhythm);
+ add('EMS 電擊',o.emsShocks!==''?o.emsShocks+' 次':'');add('EMS Epinephrine',o.emsEpi!==''?o.emsEpi+' 次':'');add('EMS 呼吸道',o.airway);add('機械 CPR',o.mech);add('到院前 ROSC',o.preRosc?o.preRosc+(o.tPreRosc?`（${o.tPreRosc}）`:''):'');
+ add('前驅症狀',[...(o.prodrome||[]),...(oth('prodrome')?[oth('prodrome')]:[])]);add('慢性病／過去病史',LL('pmh',S.pmh));add('推測原因',o.etiology||oth('etiology'));add('病前功能',o.cpc);add('DNR',o.dnr);
+ add('到院時間',o.tEd);add('到院時心律',o.edRhythm);add('到院時狀態',o.edStatus);add('到院後電擊',o.edShocks!==''?o.edShocks+' 次':'');add('到院 CPR 總時間',o.edCpr!==''?o.edCpr+' 分鐘':'');
+ const a=ohMin(o.tCollapse,o.tEms),b=ohMin(o.tCollapse,o.tEd);if(a!=null)add('倒下 → 119 到達',a+' 分鐘');if(b!=null)add('倒下 → 到院',b+' 分鐘');
+ ohcaTrAdd(add);return L.join('\n')}
+function ohcaJson(){const o=S.ohca,a=ohMin(o.tCollapse,o.tEms),b=ohMin(o.tCollapse,o.tEd),n=v=>v===''?null:+v;
+ return {event:{witness:o.witness||null,collapse_time:o.tCollapse||null,location:o.place||null,bystander_cpr:o.bcpr||null,bystander_cpr_by:o.bcprWho||null,bystander_cpr_delay_min:n(o.bcprDelay),bystander_aed:o.baed||null,bystander_aed_shocks:n(o.baedShocks),ems_arrival_time:o.tEms||null,initial_rhythm:o.rhythm||null,ems_shocks:n(o.emsShocks),ems_epinephrine_doses:n(o.emsEpi),ems_airway:o.airway||null,mechanical_cpr:o.mech||null,prehospital_rosc:o.preRosc||null,prehospital_rosc_time:o.tPreRosc||null},
+  background:{prodrome:o.prodrome,presumed_etiology:o.etiology||null,baseline_function:o.cpc||null,dnr:o.dnr||null},
+  ed_arrival:{time:o.tEd||null,rhythm:o.edRhythm||null,status:o.edStatus||null,ed_shocks:n(o.edShocks),ed_cpr_minutes:n(o.edCpr)},intervals_min:{collapse_to_ems:a,collapse_to_ed:b},...(isTr()?{trauma_arrest:ohcaTrJson()}:{})}}
 function buildNt(){
+ if(ohcaOnly())return `<section class="card" id="s-tri"><h2>基本資料 <small>OHCA 病歷只需填基本資料、OHCA 紀錄與診斷</small></h2>${basicInfo()}</section>${ohcaSec()}${dxSec(5)}`;
  const ts=cur(),locs=uni('loc'),qs=uni('q'),sy=uni('sym'),ex=uniExt(),side=ts.some(t=>t.side);
  const pd=isPd(),cats=[...new Set(TPLS().map(t=>t.cat))],pr=prio(),SX=SYSX(),others=Object.keys(SX).filter(x=>!pr.includes(x));
  const extH=ex.map(([l,ty,op])=>F(l,ty==='sel'?CH('hpi.ext.'+l,op.map(v=>cs('hpi.ext.'+l,v)).join('')):inp('hpi.ext.'+l,ty==='num'?'number':ty,'', 'max-width:200px'))).join('');
@@ -1748,6 +1866,7 @@ function buildNt(){
   ${extH}
   ${F('補充（選填）',`<textarea data-i="hpi.note" rows="2" style="width:100%" placeholder="補充說明">${esc(S.hpi.note)}</textarea>`)}
  </section>
+ ${ohcaSec()}
  <section class="card" id="s-bg"><h2>③ 病史背景</h2>
   ${F('過去病史',CH('pmh',PMHX().map(v=>cm('pmh',v)).join('')))}
   ${F('過敏',CH('alg',ALG.map(v=>cm('alg',v)).join('')))}
@@ -1767,6 +1886,10 @@ function buildTr(){
    if(g[1]==='gcs'){const tot=+T_.gcs.e+ +T_.gcs.v+ +T_.gcs.m;return F('GCS',`<div class="gcs">${[['e','E 睜眼',4],['v','V 語言',5],['m','M 動作',6]].map(([k,l,n])=>`<div><small class="hint">${l}</small><br><select data-gcs="${k}"><option value="" ${T_.gcs[k]===''?'selected':''}>—</option>${Array.from({length:n},(_,i)=>n-i).map(x=>`<option ${+T_.gcs[k]===x?'selected':''}>${x}</option>`).join('')}</select></div>`).join('')}<div class="tot">${gset(T_)?'= '+tot:''}</div></div>`)}
    if(g[3]&&T_.abc[g[3]]!==g[4])return'';
    return F(g[0],CH('tr.abc.'+g[0],g[2].map(v=>g[1]==='m'?cm('tr.abc.'+g[0],v,'ab'):cs('tr.abc.'+g[0],v)).join('')))}).join('')}</div>`).join('');
+ if(ohcaOnly())return `<section class="card" id="s-tri"><h2>基本資料與受傷經過 <small>OHCA 病歷只需填基本資料、受傷經過、OHCA 紀錄與診斷</small></h2>${basicInfo()}
+  ${F('受傷時間',`<div class="row">${inp('tr.time','time','','width:130px')}<span class="hint" id="agoT">${ago(T_.time)}</span><input type="text" data-i="tr.when" value="${esc(T_.when||'')}" placeholder="或用文字描述" style="flex:1 1 160px"></div>`)}
+  ${F('受傷機轉（可複選）',CH('tr.moi',Object.keys(MOI).map(v=>cm('tr.moi',v)).join('')))}
+  ${moiH}</section>${ohcaSec()}${dxSec(5)}`;
  return `
  <section class="card" id="s-tri"><h2>① 受傷經過 <small>檢傷由護理師完成，此處不需重填</small></h2>${ro()}
   ${basicInfo()}
@@ -1799,7 +1922,7 @@ function dxSec(n){
  <input id="dxFree" list="dxlist" placeholder="搜尋其他診斷，或輸入自由文字後按 Enter" style="width:100%;margin-top:10px"></section>`}
 
 Object.assign(EN,{"頭皮挫傷": "scalp contusion", "腦震盪(無意識喪失)": "concussion without loss of consciousness", "頭皮擦傷": "scalp abrasion", "頭皮撕裂傷(無異物)": "scalp laceration without foreign body", "頭皮撕裂傷(有異物)": "scalp laceration with foreign body", "顱部壓砸傷": "crushing injury of skull", "顱骨穹窿骨折": "fracture of vault of skull", "顱底骨折": "basilar skull fracture", "頭骨骨折,部位未特定": "skull fracture, unspecified site", "頭部(頭皮)燒傷(未指定度)": "burn of head (scalp), degree unspecified", "創傷性瀰漫性腦損傷(無意識喪失)": "traumatic diffuse brain injury without loss of consciousness", "創傷性局部腦損傷/挫傷(無意識喪失)": "traumatic focal brain injury/contusion without loss of consciousness", "外傷性硬腦膜上出血 Epidural(無意識喪失)": "traumatic epidural hemorrhage without loss of consciousness", "外傷性硬腦膜下出血 Subdural(無意識喪失)": "traumatic subdural hemorrhage without loss of consciousness", "外傷性蛛網膜下出血 tSAH(無意識喪失)": "traumatic subarachnoid hemorrhage (tSAH) without loss of consciousness", "頭部損傷,未特定(無意識喪失)": "head injury, unspecified, without loss of consciousness", "鼻部表淺傷": "superficial injury of nose", "唇表淺傷": "superficial injury of lip", "鼻部挫傷": "contusion of nose", "眼瞼及眶周挫傷(黑眼圈)": "contusion of eyelid and periocular area (black eye)", "頭臉其他部位挫傷": "contusion of other parts of head and face", "鼻部擦傷": "abrasion of nose", "頭臉其他部位擦傷": "abrasion of other parts of head and face", "眼瞼及眶周撕裂傷": "laceration of eyelid and periocular area", "唇撕裂傷(無異物)": "laceration of lip without foreign body", "口腔內撕裂傷(無異物)": "intraoral laceration without foreign body", "頭臉其他部位撕裂傷(無異物)": "laceration of other parts of head and face without foreign body", "鼻部開放傷口": "open wound of nose", "頭臉開放傷口(未特定)": "open wound of head and face, unspecified", "顏面壓砸傷": "crushing injury of face", "鼻骨骨折": "nasal bone fracture", "眶底骨折": "orbital floor fracture", "下頜骨骨折(未特定部位)": "mandible fracture, unspecified site", "顴骨/上頜骨骨折": "zygomatic/maxillary fracture", "鼻部燒傷": "burn of nose", "唇燒傷": "burn of lip", "唇挫傷": "contusion of lip", "口腔挫傷": "contusion of oral cavity", "舌及口底撕裂傷": "laceration of tongue and floor of mouth", "唇開放傷口": "open wound of lip", "口腔開放傷口": "open wound of oral cavity", "牙齒斷裂(冠折,琺瑯質/象牙質)": "fractured tooth (crown fracture, enamel/dentin)", "齒槽骨骨折": "alveolar bone fracture", "牙齒脫位/半脫位(撞出、鬆動)": "tooth dislocation/subluxation (extrusion, loosening)", "顳顎關節(TMJ)脫臼": "temporomandibular joint (TMJ) dislocation", "下頜韌帶/TMJ 扭傷": "sprain of mandibular ligament/TMJ", "牙齦炎": "gingivitis", "牙髓炎": "pulpitis", "口腔膿瘍(蜂窩組織炎)": "oral abscess (cellulitis)", "頸部挫傷(未特定部位)": "contusion of neck, unspecified site", "喉部挫傷": "contusion of larynx", "頸部擦傷(未特定部位)": "abrasion of neck, unspecified site", "頸部撕裂傷(無異物,未特定部位)": "laceration of neck without foreign body, unspecified site", "頸部開放傷口(未特定)": "open wound of neck, unspecified", "頸部壓砸傷": "crushing injury of neck", "頸椎骨折(未特定)": "cervical spine fracture, unspecified", "C1–C7 各椎節骨折": "fracture of individual cervical vertebrae C1-C7", "頸椎扭傷(揮鞭式,whiplash)": "cervical sprain (whiplash)", "頸椎關節脫位(未特定椎節)": "dislocation of cervical vertebra, unspecified level", "頸部其他/未特定韌帶扭傷": "sprain of other/unspecified ligament of neck", "頸部燒傷(未指定度)": "burn of neck, degree unspecified", "肩表淺傷(未特定)": "superficial injury of shoulder, unspecified", "肩部挫傷": "contusion of shoulder", "肩部擦傷": "abrasion of shoulder", "肩部撕裂傷(無異物)": "laceration of shoulder without foreign body", "肩開放傷口(未特定)": "open wound of shoulder, unspecified", "肩壓砸傷": "crushing injury of shoulder", "鎖骨骨折(未特定部位)": "clavicle fracture, unspecified site", "肩胛骨骨折(未特定部位)": "scapula fracture, unspecified site", "肱骨近端骨折(未特定)": "proximal humerus fracture, unspecified", "肩關節脫臼(肱盂關節,未特定)": "shoulder dislocation (glenohumeral joint), unspecified", "肩鎖關節脫臼(AC joint)": "acromioclavicular (AC) joint dislocation", "胸鎖關節脫臼(SC joint)": "sternoclavicular (SC) joint dislocation", "旋轉肌袖扭傷/拉傷": "rotator cuff sprain/strain", "肩關節扭傷(未特定)": "shoulder sprain, unspecified", "肩部創傷性截斷": "traumatic amputation of shoulder", "肩部燒傷(未指定度)": "burn of shoulder, degree unspecified", "上臂表淺傷(未特定)": "superficial injury of upper arm, unspecified", "上臂挫傷": "contusion of upper arm", "上臂擦傷": "abrasion of upper arm", "上臂撕裂傷(無異物)": "laceration of upper arm without foreign body", "上臂開放傷口(未特定)": "open wound of upper arm, unspecified", "上臂壓砸傷": "crushing injury of upper arm", "肱骨幹骨折(未特定)": "humeral shaft fracture, unspecified", "上臂創傷性截斷": "traumatic amputation of upper arm", "上臂燒傷(未指定度)": "burn of upper arm, degree unspecified", "肘表淺傷(未特定)": "superficial injury of elbow, unspecified", "肘部挫傷": "contusion of elbow", "肘部擦傷": "abrasion of elbow", "肘部撕裂傷(無異物)": "laceration of elbow without foreign body", "肘開放傷口(未特定)": "open wound of elbow, unspecified", "肘壓砸傷": "crushing injury of elbow", "肱骨遠端骨折(未特定)": "distal humerus fracture, unspecified", "橈骨頭骨折": "radial head fracture", "鷹嘴突骨折": "olecranon fracture", "肘關節脫臼(未特定)": "elbow dislocation, unspecified", "橈骨頭半脫位(保母肘,Nursemaid)": "subluxation of radial head (nursemaid's elbow)", "肘尺側副韌帶扭傷": "sprain of ulnar collateral ligament of elbow", "肘關節扭傷(未特定)": "elbow sprain, unspecified", "肘部創傷性截斷": "traumatic amputation of elbow", "手肘燒傷(未指定度)": "burn of elbow, degree unspecified", "前臂表淺傷(未特定)": "superficial injury of forearm, unspecified", "前臂挫傷": "contusion of forearm", "前臂擦傷": "abrasion of forearm", "前臂撕裂傷(無異物)": "laceration of forearm without foreign body", "前臂開放傷口(未特定)": "open wound of forearm, unspecified", "前臂壓砸傷": "crushing injury of forearm", "橈骨遠端骨折(未特定)": "distal radius fracture, unspecified", "Colles 骨折": "Colles fracture", "橈骨幹骨折(未特定)": "radial shaft fracture, unspecified", "尺骨幹骨折(未特定)": "ulnar shaft fracture, unspecified", "前臂創傷性截斷": "traumatic amputation of forearm", "前臂燒傷(未指定度)": "burn of forearm, degree unspecified", "腕表淺傷(未特定)": "superficial injury of wrist, unspecified", "手掌表淺傷(未特定)": "superficial injury of palm, unspecified", "手指表淺傷(未特定)": "superficial injury of finger, unspecified", "腕部挫傷": "contusion of wrist", "手部挫傷": "contusion of hand", "拇指挫傷(未傷及指甲)": "contusion of thumb without damage to nail", "手指挫傷(未傷及指甲,未特定指)": "contusion of finger without damage to nail, unspecified finger", "手部擦傷": "abrasion of hand", "腕部擦傷": "abrasion of wrist", "拇指擦傷": "abrasion of thumb", "手指擦傷(未特定指)": "abrasion of finger, unspecified finger", "手部撕裂傷(無異物)": "laceration of hand without foreign body", "腕部撕裂傷(無異物)": "laceration of wrist without foreign body", "手指撕裂傷(未傷及指甲,未特定指)": "laceration of finger without damage to nail, unspecified finger", "手/腕開放傷口(未特定)": "open wound of hand/wrist, unspecified", "腕壓砸傷": "crushing injury of wrist", "手掌壓砸傷": "crushing injury of palm", "手指壓砸傷": "crushing injury of finger", "舟狀骨骨折(未特定)": "scaphoid fracture, unspecified", "掌骨骨折(未特定)": "metacarpal fracture, unspecified", "拇指骨折(未特定)": "thumb fracture, unspecified", "指骨骨折(未特定指)": "phalanx fracture of finger, unspecified finger", "腕關節扭傷(未特定)": "wrist sprain, unspecified", "手指關節脫臼(未特定指)": "dislocation of finger joint, unspecified finger", "拇指扭傷(MCP/IP)": "thumb sprain (MCP/IP)", "手指扭傷(未特定指)": "finger sprain, unspecified finger", "腕掌/掌骨關節脫臼": "carpometacarpal/metacarpal joint dislocation", "腕部創傷性截斷": "traumatic amputation of wrist", "手掌創傷性截斷": "traumatic amputation of palm", "手指創傷性截斷": "traumatic amputation of finger", "腕/手燒傷": "burn of wrist/hand", "手掌燒傷": "burn of palm", "手指燒傷": "burn of finger", "胸壁表淺傷(未特定)": "superficial injury of chest wall, unspecified", "上背表淺傷": "superficial injury of upper back", "前胸壁挫傷": "contusion of front wall of thorax", "後胸壁挫傷": "contusion of back wall of thorax", "前胸壁擦傷": "abrasion of front wall of thorax", "後胸壁擦傷": "abrasion of back wall of thorax", "前胸壁撕裂傷(無異物,未穿入胸腔)": "laceration of front wall of thorax without foreign body, without penetration into thoracic cavity", "胸壁開放傷口(未特定)": "open wound of chest wall, unspecified", "胸廓壓砸傷": "crushing injury of thorax", "單根肋骨骨折": "fracture of one rib", "多根肋骨骨折": "fracture of multiple ribs", "連枷胸(Flail chest)": "flail chest", "胸骨骨折(未特定)": "sternum fracture, unspecified", "胸椎骨折(未特定)": "thoracic spine fracture, unspecified", "胸部燒傷(未指定度)": "burn of chest, degree unspecified", "肺挫傷(Lung contusion,單側)": "lung contusion, unilateral", "肺撕裂傷(Lung laceration,單側)": "lung laceration, unilateral", "創傷性氣胸(Traumatic pneumothorax)": "traumatic pneumothorax", "創傷性血胸(Traumatic hemothorax)": "traumatic hemothorax", "創傷性血氣胸(Hemopneumothorax)": "traumatic hemopneumothorax", "心臟挫傷(Cardiac contusion)": "cardiac contusion", "支氣管損傷(未特定,單側)": "bronchus injury, unspecified, unilateral", "胸主動脈損傷": "injury of thoracic aorta", "創傷性橫膈損傷": "traumatic diaphragm injury", "腹壁表淺傷": "superficial injury of abdominal wall", "腹壁挫傷": "contusion of abdominal wall", "下背及骨盆挫傷": "contusion of lower back and pelvis", "腹壁擦傷": "abrasion of abdominal wall", "下背及骨盆擦傷": "abrasion of lower back and pelvis", "腹壁撕裂傷(無異物,未穿入腹腔,未特定象限)": "laceration of abdominal wall without foreign body, without penetration into peritoneal cavity, unspecified quadrant", "下背/骨盆撕裂傷(無異物,未穿入後腹腔)": "laceration of lower back/pelvis without foreign body, without penetration into retroperitoneum", "腹壁開放傷口(未特定)": "open wound of abdominal wall, unspecified", "腹/下背/骨盆壓砸傷": "crushing injury of abdomen/lower back/pelvis", "腰椎骨折(未特定)": "lumbar spine fracture, unspecified", "腹部/下背燒傷(未指定度)": "burn of abdomen/lower back, degree unspecified", "肝損傷/裂傷(Liver laceration,輕度)": "liver injury/laceration, minor", "脾臟裂傷(Spleen laceration,輕度)": "spleen laceration, minor", "腎損傷/裂傷(Kidney laceration,單側,中度)": "kidney injury/laceration, unilateral, moderate", "胰臟損傷/裂傷": "pancreas injury/laceration", "胃損傷": "stomach injury", "小腸損傷": "small intestine injury", "大腸損傷": "large intestine injury", "膀胱損傷(挫傷/裂傷)": "bladder injury (contusion/laceration)", "腹部/腹膜後其他及未特定器官損傷": "injury of other and unspecified intra-abdominal/retroperitoneal organs", "下背/骨盆壓砸傷": "crushing injury of lower back/pelvis", "恥骨骨折(未特定)": "pubis fracture, unspecified", "髂骨骨折(未特定)": "ilium fracture, unspecified", "髖臼骨折(未特定)": "acetabulum fracture, unspecified", "薦椎骨折(未特定)": "sacrum fracture, unspecified", "尾椎骨折": "coccyx fracture", "骨盆骨折(未特定部位)": "pelvic fracture, unspecified site", "骨盆燒傷(未指定度)": "burn of pelvis, degree unspecified", "外生殖器表淺傷(男)": "superficial injury of external genitalia (male)", "外生殖器表淺傷(女)": "superficial injury of external genitalia (female)", "外生殖器挫傷(未特定)": "contusion of external genitalia, unspecified", "肛門挫傷": "contusion of anus", "外生殖器擦傷(男性,未特定)": "abrasion of external genitalia, male, unspecified", "陰莖撕裂傷(無異物)": "laceration of penis without foreign body", "陰囊及睪丸撕裂傷(無異物)": "laceration of scrotum and testes without foreign body", "外陰/陰道撕裂傷(無異物)": "laceration of vulva/vagina without foreign body", "會陰其他/未特定撕裂傷(無異物)": "other/unspecified laceration of perineum without foreign body", "男性外生殖器壓砸傷": "crushing injury of male external genitalia", "女性外生殖器壓砸傷": "crushing injury of female external genitalia", "男性外生殖器燒傷": "burn of male external genitalia", "女性外生殖器燒傷": "burn of female external genitalia", "尿道損傷": "urethral injury", "睪丸損傷": "testicular injury", "卵巢/子宮損傷": "ovary/uterus injury", "髖表淺傷(未特定)": "superficial injury of hip, unspecified", "髖部挫傷": "contusion of hip", "髖部擦傷": "abrasion of hip", "髖部撕裂傷(無異物)": "laceration of hip without foreign body", "髖開放傷口(未特定)": "open wound of hip, unspecified", "髖壓砸傷": "crushing injury of hip", "股骨頸骨折(未特定)": "femoral neck fracture, unspecified", "轉子間骨折": "intertrochanteric fracture", "轉子下骨折": "subtrochanteric fracture", "髖關節脫臼(未特定)": "hip dislocation, unspecified", "髂股韌帶扭傷": "sprain of iliofemoral ligament", "髖關節扭傷(未特定)": "hip sprain, unspecified", "髖部創傷性截斷": "traumatic amputation of hip", "髖部燒傷(未指定度)": "burn of hip, degree unspecified", "大腿表淺傷(未特定)": "superficial injury of thigh, unspecified", "大腿挫傷": "contusion of thigh", "大腿擦傷": "abrasion of thigh", "大腿撕裂傷(無異物)": "laceration of thigh without foreign body", "大腿開放傷口(未特定)": "open wound of thigh, unspecified", "大腿壓砸傷": "crushing injury of thigh", "股骨幹骨折(未特定)": "femoral shaft fracture, unspecified", "股骨遠端骨折(未特定)": "distal femur fracture, unspecified", "大腿創傷性截斷": "traumatic amputation of thigh", "大腿燒傷(未指定度)": "burn of thigh, degree unspecified", "膝表淺傷(未特定)": "superficial injury of knee, unspecified", "膝部挫傷": "contusion of knee", "膝部擦傷": "abrasion of knee", "膝部撕裂傷(無異物)": "laceration of knee without foreign body", "膝開放傷口(未特定)": "open wound of knee, unspecified", "膝壓砸傷": "crushing injury of knee", "髕骨骨折(未特定)": "patella fracture, unspecified", "脛骨近端骨折(未特定)": "proximal tibia fracture, unspecified", "前十字韌帶扭傷(ACL)": "sprain of anterior cruciate ligament (ACL)", "後十字韌帶扭傷(PCL)": "sprain of posterior cruciate ligament (PCL)", "內側副韌帶扭傷(MCL)": "sprain of medial collateral ligament (MCL)", "外側副韌帶扭傷(LCL)": "sprain of lateral collateral ligament (LCL)", "內側半月板急性撕裂": "acute tear of medial meniscus", "外側半月板急性撕裂": "acute tear of lateral meniscus", "髕骨脫臼": "patellar dislocation", "膝關節脫臼(未特定)": "knee dislocation, unspecified", "膝關節扭傷(未特定)": "knee sprain, unspecified", "膝部創傷性截斷": "traumatic amputation of knee", "膝部燒傷(未指定度)": "burn of knee, degree unspecified", "小腿表淺傷(未特定)": "superficial injury of lower leg, unspecified", "小腿挫傷": "contusion of lower leg", "小腿擦傷": "abrasion of lower leg", "小腿撕裂傷(無異物)": "laceration of lower leg without foreign body", "小腿開放傷口(未特定)": "open wound of lower leg, unspecified", "小腿壓砸傷": "crushing injury of lower leg", "脛骨幹骨折(未特定)": "tibial shaft fracture, unspecified", "腓骨幹骨折(未特定)": "fibular shaft fracture, unspecified", "小腿創傷性截斷": "traumatic amputation of lower leg", "小腿燒傷(未指定度)": "burn of lower leg, degree unspecified", "踝表淺傷(未特定)": "superficial injury of ankle, unspecified", "踝部挫傷": "contusion of ankle", "踝部擦傷": "abrasion of ankle", "踝部撕裂傷(無異物)": "laceration of ankle without foreign body", "踝開放傷口(未特定)": "open wound of ankle, unspecified", "踝壓砸傷": "crushing injury of ankle", "內踝骨折(移位)": "displaced medial malleolus fracture", "外踝骨折(移位)": "displaced lateral malleolus fracture", "雙踝骨折(移位)": "displaced bimalleolar fracture", "距腓前韌帶等外側韌帶扭傷": "sprain of lateral ankle ligaments (e.g., anterior talofibular ligament)", "三角韌帶(deltoid)扭傷": "sprain of deltoid ligament", "踝關節扭傷(未特定)": "ankle sprain, unspecified", "踝關節脫臼": "ankle dislocation", "踝部創傷性截斷": "traumatic amputation of ankle", "踝部燒傷(未指定度)": "burn of ankle, degree unspecified", "足表淺傷(未特定)": "superficial injury of foot, unspecified", "趾表淺傷(第2–5趾)": "superficial injury of toes (2nd-5th toes)", "足部挫傷": "contusion of foot", "大趾挫傷(未傷及趾甲)": "contusion of great toe without damage to nail", "其他趾挫傷(未傷及趾甲)": "contusion of other toe without damage to nail", "足部擦傷": "abrasion of foot", "足部撕裂傷(無異物)": "laceration of foot without foreign body", "足開放傷口(未特定)": "open wound of foot, unspecified", "足壓砸傷": "crushing injury of foot", "趾壓砸傷": "crushing injury of toe", "蹠骨骨折(未特定)": "metatarsal fracture, unspecified", "跟骨骨折(未特定)": "calcaneus fracture, unspecified", "趾骨骨折(未特定趾)": "phalanx fracture of toe, unspecified toe", "足創傷性截斷": "traumatic amputation of foot", "趾創傷性截斷": "traumatic amputation of toe", "足燒傷": "burn of foot", "趾燒傷": "burn of toe", "眼瞼及眶周表淺傷(未特定)": "superficial injury of eyelid and periocular area, unspecified", "眼瞼及眶周挫傷": "contusion of eyelid and periocular area", "眼瞼及眶周開放傷口(未特定)": "open wound of eyelid and periocular area, unspecified", "眼及附器燒傷": "burn of eye and adnexa", "角膜擦傷(表淺)": "corneal abrasion (superficial)", "眼球破裂/眼內容脫出": "ruptured globe/extrusion of intraocular contents", "眼內異物(機械性)": "intraocular foreign body (mechanical)", "針眼/麥粒腫(hordeolum)": "stye/hordeolum", "結膜炎(未特定)": "conjunctivitis, unspecified", "結膜水腫(chemosis)": "conjunctival edema (chemosis)", "結膜下出血": "subconjunctival hemorrhage", "角膜潰瘍(未特定)": "corneal ulcer, unspecified", "視網膜剝離(未特定)": "retinal detachment, unspecified", "青光眼(未特定)": "glaucoma, unspecified", "玻璃體出血": "vitreous hemorrhage", "耳部表淺傷(未特定)": "superficial injury of ear, unspecified", "耳部挫傷": "contusion of ear", "耳部開放傷口(未特定)": "open wound of ear, unspecified", "耳部燒傷": "burn of ear", "外傷性耳膜穿孔": "traumatic perforation of tympanic membrane", "外耳異物": "foreign body in external ear", "鼻出血(epistaxis)": "epistaxis", "咽喉/呼吸道異物": "foreign body in pharynx/respiratory tract", "食道異物": "foreign body in esophagus", "鼻腔異物": "foreign body in nasal cavity", "牙齒斷裂(冠折)/裂齒": "fractured tooth (crown fracture)/cracked tooth", "急性牙齦炎": "acute gingivitis", "口腔膿瘍/蜂窩組織炎": "oral abscess/cellulitis", "口內傷口": "intraoral wound", "針眼/麥粒腫": "stye/hordeolum", "結膜炎": "conjunctivitis", "角膜潰瘍": "corneal ulcer", "視網膜剝離": "retinal detachment", "青光眼": "glaucoma", "有意識喪失依時間長短另細分 S06.0X1A 起": "S06.0X1A onward: subdivided by duration of loss of consciousness if present", "依部位/側別細分": "subdivide by site/laterality", "度數由上方切換帶入(未指定/1/2/3)": "degree supplied from the selector above (unspecified/1/2/3)", "意識喪失≤30分 S06.0X1A;更長時間再細分": "loss of consciousness <=30 min S06.0X1A; longer durations subdivided further", "依意識喪失時間 S06.2X1A 起細分": "subdivided by duration of loss of consciousness, from S06.2X1A", "左右腦 S06.31/32,依意識喪失時間細分": "left/right brain S06.31/32, subdivided by duration of loss of consciousness", "依意識喪失時間 S06.4X1A 起細分": "subdivided by duration of loss of consciousness, from S06.4X1A", "依意識喪失時間 S06.5X1A 起細分": "subdivided by duration of loss of consciousness, from S06.5X1A", "依意識喪失時間 S06.6X1A 起細分": "subdivided by duration of loss of consciousness, from S06.6X1A", "多以口腔內撕裂傷歸類": "mostly classified as intraoral laceration", "外傷牙折均編 S02.5": "traumatic tooth fractures all coded S02.5", "併牙折時同碼,另可加下頜齒槽部碼": "same code when accompanied by tooth fracture; mandibular alveolar code may be added", "含撞入、撞出、側方移位、完全脫落": "includes intrusion, extrusion, lateral displacement, and avulsion (complete loss)", "雙側 S03.03,未特定側 S03.00": "bilateral S03.03, unspecified side S03.00", "雙側 S03.43XA": "bilateral S03.43XA", "院內 K04/K05;急性牙齦炎 K05.0": "in-hospital K04/K05; acute gingivitis K05.0", "可逆性 K04.01;不可逆性 K04.02": "reversible K04.01; irreversible K04.02", "依椎節/型態細分": "subdivided by vertebral level/type", "依椎節 C0/1–C7/T1 細分 S13.1-": "subdivided by vertebral level C0/1-C7/T1, S13.1-", "院內『開放傷口』收案碼": "in-hospital catch-all code for open wound", "前脫位 S43.01/後 S43.02/下 S43.03": "anterior dislocation S43.01/posterior S43.02/inferior S43.03", "側別由左右選取、完全/部分由上方切換帶入": "side selected as left/right; complete/partial supplied from the selector above", "依側別/移位細分": "subdivided by side/displacement", "前/後/內/外側另細分": "subdivided further into anterior/posterior/medial/lateral", "橈側 S53.44": "radial side S53.44", "各指別另有細碼 S61.21-": "individual fingers have separate detailed codes S61.21-", "手掌 S61.409/腕 S61.509": "palm S61.409/wrist S61.509", "依第幾掌骨細分 S62.3-": "subdivided by metacarpal number S62.3-", "依指別/指節細分 S62.6-": "subdivided by finger/phalanx S62.6-", "依指別/MCP·IP 細分 S63.2-": "subdivided by finger/MCP/IP S63.2-", "依指別細分 S63.6-": "subdivided by finger S63.6-", "依側別細分": "subdivided by side", "依指別逐列展開;無明確指別用『其他指』": "expanded row by row for each finger; use 'other finger' when the finger is not specified", "此區另需部位/側別細分,度數改小數點後第一碼(1/2/3)": "this region also requires site/laterality subdivision; degree is the first digit after the decimal point (1/2/3)", "院內『上背』": "in-hospital 'upper back'", "雙側 S22.43XA": "bilateral S22.43XA", "依椎節細分 S22.0-": "subdivided by vertebral level S22.0-", "雙側 S27.322A;未特定 S27.329A": "bilateral S27.322A; unspecified S27.329A", "雙側 S27.332A;未特定 S27.339A": "bilateral S27.332A; unspecified S27.339A", "含裂傷 S26.0-,依有無心包積血細分": "includes laceration S26.0-, subdivided by presence of hemopericardium", "雙側 S27.402A;未特定 S27.409A;挫傷 S27.421A;裂傷 S27.431A;其他 S27.491A": "bilateral S27.402A; unspecified S27.409A; contusion S27.421A; laceration S27.431A; other S27.491A", "依部位/型態 S25.0-": "by site/type S25.0-", "依 L1–L5 椎節細分 S32.0-": "subdivided by vertebral level L1-L5 S32.0-", "挫傷 S36.112;中度 S36.116;重度/大裂 S36.117": "contusion S36.112; moderate S36.116; severe/major laceration S36.117", "挫傷 S36.021;中度 S36.032;大裂/破裂 S36.033": "contusion S36.021; moderate S36.032; major laceration/rupture S36.033", "挫傷 S37.01;輕/中/重依 S37.02-04,側別另編": "contusion S37.01; minor/moderate/major per S37.02-04, laterality coded separately", "部位(頭/體/尾)與型態細分 S36.2-": "subdivided by site (head/body/tail) and type S36.2-", "挫傷/裂傷細分": "subdivided into contusion/laceration", "十二指腸 S36.4;依挫傷/裂傷細分": "duodenum S36.4; subdivided into contusion/laceration", "依節段/型態細分 S36.5-": "subdivided by segment/type S36.5-", "裂傷 S37.22/S37.23": "laceration S37.22/S37.23", "陰莖 S30.21;陰囊睪丸 S30.22;陰道外陰 S30.23": "penis S30.21; scrotum/testis S30.22; vagina/vulva S30.23", "陰莖 S30.812A;陰囊 S30.813A;外陰 S30.814A;女性未特定 S30.816A": "penis S30.812A; scrotum S30.813A; vulva S30.814A; female unspecified S30.816A", "依部位另可用 S31.5-": "may also use S31.5- by site", "挫傷/裂傷細分 S37.3-": "subdivided into contusion/laceration S37.3-", "依器官細分 S37.6-/S37.89-": "subdivided by organ S37.6-/S37.89-", "前/後/中央脫位另細分 S73.0-": "anterior/posterior/central dislocation subdivided further S73.0-", "型態(bucket/桶柄等)細分 S83.2-": "subdivided by type (bucket-handle, etc.) S83.2-", "型態/側別細分 S83.2-": "subdivided by type/laterality S83.2-", "無移位 S82.54–56": "nondisplaced S82.54-56", "無移位 S82.64–66": "nondisplaced S82.64-66", "無移位 S82.844–846": "nondisplaced S82.844-846", "跟腓韌帶 S93.41": "calcaneofibular ligament S93.41", "拇趾 S90.931A右/S90.932A左/S90.933A未特定;趾擦傷 S90.41-": "great toe S90.931A right/S90.932A left/S90.933A unspecified; toe abrasion S90.41-", "依第幾蹠骨細分 S92.3-": "subdivided by metatarsal number S92.3-", "ICD-10-CM 趾別僅分拇趾/其他趾": "ICD-10-CM distinguishes only great toe vs. other toe", "化學灼傷另 T26.5-/T26.6-": "chemical burn also T26.5-/T26.6-", "疑破裂勿加壓,眼科急會診": "suspected rupture: do not apply pressure, urgent ophthalmology consult", "角膜異物 T15.00XA": "corneal foreign body T15.00XA", "耳內異物 T16": "foreign body in ear T16", "右 T16.1/左 T16.2": "right T16.1/left T16.2", "院內喉異物": "in-hospital laryngeal foreign body", "右 T16.1XXA/左 T16.2XXA": "right T16.1XXA/left T16.2XXA", "院內併列牙體 K03.81": "in-hospital entry listing dental structure K03.81", "頭部(頭皮)": "head (scalp)", "顏面": "face", "牙齒/口腔": "teeth/oral cavity", "頸部": "neck", "肩部": "shoulder", "上臂": "upper arm", "手肘": "elbow", "前臂": "forearm", "腕與手": "wrist and hand", "胸部": "chest", "腹部/下背": "abdomen/lower back", "骨盆": "pelvis", "會陰/外生殖器": "perineum/external genitalia", "髖部": "hip", "大腿": "thigh", "膝部": "knee", "小腿": "lower leg", "踝部": "ankle", "足部": "foot", "眼": "eye", "耳": "ear", "耳鼻喉": "ENT", "牙科/口腔": "dental/oral", "眼科(非外傷)": "ophthalmology (non-traumatic)"});
-Object.assign(EN,{'複診':'follow-up','後遺症':'sequela','完全':'complete','部分':'partial','未特定側':'unspecified side','未特定':'unspecified','非外傷':'non-traumatic','一度':'1st degree','二度':'2nd degree','三度':'3rd degree'});
+Object.assign(EN,{'外傷性心跳停止':'traumatic cardiac arrest','急救性開胸':'resuscitative thoracotomy','針刺減壓':'needle decompression','輸血':'transfusion','骨盆束帶':'pelvic binder','止血帶':'tourniquet','OHCA（到院前心跳停止）':'out-of-hospital cardiac arrest (OHCA)','心跳停止 (cardiac arrest)':'cardiac arrest','OHCA 紀錄':'OHCA record','近期發燒或感染症狀':'recent fever or infection symptoms','暈厥或頭暈':'syncope or dizziness','複診':'follow-up','後遺症':'sequela','完全':'complete','部分':'partial','未特定側':'unspecified side','未特定':'unspecified','非外傷':'non-traumatic','一度':'1st degree','二度':'2nd degree','三度':'3rd degree'});
 /* ---------- 事件 ---------- */
 const FK=['m','s','act','p','st','v','n','i','gcs','pk'];
 function fkey(el){if(!el||el===document.body||!$('#form').contains(el))return null;if(el.id)return '#'+el.id;
@@ -1834,6 +1957,8 @@ document.addEventListener('click',e=>{
  else if(d.act==='oth'){if(S.oth[d.p]===undefined)S.oth[d.p]='';else delete S.oth[d.p];rebuild();update();if(S.oth[d.p]!==undefined)$('#form').querySelector(`input[data-oth="${d.p.replace(/["\\]/g,'\\$&')}"]`)?.focus();return}
  else if(d.act==='pack'){const n=applyPack(d.pk,+d.i);toast(Z('已套用「'+n+'」，請確認並修改','Applied "'+n+'". Please review and edit.'))}
  else if(d.act==='abcN'){applyAbc();toast(Z('已帶入常見正常值，請確認頸椎、eFAST 與 E','Typical normal values filled in. Please check C-spine, eFAST and E.'))}
+ else if(d.act==='ohca'){const o=S.ohca,DXN='心跳停止 (cardiac arrest)';o.on=!o.on;if(!o.on){const i=dxl().findIndex(d=>d[0]===DXN&&d[1]==='I46.9');if(i>=0)dxl().splice(i,1)}if(o.on){if(!dxl().some(d=>d[0]===DXN))dxl().unshift([DXN,'I46.9']);if(isTr()&&!o.etiology)o.etiology='外傷（創傷性）';const n='OHCA（到院前心跳停止）';if(!isTr()&&!S.cc.includes(n)){S.cc.unshift(n);prune()}setTimeout(()=>$('#s-ohca')?.scrollIntoView({behavior:'smooth',block:'start'}),60)}}
+ else if(d.act==='now'){setp(d.p,hhmm(new Date()))}
  else if(d.act==='icdreg'){ICD.state.region=d.v;ICD.state.cat='all';ICD.state.q=''}
  else if(d.act==='icdside'){ICD.state.side=d.v}
  else if(d.act==='icdext'){ICD.state.ext=d.v}
@@ -1848,7 +1973,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('input',e=>{const t=e.target;
  if(t.id==='icdQ'){ICD.state.q=t.value;const rs=$('#icdRes');if(rs)rs.innerHTML=icdResHtml();return}
  if(t.dataset.i!==undefined)setp(t.dataset.i,t.value);else if(t.dataset.oth!==undefined)S.oth[t.dataset.oth]=t.value;else return;
- const a=$('#agoT');if(a)a.textContent=ago(S.tr.time);update()});
+ const a=$('#agoT');if(a)a.textContent=ago(S.tr.time);const oh=$('#ohHint');if(oh)oh.textContent=ohcaHint();update()});
 document.addEventListener('change',e=>{const t=e.target;
  if(t.dataset.gcs){S.tr.gcs[t.dataset.gcs]=t.value;rebuild();update()}
  else if(t.id==='icdRegion'){ICD.state.region=t.value;ICD.state.cat='all';ICD.state.q='';rebuild();update()}
@@ -1910,7 +2035,6 @@ function alertsPd(){const A=[],p=S.pd,cc=S.cc.join('|'),sx=k=>S.hpi.sym[k]===1,a
  const fever=cc.includes('小兒發燒')||sx('發燒');
  if(am!=null&&am<3&&fever)A.push(['crit','三個月以下嬰兒發燒','建議完整敗血症評估（血液、尿液，必要時腦脊髓液），並考慮住院觀察']);
  if(am==null)A.push(['warn','尚未填寫年齡','']);
- if(!p.wt)A.push(['warn','尚未填寫體重','藥物劑量與輸液量需要體重']);
  if(['吸氣喘鳴 (stridor)','胸凹','鼻翼搧動','呻吟'].some(x=>f('胸/肺',x)))A.push(['crit','呼吸窘迫徵象','評估氣道與呼吸，準備給氧與進一步處置']);
  if(['嗜睡','難以喚醒','中毒面容 (toxic)','哭聲微弱'].some(x=>f('一般外觀',x)))A.push(['crit','活力或意識明顯下降','考慮敗血症、腦膜炎或代謝問題，優先處理']);
  const dh=(S.pe['脫水評估']?.f||[]).length;if(dh>=2)A.push(['warn','可能中至重度脫水（'+dh+' 項徵象）','評估補液方式，必要時靜脈輸液並檢查血糖與電解質']);
@@ -1925,7 +2049,7 @@ function alertsPd(){const A=[],p=S.pd,cc=S.cc.join('|'),sx=k=>S.hpi.sym[k]===1,a
  if(S.alg.length===0)A.push(['warn','過敏史未填','開藥前須確認']);
  if(!S.dx.length)A.push(['warn','尚未填寫診斷','']);
  return A}
-const alerts=()=>isTr()?alertsTr():isPd()?alertsPd():alertsNt();
+const alerts=()=>ohcaOnly()?[]:isTr()?alertsTr():isPd()?alertsPd():alertsNt();
 
 /* ---------- 完成度 ---------- */
 const STEPS={nt:[['tri','主訴與基本資料'],['hpi','現在病史'],['bg','病史背景'],['pe','理學檢查'],['dx','診斷']],pd:[['tri','主訴與基本資料'],['hpi','現在病史'],['bg','病史背景'],['pe','理學檢查'],['dx','診斷']],tr:[['tri','受傷經過'],['abc','初步評估'],['reg','傷處檢查'],['bg','病史'],['dx','診斷']]};
@@ -1933,7 +2057,7 @@ function section(){const bg=S.pmh.length&&S.alg.length;
  if(isPd()){const p=S.pd,pr=prio(),peN=pr.filter(s=>S.pe[s]?.st).length,ex=uniExt().filter(e=>!GLBL.includes(e[0]));
   const hpiOk=S.hpi.on&&Object.keys(S.hpi.sym).length>=2&&ex.every(e=>S.hpi.ext[e[0]]);
   const bgN=((S.pmh.length||S.oth.pmh)?1:0)+(S.alg.length?1:0)+(p.ga?1:0)+(p.vax?1:0);
-  return {tri:(S.cc.length||S.oth.cc)&&p.age!==''&&p.wt?2:(S.cc.length?1:0),hpi:hpiOk?2:(S.hpi.on?1:0),bg:bgN===4?2:bgN?1:0,pe:peN===pr.length?2:peN?1:0,dx:S.dx.length?2:0}}
+  return {tri:(S.cc.length||S.oth.cc)&&p.age!==''?2:(S.cc.length?1:0),hpi:hpiOk?2:(S.hpi.on?1:0),bg:bgN===4?2:bgN?1:0,pe:peN===pr.length?2:peN?1:0,dx:S.dx.length?2:0}}
  if(isTr()){const t=S.tr,n=ABC_REQ.filter(k=>t.abc[k]).length,rp=regPrio(),r=rp.filter(k=>t.reg[k]?.st).length;
   return {tri:(t.time||t.when)&&t.moi.length?2:((t.time||t.when||t.moi.length)?1:0),abc:n===ABC_REQ.length?2:n?1:0,reg:r===rp.length?2:r?1:0,bg:bg&&t.teta?2:(S.pmh.length+S.alg.length?1:0),dx:t.dx.length?2:0}}
  const pr=prio(),peN=pr.filter(s=>S.pe[s]?.st).length,pain=uni('loc').length||uni('q').length,ex=uniExt().filter(e=>!GLBL.includes(e[0]));
@@ -1947,8 +2071,8 @@ const Zb=(zh,en)=>LANG==='zh'?zh:en;
 const ptEn=()=>{const p=pi(),n=p.age,pd=isPd();const a=n===''?'':p.unit==='歲'?n+'-year-old':p.unit==='月'?n+'-month-old':n+'-day-old';
  const ot=S.oth[pk()+'.sex'];let sx=p.sex==='男'?(pd?'boy':'male'):p.sex==='女'?(pd?'girl':'female'):(ot||'');
  if(!pd&&sx&&!a)sx=sx+' patient';else if(!sx)sx=pd?'child':(a?'patient':'Patient');
- return [a,sx].filter(Boolean).join(' ')+(p.wt?' ('+p.wt+' kg)':'')};
-const ptZh=()=>{const p=pi(),pd=isPd(),ot=S.oth[pk()+'.sex'];return (p.age===''?'':p.age+' '+p.unit)+(p.sex==='男'?(pd?'男童':'男性'):p.sex==='女'?(pd?'女童':'女性'):(ot||(pd?'小兒':'病人')))+(p.wt?'（'+p.wt+' kg）':'')};
+ return [a,sx].filter(Boolean).join(' ')};
+const ptZh=()=>{const p=pi(),pd=isPd(),ot=S.oth[pk()+'.sex'];return (p.age===''?'':p.age+' '+p.unit)+(p.sex==='男'?(pd?'男童':'男性'):p.sex==='女'?(pd?'女童':'女性'):(ot||(pd?'小兒':'病人')))};
 function sectionsList(){const L=[],en=LANG!=='zh',cm_=en?', ':'、',JN=a=>a.map(V).join(cm_),vv=V;
  const bgTxt=S.pmh.length||S.alg.length||S.oth.pmh||S.oth.alg?`PMH${Zb('：',': ')}${JN(LL('pmh',S.pmh))||'—'}\n${Zb('過敏：','Allergies: ')}${JN(LL('alg',S.alg))||'—'}`:'';
  const dxTxt=dxl().map((d,i)=>`${i+1}. ${vv(d[0])}${d[1]?' ('+d[1]+')':''}`).join('\n');
@@ -1969,11 +2093,12 @@ function sectionsList(){const L=[],en=LANG!=='zh',cm_=en?', ':'、',JN=a=>a.map(
     if(pos.length)t+=`伴隨${pos.join('、')}。`;if(neg.length)t+=`否認${neg.join('、')}。`;
     const ex=uniExt().map(e=>[e[0],e[1]==='sel'?J('hpi.ext.'+e[0],h.ext[e[0]]):h.ext[e[0]]]).filter(x=>x[1]);if(ex.length)t+=ex.map(x=>`${x[0]}：${x[1]}`).join('；')+'。';if(h.note)t+=h.note}}
   H(L,Z('現在病史 HPI','History of present illness (HPI)'),t);
+  if(S.ohca&&S.ohca.on)H(L,Z('OHCA 紀錄','OHCA record'),ohcaList());
   const soc=LL('soc',S.soc),pdl=isPd()?`\n${Zb('出生史：','Birth: ')}${vv(S.pd.ga)||'—'}\n${Zb('預防接種：','Immunizations: ')}${vv(S.pd.vax)||'—'}\n${Zb('發展：','Development: ')}${vv(S.pd.dev)||'—'}\n${Zb('飲食：','Feeding: ')}${vv(S.pd.feed)||'—'}\n${Zb('照顧環境：','Childcare: ')}${vv(S.pd.care)||'—'}`:'';
   H(L,Z('過去史 / 過敏','Past history / allergies'),bgTxt+(bgTxt&&isPd()?pdl+(S.surg?`\n${Zb('手術史：','Surgical history: ')}${S.surg}`:''):'')+(bgTxt&&!isPd()&&(soc.length||S.surg)?`\n${Zb('個人史：','Social history: ')}${JN(soc)||'—'}\n${Zb('手術史：','Surgical history: ')}${S.surg||'—'}`:''));
   H(L,Z('理學檢查 PE','Physical exam (PE)'),Object.entries(S.pe).filter(x=>x[1].st).map(([s,e])=>`${vv(s)}${Zb('：',': ')}${e.st==='n'?Zb('正常','normal'):(JN(LL('pe.'+s+'.f',e.f))||Zb('異常（未註明）','abnormal (unspecified)'))}`).join('\n'));
  }else{const t=S.tr,a=t.abc,gcs=+t.gcs.e+ +t.gcs.v+ +t.gcs.m;
-  if(pi().age!==''||pi().sex||pi().wt)H(L,Z('病人','Patient'),en?ptEn():ptZh());
+  if(pi().age!==''||pi().sex)H(L,Z('病人','Patient'),en?ptEn():ptZh());
   H(L,Z('主訴 CC','Chief complaint (CC)'),JN([...S.tri.cc0,...LL('tr.cc',t.cc)])+(tri?Zb('　',' · ')+tri:''));
   const moi=LL('tr.moi',t.moi),colon=Zb('：',': ');
   H(L,Z('受傷經過','Injury event'),moi.length||t.time||t.when?[`${Zb('受傷時間：','Time of injury: ')}${[t.time?`${t.time} (${ago(t.time,true)})`:'',t.when].filter(Boolean).join(' · ')||'—'}`,
@@ -2023,8 +2148,8 @@ function sectionsProse(){
  const p=pi(),pd=isPd(),sx=p.sex,he=sx==='男'?'He':sx==='女'?'She':'The patient';
  const age=p.age===''?'':p.unit==='歲'?p.age+'-year-old':p.unit==='月'?p.age+'-month-old':p.age+'-day-old';
  const noun=sx==='男'?(pd?'boy':age?'male':'male patient'):sx==='女'?(pd?'girl':age?'female':'female patient'):(pd?'child':'patient');
- const has=!!(age||sx),phrase=anA([age,noun].filter(Boolean).join(' ')),wtTxt=p.wt?` weighing ${p.wt} kg`:'';
- const intro=(has||p.wt)?`The patient is ${has?phrase:'a patient'}${wtTxt}`:'';
+ const has=!!(age||sx),phrase=anA([age,noun].filter(Boolean).join(' ')),wtTxt='';
+ const intro=(has)?`The patient is ${has?phrase:'a patient'}${wtTxt}`:'';
  const tri=S.tri.lvl!=null?`TTAS ${S.tri.lvl}${S.tri.mode?', '+vv(S.tri.mode):''}`:'';
  const ccLine=l=>[l.join(', '),tri].filter(Boolean).join(' · '),capS=x=>/^eFAST/.test(x)?x:ucF(x);
  // ---- 過去史、過敏、用藥 ----
@@ -2058,6 +2183,7 @@ function sectionsProse(){
    if(h.note)s.push(sent(vv(h.note)));
   }
   Hp(Z('現在病史 HPI','History of present illness (HPI)'),s.join(' '));
+  if(S.ohca&&S.ohca.on)Hp(Z('OHCA 紀錄','OHCA record'),ohcaProse());
   const soc=LL('soc',S.soc).map(vv);
   const bg=[...hist];
   if(!pd&&soc.length)bg.push(`The social history includes ${andJ(soc.map(lcF))}.`);
@@ -2113,7 +2239,8 @@ function sectionsProse(){
  Hp(Z('診斷 Dx','Diagnosis (Dx)'),diag());
  return L}
 const p0=k=>S.pd[k];
-const sectionsMain=()=>LANG==='zh'?sectionsList():sectionsProse();
+const sectionsMain=()=>{const L=LANG==='zh'?sectionsList():sectionsProse();if(!ohcaOnly())return L;if(!isTr())return L.filter(x=>/<h4>(?:主訴|Chief|現在病史|History of present|OHCA|診斷|Diagnos)/.test(x));
+  const K=L.filter(x=>/<h4>(?:病人|Patient|受傷經過|Injury|診斷|Diagnos)/.test(x)),M=[];H(M,Z('OHCA 紀錄','OHCA record'),LANG==='zh'?ohcaList():ohcaProse());const i=K.findIndex(x=>/<h4>(?:診斷|Diagnos)/.test(x));K.splice(i<0?K.length:i,0,...M);return K};
 
 const sections=sectionsMain;
 const note=()=>sections().join('');
@@ -2122,26 +2249,29 @@ function json(){const n=num;
  const reg=(o)=>Object.fromEntries(Object.entries(o).filter(x=>x[1].st||(x[1].n||[]).length).map(([s,e])=>[s,{status:e.st==='n'?'normal':e.st==='a'?'abnormal':'not_stated',findings:e.f||[],negative_findings:e.n||[],side:e.side||[],site:e.site||[]}]));
  const dx=dxl().map((d,i)=>({name:d[0],icd10:d[1]||null,primary:i===0}));
  const out=o=>JSON.stringify(LANG!=='zh'?deepT(o):o,null,1);
- if(!isTr()){const h=S.hpi;return out({chart_type:isPd()?'pediatric':'non_trauma',patient:{age:{value:n(pi().age),unit:pi().unit},sex:pi().sex||null,weight_kg:n(pi().wt)},triage:{ttas_level:S.tri.lvl,arrival_mode:S.tri.mode},
+ if(!isTr()){const h=S.hpi;return out({chart_type:isPd()?'pediatric':'non_trauma',patient:{age:{value:n(pi().age),unit:pi().unit},sex:pi().sex||null},triage:{ttas_level:S.tri.lvl,arrival_mode:S.tri.mode},
   chief_complaint:S.cc.map((c,i)=>({text:c,icd10:TP[c]?.icd,primary:i===0,episode_count:S.cnt[c]!==undefined&&S.cnt[c]!==''?+S.cnt[c]:null})),
   hpi:{onset:{value:n(h.on),unit:h.unit,relative:'ago'},course:h.course,location:h.loc,laterality:h.side||null,pain_nrs:h.nrs,quality:h.q,
    symptoms_present:Object.keys(h.sym).filter(k=>h.sym[k]==1),symptoms_denied:Object.keys(h.sym).filter(k=>h.sym[k]==-1),extra:h.ext,free_text:h.note||null},
-  history:{tocc:{travel:S.tocc.t||null,occupation:S.tocc.o||null,contact:S.tocc.c||null,cluster:S.tocc.k||null},pmh:S.pmh,allergies:S.alg,social:S.soc,surgical:S.surg||null,...(isPd()?{birth_history:S.pd.ga||null,immunization:S.pd.vax||null,development:S.pd.dev||null,feeding:S.pd.feed||null,childcare:S.pd.care||null}:{})},physical_exam:reg(S.pe),diagnoses:dx,other_entries:oe()})}
+  history:{tocc:{travel:S.tocc.t||null,occupation:S.tocc.o||null,contact:S.tocc.c||null,cluster:S.tocc.k||null},pmh:S.pmh,allergies:S.alg,social:S.soc,surgical:S.surg||null,...(isPd()?{birth_history:S.pd.ga||null,immunization:S.pd.vax||null,development:S.pd.dev||null,feeding:S.pd.feed||null,childcare:S.pd.care||null}:{})},physical_exam:reg(S.pe),...(S.ohca&&S.ohca.on?{ohca:ohcaJson()}:{}),diagnoses:dx,other_entries:oe()})}
  const t=S.tr,gcs=+t.gcs.e+ +t.gcs.v+ +t.gcs.m;
- return out({chart_type:'trauma',patient:{age:{value:n(pi().age),unit:pi().unit},sex:pi().sex||null,weight_kg:n(pi().wt)},triage:{ttas_level:S.tri.lvl,arrival_mode:S.tri.mode},chief_complaints:[...S.tri.cc0,...t.cc],
+ return out({chart_type:'trauma',patient:{age:{value:n(pi().age),unit:pi().unit},sex:pi().sex||null},triage:{ttas_level:S.tri.lvl,arrival_mode:S.tri.mode},chief_complaints:[...S.tri.cc0,...t.cc],
   injury:{time:t.time||null,time_description:t.when||null,head_injury_screen:{present:Object.keys(t.hs||{}).filter(k=>t.hs[k]==1),denied:Object.keys(t.hs||{}).filter(k=>t.hs[k]==-1)},mechanisms:t.moi.map(m=>({type:m,details:t.det[m]||{},high_risk:Object.entries(MOI[m].hr).some(([l,vs])=>vs.includes((t.det[m]||{})[l]))})),loss_of_consciousness:t.loc||null,alcohol_drug:t.alc||null,prehospital:t.ems},
   primary_survey:{...t.abc,gcs:gset(t)?{e:+t.gcs.e,v:+t.gcs.v,m:+t.gcs.m,total:gcs}:null},secondary_survey:reg(t.reg),
-  history:{allergies:S.alg,past_history:S.pmh,last_meal:t.meal||null,tetanus:t.teta||null},diagnoses:dx,other_entries:oe()})}
+  history:{allergies:S.alg,past_history:S.pmh,last_meal:t.meal||null,tetanus:t.teta||null},...(S.ohca&&S.ohca.on?{ohca:ohcaJson()}:{}),diagnoses:dx,other_entries:oe()})}
 
 /* ---------- 畫面更新 ---------- */
 let tab='note';
 function update0(){
  const l=S.tri.lvl;$('#triBadge').innerHTML=l!=null?`<span class="tri" data-l="${l}">${Z(`檢傷 ${l} 級 · ${TT[l-1][1]}`,`TTAS ${l} · ${V(TT[l-1][1])}`)}</span>`:'';
  $$('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.mode===S.mode));
+ {const ob=$('#ohcaBtn');if(ob){ob.hidden=false;ob.classList.toggle('pri',!!(S.ohca&&S.ohca.on))}}
  $('#chart').classList.toggle('is-tr',isTr());$('#chart').classList.toggle('is-pd',isPd());setPt();
- const sec=section(),st=STEPS[S.mode],done=st.filter(s=>sec[s[0]]==2).length;
+ const sec=section(),oh=ohcaOnly(),st=oh?[['tri',isTr()?'基本資料與受傷經過':'基本資料'],['ohca','OHCA 紀錄'],['dx','診斷']]:STEPS[S.mode];
+ if(oh){const o=S.ohca,k=['witness','tCollapse','tEms','rhythm','tEd','edRhythm','edStatus'],n=k.filter(x=>o[x]).length;sec.ohca=n===k.length?2:n?1:0;{const tn=isTr()?[pi().age!=='',!!pi().sex,!!(S.tr.time||S.tr.when),S.tr.moi.length>0]:[pi().age!=='',!!pi().sex],c=tn.filter(Boolean).length;sec.tri=c===tn.length?2:c?1:0}}
+ const done=st.filter(s=>sec[s[0]]==2).length;
  $('#steps').innerHTML=st.map(([k,n])=>`<a href="#s-${k}" class="${sec[k]==2?'done':sec[k]==1?'part':''}" data-k="${k}"><i>${sec[k]==2?'✓':''}</i>${n}</a>`).join('')+
-  `<div class="prog">${Z('完成度','Progress')} ${done}/5<div><span style="width:${done/5*100}%"></span></div></div>`;
+  `<div class="prog">${Z('完成度','Progress')} ${done}/${st.length}<div><span style="width:${done/st.length*100}%"></span></div></div>`;
  const A=alerts(),an=$('#alertN');an.hidden=!A.length;an.textContent=A.length;paint(A)}
 function paint(A=alerts()){
  $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
@@ -2242,6 +2372,13 @@ add('全身','轉診/入院評估','Z76.89',{
  pe:['一般外觀','心臟','胸/肺','腹部','神經'],
  dx:['非ST上升心肌梗塞 (NSTEMI)|I21.4','ST上升心肌梗塞 (STEMI)|I21.3','肺炎|J18.9','敗血症|A41.9','缺血性腦中風|I63.9','腸阻塞|K56.60','上消化道出血|K92.2','急性心衰竭|I50.9','急性腎損傷|N17.9','轉診評估|Z76.89']});
 
+add('心肺','OHCA（到院前心跳停止）','I46.9',{
+ sym:['胸痛','呼吸困難','暈厥或頭暈','噁心嘔吐','抽搐','近期發燒或感染症狀','酒精或藥物使用'],
+ ext:[],
+ pe:['一般外觀','心臟','胸/肺','神經','精神狀態'],
+ dx:['心跳停止 (cardiac arrest)|I46.9','急性心肌梗塞|I21.9','肺栓塞|I26.99','主動脈剝離|I71.00','高血鉀|E87.5','藥物過量|T50.901A','缺血性腦中風|I63.9','敗血症|A41.9','低血糖|E16.2']});
+Object.assign(CCAL,{'OHCA（到院前心跳停止）':['到院前心跳停止','心跳停止','無呼吸心跳','OHCA']});
+Object.assign(CCEN,{'OHCA（到院前心跳停止）':['OHCA','out-of-hospital cardiac arrest','out of hospital cardiac arrest','cardiac arrest','CPR in progress','CPR on arrival','found unresponsive','pulseless']});
 /* 既有「肢體疼痛/腫脹（非外傷）」補症狀 */
 {const t=TP['肢體疼痛/腫脹（非外傷）'];['活動受限','夜間痛','皮膚破損或傷口'].forEach(s=>{if(!t.sym.includes(s))t.sym.push(s)})}
 
@@ -2481,9 +2618,7 @@ function parsePd(t0){const t=t0.replace(/\b(?:in|within|for|over|past|last|recen
  else if(m=t.match(/(?<![\d.\/:-])(\d{1,3})\s+(?:female|male|man|woman|lady|gentleman|boy|girl|patient|pt)\b/i)){if(+m[1]<=120)p.age={value:+m[1],unit:'歲'}}
  if(/男童|男孩|男嬰|男性|先生|\b(?:boy|male|man|gentleman|guy|son)\b/i.test(t))p.sex='男';else if(/女童|女孩|女嬰|女性|女士|小姐|\b(?:girl|female|woman|lady|daughter)\b/i.test(t))p.sex='女';
  else if(m=abbrAS(t))p.sex=m.sex;
- for(const km of t.matchAll(/(\d+(?:\.\d+)?)\s*(?:kg|公斤)/gi)){const ctx=t.slice(Math.max(0,km.index-32),km.index);
-  if(/(?:gain|gained|gaining|loss|lost|lose|losing|increase[ds]?|decrease[ds]?|drop(?:ped)?|reduced?|up|down|增加|減少|減輕|下降|上升|瘦了|胖了|\bfrom|\bto)\W*(?:of\s+|about\s+|around\s+|by\s+)*(?:\w+\s+){0,2}$/i.test(ctx)||/weight\s+(?:gain|loss)\b/i.test(ctx)||/體重(?:增加|減少|減輕)/.test(ctx))continue;
-  p.wt=km[1];break}
+ 
  if(/早產|premature|preterm/i.test(t))p.ga='早產（<37 週）';else if(/足月|full[- ]term|\bterm (?:infant|baby)/i.test(t))p.ga='足月';
  if(/(?:疫苗|預防接種)(?:完整|按時|齊全|依時程)|vaccin\w* up[- ]to[- ]date|immunizations? up[- ]to[- ]date|fully vaccinated/i.test(t))p.vax='依時程完成';else if(/未接種|unvaccinated|not vaccinated/i.test(t))p.vax='未接種';
  if(/發展正常|normal development|development(?:ally)? normal/i.test(t))p.dev='發展正常';
@@ -2520,7 +2655,6 @@ function ruleNt(t0){
  sy.forEach(s=>{const h=hit(body,[s,...(SYMAL[s]||[])]);if(h===1)r.sym_present.push(s);else if(h===-1)r.sym_denied.push(s)});
  extFor(ccs,(parsePd(bgBody)||{}).sex).forEach(([l,ty,op])=>{let v=null,m;
   if(l==='最後正常時間'&&(m=t.match(/(?:最後正常時間|LKW)\D{0,4}(\d{1,2})[:：點](\d{0,2})/)))v=String(m[1]).padStart(2,'0')+':'+String(m[2]||'00').padStart(2,'0');
-  else if(l==='體重（kg）'&&(m=t.match(/(\d+(?:\.\d+)?)\s*(?:kg|公斤)/i)))v=m[1];
   else if(l==='發燒天數'&&(m=t.match(/發燒\D{0,3}(\d+)\s*天/)))v=m[1];
   else if(l==='持續天數'&&(m=t.match(/(?:持續|已經)\D{0,3}(\d+)\s*天/)))v=m[1];
   else if(l==='末次月經'){v=parseLmp(t)||null}
@@ -2717,7 +2851,7 @@ function aiPrompt(text){
 
 輸出格式（省略沒提到的欄位）：
 {"cc":["主訴"],"cnt":{"主訴名稱":3},"cc_other":"","onset":{"value":2,"unit":"分鐘|小時|天|週"},"course":"加重|持平|改善|間歇","nrs":7,"loc":[],"loc_other":"","side":"左|右|雙側|正中","q":[],"q_other":"",
-"sym_present":[],"sym_denied":[],"sym_other":"","ext":{"專屬欄位名稱":"值"},"pmh":[],"pmh_other":"","alg":[],"alg_other":"","soc":[],"surg":"","tocc":{"t":"無|有|不詳","o":"","c":"","k":"","note":""},${isPd()?'"pd":{"age":{"value":2,"unit":"天|月|歲"},"sex":"男|女","wt":"體重公斤數字","ga":"","vax":"","dev":"","feed":"","care":""},':'"pd":{"age":{"value":45,"unit":"天|月|歲"},"sex":"男|女","wt":"體重公斤數字"},'}
+"sym_present":[],"sym_denied":[],"sym_other":"","ext":{"專屬欄位名稱":"值"},"pmh":[],"pmh_other":"","alg":[],"alg_other":"","soc":[],"surg":"","tocc":{"t":"無|有|不詳","o":"","c":"","k":"","note":""},${isPd()?'"pd":{"age":{"value":2,"unit":"天|月|歲"},"sex":"男|女","ga":"","vax":"","dev":"","feed":"","care":""},':'"pd":{"age":{"value":45,"unit":"天|月|歲"},"sex":"男|女"},'}
 "pe":{"系統名稱":{"status":"n 表示文字明確說正常，a 表示異常","findings":[],"negatives":[],"other":""}},"dx":[],"note":"其他沒有對應欄位的重要內容"}
 說明：cnt 是該主訴反覆發生的次數（例如嘔吐 3 次），沒提到就省略；cc 取自「主訴」的名稱；loc、q、sym_* 要取自該主訴底下的選項；否認的症狀放 sym_denied。
 
@@ -2729,7 +2863,7 @@ ${text}`;
  return `${rules}
 
 輸出格式（省略沒提到的欄位）：
-{"cc":["外傷主訴"],"pd":{"age":{"value":45,"unit":"天|月|歲"},"sex":"男|女","wt":"體重公斤數字"},"time":"HH:MM","when":"無法換算成時間時的描述","moi":["機轉"],"det":{"機轉名稱":{"細節標籤":"選項"}},"moi_other":"","loc":"無|有|不詳","hs":{"present":[],"denied":[]},"alc":"無|酒精|藥物|不詳","ems":[],"ems_other":"",
+{"cc":["外傷主訴"],"pd":{"age":{"value":45,"unit":"天|月|歲"},"sex":"男|女"},"time":"HH:MM","when":"無法換算成時間時的描述","moi":["機轉"],"det":{"機轉名稱":{"細節標籤":"選項"}},"moi_other":"","loc":"無|有|不詳","hs":{"present":[],"denied":[]},"alc":"無|酒精|藥物|不詳","ems":[],"ems_other":"",
 "abc":{"評估項目":"選項（可複選的項目用陣列）"},"gcs":{"e":4,"v":5,"m":6},
 "reg":{"傷處部位":{"status":"n 表示文字明確說無傷，a 表示有傷","side":[],"site":[],"findings":[],"negatives":[],"other":""}},
 "pmh":[],"alg":[],"meal":"HH:MM","teta":"","dx":[],"note":"其他沒有對應欄位的重要內容"}
@@ -2763,7 +2897,7 @@ function normNt(raw){
  {const q=raw.tocc;if(q&&typeof q==='object'){const o={};['t','o','c','k'].forEach(k=>{if(['無','有','不詳'].includes(q[k]))o[k]=q[k]});if(q.note)addTo(r.oth,'tocc.c',String(q.note));r.tocc=Object.keys(o).length?o:null}}
  if(raw.pd&&typeof raw.pd==='object'){const q=raw.pd,p={};
   if(q.age&&num(q.age.value)!=null&&['天','月','歲'].includes(q.age.unit))p.age={value:+q.age.value,unit:q.age.unit};
-  if(['男','女'].includes(q.sex))p.sex=q.sex;if(q.wt!=null&&num(q.wt)!=null)p.wt=String(q.wt);
+  if(['男','女'].includes(q.sex))p.sex=q.sex;
   if(isPd())[['ga',PD_GA],['vax',PD_VAX],['dev',PD_DEV],['feed',PD_FEED],['care',PD_CARE]].forEach(([k,l])=>{if(q[k]){l.includes(q[k])?p[k]=q[k]:O('pd.'+k,String(q[k]))}});
   r.pd=Object.keys(p).length?p:null}
  if(raw.note)r.note=[r.note,String(raw.note)].filter(Boolean).join('；');return r}
@@ -2784,17 +2918,17 @@ function normTr(raw){
   if(o.f.length||o.side.length||o.site.length||r.oth[`tr.reg.${k}.f`])o.st='a';r.reg[k]=o});
  A_(raw.pmh).forEach(v=>PMH.includes(v)&&r.pmh.push(v));A_(raw.alg).forEach(v=>ALG.includes(v)&&r.alg.push(v));r.meal=tm(raw.meal);
  if(raw.teta&&['10 年內曾接種','超過 10 年或不詳','需追加（髒傷口 >5 年）','本次已給予'].includes(raw.teta))r.teta=raw.teta;
- {const q=raw.pd;if(q&&typeof q==='object'){const p={};if(q.age&&num(q.age.value)!=null&&['天','月','歲'].includes(q.age.unit))p.age={value:+q.age.value,unit:q.age.unit};if(['男','女'].includes(q.sex))p.sex=q.sex;if(q.wt!=null&&num(q.wt)!=null)p.wt=String(q.wt);r.pd=Object.keys(p).length?p:null}}
+ {const q=raw.pd;if(q&&typeof q==='object'){const p={};if(q.age&&num(q.age.value)!=null&&['天','月','歲'].includes(q.age.unit))p.age={value:+q.age.value,unit:q.age.unit};if(['男','女'].includes(q.sex))p.sex=q.sex;r.pd=Object.keys(p).length?p:null}}
  A_(raw.dx).forEach(n=>r.dx.push([n,DXTR[n]||'']));if(raw.note)r.note=String(raw.note);return r}
 
 /* ---------- 預覽與套用 ---------- */
 function rowsOf(r){const R=[],add=(l,v)=>{if(v!==''&&v!=null&&!(Array.isArray(v)&&!v.length))R.push([l,Array.isArray(v)?v.join('、'):String(v)])};
  if(r.chart==='nt'){
-  if(r.pd){const q=r.pd;add('年齡',q.age?q.age.value+q.age.unit:'');add('性別',q.sex);add('體重',q.wt?q.wt+' kg':'');add('出生史',q.ga);add('預防接種',q.vax);add('發展',q.dev);add('飲食',q.feed);add('照顧環境',q.care)}
+  if(r.pd){const q=r.pd;add('年齡',q.age?q.age.value+q.age.unit:'');add('性別',q.sex);add('出生史',q.ga);add('預防接種',q.vax);add('發展',q.dev);add('飲食',q.feed);add('照顧環境',q.care)}
   add('主訴',r.cc);Object.entries(r.cnt||{}).forEach(([k,v])=>add('次數：'+k,v+' 次'));add('開始時間',r.onset?(LANG==='zh'?r.onset.value+r.onset.unit+'前':r.onset.value+' '+(UNITEN[r.onset.unit]||r.onset.unit)+' ago'):'');add('變化趨勢',r.course);add('疼痛 NRS',r.nrs!=null?r.nrs+'/10':'');add('部位',r.loc);add('側別',r.side);add('性質',r.q);
   add('有的症狀',r.sym_present);add('否認的症狀',r.sym_denied);Object.entries(r.ext).forEach(([l,v])=>add(l,v));add('過去病史',r.pmh);add('過敏',r.alg);add('個人史',r.soc);add('手術史',r.surg);if(r.tocc)add('TOCC',[['旅遊','t'],['職業','o'],['接觸','c'],['群聚','k']].map(([l,k])=>r.tocc[k]?l+' '+r.tocc[k]:'').filter(Boolean).join('；'));
   Object.entries(r.pe).forEach(([s,e])=>add('理學檢查：'+s,(e.st==='n'?'正常':e.st==='a'?'異常'+(e.f.length?'：'+e.f.join('、'):''):'')+((e.n||[]).length?(e.st?'；':'')+'陰性：'+e.n.join('、'):'')));add('診斷',r.dx.map(d=>d[0]))}
- else{if(r.pd){const q=r.pd;add('年齡',q.age?q.age.value+q.age.unit:'');add('性別',q.sex);add('體重',q.wt?q.wt+' kg':'')}add('外傷主訴',r.cc);add('受傷時間',r.time);add('受傷時間（描述）',r.when);add('機轉',r.moi);Object.entries(r.det).forEach(([m,d])=>add('細節：'+m,Object.entries(d).map(([l,v])=>l+' '+v)));add('意識喪失',r.loc);{const hp=Object.keys(r.hs||{}).filter(k=>r.hs[k]==1),hn=Object.keys(r.hs||{}).filter(k=>r.hs[k]==-1);add('頭部外傷篩檢：有',hp);add('頭部外傷篩檢：無',hn)}add('飲酒/藥物',r.alc);add('到院前處置',r.ems);
+ else{if(r.pd){const q=r.pd;add('年齡',q.age?q.age.value+q.age.unit:'');add('性別',q.sex)}add('外傷主訴',r.cc);add('受傷時間',r.time);add('受傷時間（描述）',r.when);add('機轉',r.moi);Object.entries(r.det).forEach(([m,d])=>add('細節：'+m,Object.entries(d).map(([l,v])=>l+' '+v)));add('意識喪失',r.loc);{const hp=Object.keys(r.hs||{}).filter(k=>r.hs[k]==1),hn=Object.keys(r.hs||{}).filter(k=>r.hs[k]==-1);add('頭部外傷篩檢：有',hp);add('頭部外傷篩檢：無',hn)}add('飲酒/藥物',r.alc);add('到院前處置',r.ems);
   Object.entries(r.abc).forEach(([k,v])=>add('初步評估：'+k,v));if(r.gcs)add('GCS',`E${r.gcs.e}V${r.gcs.v}M${r.gcs.m}=${+r.gcs.e+ +r.gcs.v+ +r.gcs.m}`);
   Object.entries(r.reg).forEach(([k,e])=>add('傷處：'+k,(e.st==='n'?'無傷':e.st==='a'?[...e.side,...e.site].join('')+(e.f.length?' '+e.f.join('、'):' 有傷'):'')+((e.n||[]).length?(e.st?'；':'')+'陰性：'+e.n.join('、'):'')));add('過去病史',r.pmh);add('過敏',r.alg);add('最後進食',r.meal);add('破傷風疫苗',r.teta);add('診斷',r.dx.map(d=>d[0]))}
  Object.entries(r.oth).forEach(([p,v])=>add('其他（'+p+'）',v));add('備註',r.note);return R}
@@ -2906,7 +3040,7 @@ function blank(p){
   const info=()=>({age:String(age),unit:'歲',sex:p.sex,wt:''});
   return {mode:trm?'tr':pdm?'pd':'nt',tri:{lvl:p.lvl,mode:'',cc0:[p.cc]},oth:{},cnt:{},tocc:{t:'',o:'',c:'',k:''},nl:'',nlres:null,
     pt:pdm?{age:'',unit:'歲',sex:'',wt:''}:info(),pd:pdm?{...info(),ga:'',vax:'',dev:'',feed:'',care:''}:{age:'',unit:'歲',sex:'',wt:'',ga:'',vax:'',dev:'',feed:'',care:''},
-    cc:m?[m.n]:[],hpi:blankHpi(),pmh:[],alg:[],soc:[],surg:'',pe:{},dx:[],
+    cc:m?[m.n]:[],hpi:blankHpi(),pmh:[],alg:[],soc:[],surg:'',pe:{},dx:[],ohca:{on:false,witness:'',tCollapse:'',place:'',bcpr:'',bcprWho:'',bcprDelay:'',baed:'',baedShocks:'',tEms:'',rhythm:'',emsShocks:'',emsEpi:'',airway:'',mech:'',preRosc:'',tPreRosc:'',prodrome:[],etiology:'',cpc:'',dnr:'',tEd:'',edRhythm:'',edStatus:'',edShocks:'',edCpr:'',xParts:[],xType:'',xFast:[],xTube:'',xNeedle:'',xThor:'',xTThor:'',xBlood:'',xRbc:'',xFfp:'',xTxa:'',xBinder:'',xTq:''},
     tr:{hs:{},cc:[],time:'',when:'',loc:'',alc:'',moi:[],det:{},ems:[],abc:{},gcs:{e:'',v:'',m:''},reg:{},meal:'',teta:'',dx:[]}}}
 function savedHtml(){const v=S.saved;
   if(!v)return '<div class="none">尚未存檔。填完病歷後按「💾 存檔」，內容會存成現病史（Present Illness）並寫入病程，之後可在這裡直接修改。</div>';
@@ -2946,6 +3080,7 @@ function render(p,el){
   S.tri=S.tri||B.tri;PT_UNDO=null;
   root.innerHTML=`<div class="chart" id="chart"><div class="cbar">
     <div class="modebar"><span>病歷類型</span><div class="seg" id="modeSeg"><button type="button" class="nt" data-mode="nt">非外傷</button><button type="button" class="tr" data-mode="tr">外傷</button><button type="button" class="pd" data-mode="pd">小兒</button></div></div>
+    <button type="button" class="btn" id="ohcaBtn" data-act="ohca" title="OHCA 病人：帶出 OHCA 紀錄欄位">OHCA</button>
     <button type="button" class="btn" id="newPt" title="清空本病人的所有病歷欄位">清空病歷</button><button type="button" class="btn" id="undoPt" hidden title="復原剛清空的資料">復原</button>
     <button type="button" class="btn" id="kbBtn" aria-controls="kb">快速鍵 ?</button><span id="ptAge" hidden></span>
     <div id="triBadge"></div><nav class="steps" id="steps"></nav><button type="button" class="btn pri" id="saveBtn">💾 存檔</button><button type="button" class="btn" id="fullBtn"></button></div>

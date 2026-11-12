@@ -1084,7 +1084,8 @@ function renderTab(){
   }else if(S.tab==='病程'){
     tb.innerHTML=`<div class="row"><textarea id="nt" rows="2" placeholder="輸入病程紀錄…" style="flex:1"></textarea><button class="btn primary" id="addNt">新增</button></div>
     <div id="nts">${p.notes.map(n=>`<div class="note">${n.t}<br><small>${n.at}</small></div>`).reverse().join('')||'<div class="empty">尚無病程紀錄</div>'}</div>`;
-  }else{
+  }else if(S.tab==='醫囑'){OrderPad.render(p,tb)}
+  else{
     tb.innerHTML=`<div class="empty">「${S.tab}」模組（示意，之後串接）</div>`;
   }
 }
@@ -3325,5 +3326,6 @@ $('#hoApply').onclick=()=>{
 layoutLbl();renderChips();renderList();renderDetail();
 document.addEventListener('click',e=>{if(e.target.dataset.z)renderChips()});
 </script>
+<script src="order-pad.js"></script>
 </body>
 </html>

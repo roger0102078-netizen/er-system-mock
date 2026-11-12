@@ -702,6 +702,11 @@ body.dark #critPop{background:#202a24;color:#e6efe8}
 #critPop .cs{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
 #critPop .cpa{padding:8px 10px;font-weight:700}
 #critPop .cpa span{opacity:.45}#critPop .cpa span.on{opacity:1;color:#2f8f5b}
+/* 進度燈號：全部完成=藍底「Y」；部分完成=綠底「完成/開立」 */
+table.emr .st.Y{background:#5aa0f0;color:#fff}
+table.emr .st.P{background:#74d24a;color:#0f3a05;font-variant-numeric:tabular-nums}
+body.dark table.emr .st.Y{background:#2b62b0;color:#fff}
+body.dark table.emr .st.P{background:#3f7a2a;color:#e4f6d8}
 </style>
 
 </head>
@@ -953,7 +958,15 @@ function renderChips(){
 }
 
 /* ===== 清單 ===== */
-const stCell=v=>v?`<span class="st ${v}">${v}</span>`:'';
+/* 檢驗/檢查/醫囑進度：開立項數(tot)與完成項數(done)。依病人+類別固定推算，Y=全部完成(藍)、P=部分完成(綠，顯示 完成/開立) */
+const ST_TOT={med:[2,8],proc:[1,3],ct:[1,2],xr:[1,3],bio:[2,10],scope:[1,2],lab:[4,12],ekg:[1,2]};
+const stCnt=(p,k,v)=>{const r=ST_TOT[k]||[1,3];let h=0;for(const c of p.id+k)h=(h*31+c.charCodeAt(0))>>>0;
+  let tot=r[0]+h%(r[1]-r[0]+1);if(v==='P'&&tot<2)tot=2;
+  const done=v==='Y'?tot:v==='P'?1+(h>>>5)%(tot-1):0;return[done,tot]};
+const stCell=(v,p,k)=>{if(!v)return'';const[d,t]=stCnt(p,k,v);
+  const txt=v==='Y'?'Y':v==='P'?d+'/'+t:v==='N'?'0/'+t:v;
+  const tip=v==='Y'?`全部完成 ${t}/${t}`:v==='P'?`部分完成 ${d}/${t}`:v==='N'?`尚未執行 0/${t}`:`逾時／異常（開立 ${t} 項）`;
+  return`<span class="st ${v}" title="${tip}">${txt}</span>`};
 let critX=0,critY=0;
 function layoutLbl(){const b=$('#layoutBtn');if(b)b.textContent=LAYOUT==='B'?'樣式 B：固定小格':'樣式 A：共用欄'}
 function closeCrit(){const e=$('#critPop');if(e)e.remove()}
@@ -988,7 +1001,7 @@ function renderList(){
     L.map((p,i)=>(S.zone==='大'&&(i===0||L[i-1].mci!==p.mci)?`<tr class="grp t${p.mci}"><td colspan="${(S.ho?20:19)+(LAYOUT==='B'?SLOTS.length-1:0)}">大量傷患｜${p.mci}級（${L.filter(x=>x.mci===p.mci).length} 位）</td></tr>`:'')+`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
       <td title="到院 ${new Date(p.arrive).toLocaleString('zh-TW',{hour12:false})}"><b>${p.id}</b> <small class="arr">${new Date(p.arrive).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</small></td><td><b>${p.bed}</b></td>${LAYOUT==='B'?SLOTS.map(k=>`<td class="slc">${slotHtml(p,k)}</td>`).join(''):`<td>${stat(p)}</td>`}<td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
       ${LAYOUT==='B'&&p.adm>=0&&!activeCons(p).length?dirCell(p).replace(/<\/td>$/,`<small class="admst a${p.adm}">${ADM_STEPS[p.adm]}</small></td>`):dirCell(p)}<td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td>
-      ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k])}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
+      ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k],p,k)}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
   }
   $('#hoN').textContent=S.checked.size;
   $('#hoApply').disabled=!S.checked.size;

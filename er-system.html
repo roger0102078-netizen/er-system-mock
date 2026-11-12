@@ -707,6 +707,13 @@ table.emr .st.Y{background:#5aa0f0;color:#fff}
 table.emr .st.P{background:#74d24a;color:#0f3a05;font-variant-numeric:tabular-nums}
 body.dark table.emr .st.Y{background:#2b62b0;color:#fff}
 body.dark table.emr .st.P{background:#3f7a2a;color:#e4f6d8}
+/* 固定小格：三區分隔、重大傷病／轉診／行政 */
+.slot.major{background:#0f6e73;color:#fff}
+.slot.ref{border:2px solid #4f7fb8;color:#254a7a}.slot.ref.back{background:#4f7fb8;color:#fff}
+.adminc{display:inline-flex;gap:2px}.adminc i{font-style:normal;font-size:12px;font-weight:700;color:#6b7a70;border:1px solid #9aa5a0;border-radius:4px;padding:1px 3px;line-height:1.1}
+.adminc i.more{border-style:dashed}
+th.slh.gs,td.slc.gs{border-left:3px solid #7d9a7d}
+th.slh.gw{border-top:3px solid #c0282d}th.slh.gd{border-top:3px solid #4f7fb8}th.slh.ga{border-top:3px solid #9aa5a0}
 </style>
 
 </head>
@@ -892,6 +899,7 @@ const ADM_STEPS=['未開單','已開單','已簽','待床'];
 (function seedFlags(){patients.forEach(p=>{const n=parseInt(p.id,10)||0;
   if(p.crit===undefined){p.crit=[];if(n%9===1||n%23===0){const c=CRIT_POOL[n%CRIT_POOL.length];p.crit.push({name:c[0],val:c[1],ref:c[2],at:p.arrive+(2+n%3)*18e5,ack:n%4===0});
     if(n%5===0){const d=CRIT_POOL[(n+3)%CRIT_POOL.length];p.crit.push({name:d[0],val:d[1],ref:d[2],at:p.arrive+3*18e5,ack:false})}}}
+  if(p.fl===undefined)p.fl={sars:n%29===5,major:n%11===2,ref:n%13===4?(n%2?1:2):0,cert:n%7===3,rv:n%10===5?1:n%17===6?2:0,drg:n%6===0?1+n%3:0,pre:n%8===3};
   if(p.adm===undefined){const w=/住院/.test(p.dir)||p.dir==='等ICU'||p.zone==='ICU待床';p.adm=w?n%4:-1}
   });
   /* 保證示範資料裡有「同時有危急值又在辦住院」的病人 */
@@ -930,15 +938,23 @@ setInterval(tickStay,30000);
 /* ===== 篩選 ===== */
 const MR={重:0,中:1,輕:2};
 const MCI_T=['重','中','輕'];
-const SLOTS=['危','住','ICU','隔','大'];
-const slotOn=(p,k)=>k==='危'?(p.crit||[]).length>0:k==='住'?p.adm>=0&&p.zone!=='ICU待床'&&p.dir!=='等ICU':k==='ICU'?p.zone==='ICU待床'||p.dir==='等ICU':k==='會'?activeCons(p).length>0:k==='隔'?p.zone==='F':k==='大'?!!p.mci:false;
+/* 固定小格：警示區(危 隔 重 大)｜動向區(住 ICU 轉)｜行政區(收成一格，最多顯示 2 個，其餘「+N」) */
+const SLOTS=['危','隔','重','大','住','ICU','轉','行'];
+const SLOT_GRP={危:'w',隔:'w',重:'w',大:'w',住:'d',ICU:'d',轉:'d',行:'a'};
+const SLOT_NAME={危:'危急值',隔:'隔離／SARS',重:'重大傷病',大:'大量傷患',住:'住院進度',ICU:'等加護病房',轉:'轉診',行:'行政標記'};
+const adminItems=p=>{const f=p.fl||{},x=[];
+  if(f.cert)x.push(['診','診斷書']);if(f.rv)x.push([f.rv===2?'昨':'回',f.rv===2?'昨日回診':'回診']);
+  if(f.drg)x.push(['D'+f.drg,'DRG 第 '+f.drg+' 日']);if(f.pre)x.push(['P','Pre-care']);return x};
+const slotOn=(p,k)=>{const f=p.fl||{};return k==='危'?(p.crit||[]).length>0:k==='住'?p.adm>=0&&p.zone!=='ICU待床'&&p.dir!=='等ICU':k==='ICU'?p.zone==='ICU待床'||p.dir==='等ICU':k==='隔'?p.zone==='F'||!!f.sars:k==='重'?!!f.major:k==='大'?!!p.mci:k==='轉'?!!f.ref:k==='行'?adminItems(p).length>0:false};
 const slotHtml=(p,k)=>{
   if(!slotOn(p,k))return '<span class="slot none"></span>';
   if(k==='危'){const o=critOpen(p);return `<span class="slot crit ${o?'open':'done'}" data-crit="${p.id}" title="危急值 ${p.crit.length} 筆，${o} 筆未知悉（點開看明細）">危${p.crit.length>1?p.crit.length:''}</span>`}
   if(k==='住'){const a=p.adm;return `<span class="slot adm a${a}" title="住院進度：${ADM_STEPS[a]}">${['未','開','簽','床'][a]}</span>`}
   if(k==='ICU')return `<span class="slot icu" title="等加護病房">ICU</span>`;
-  if(k==='會')return `<span class="slot cons" title="會診中：${activeCons(p).map(c=>c.dept).join('、')}">會${activeCons(p).length>1?activeCons(p).length:''}</span>`;
-  if(k==='隔')return `<span class="slot iso" title="隔離">隔</span>`;
+  if(k==='隔')return `<span class="slot iso" title="${p.fl&&p.fl.sars?'SARS／需隔離':'隔離'}">${p.fl&&p.fl.sars?'疫':'隔'}</span>`;
+  if(k==='重')return `<span class="slot major" title="重大傷病">重</span>`;
+  if(k==='轉'){const r=p.fl.ref===2;return `<span class="slot ref${r?' back':''}" title="${r?'轉診已回覆':'轉診中，尚未回覆'}">${r?'覆':'轉'}</span>`}
+  if(k==='行'){const it=adminItems(p);return `<span class="adminc" title="${it.map(x=>x[1]).join('、')}">${it.slice(0,2).map(x=>`<i>${x[0]}</i>`).join('')}${it.length>2?`<i class="more">+${it.length-2}</i>`:''}</span>`}
   return `<span class="slot mci mci-${p.mci}" title="大量傷患：${p.mci}級">${p.mci}</span>`};
 function filtered(){
   const q=S.q.trim().toLowerCase(),f=(v,k)=>!k||String(v).toLowerCase().includes(k.toLowerCase());
@@ -997,9 +1013,9 @@ function renderList(){
         ${zp.length?`<div class="cards">${zp.map(card).join('')}</div>`:'<div class="lbl" style="padding:8px 2px">此區目前沒有病人</div>'}</section>`}).join('');
   }else{
     const stat=p=>critOpen(p)?`<b class="slot crit open" data-crit="${p.id}" title="危急值（點開看明細）">危</b>`:p.mci?`<b class="mci mci-${p.mci}">大${p.mci}</b>`:p.zone==='ICU待床'||p.dir==='等ICU'?'ICU':p.zone==='F'?'隔':/住院/.test(p.dir)?'住':p.lvl===1?'●':'';
-    $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號 <small>到院</small></th><th>床號</th>${LAYOUT==='B'?SLOTS.map(k=>`<th class="slh ${S.sf.has(k)?'on':''}" data-sf="${k}" title="點一下只看有「${k}」的病人">${k}</th>`).join(''):'<th>狀態</th>'}<th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>主責醫師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
+    $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號 <small>到院</small></th><th>床號</th>${LAYOUT==='B'?SLOTS.map(k=>`<th class="slh g${SLOT_GRP[k]}${k==='危'||k==='住'||k==='行'?' gs':''} ${S.sf.has(k)?'on':''}" data-sf="${k}" title="點一下只看有「${SLOT_NAME[k]}」的病人">${k==='行'?'行政':k}</th>`).join(''):'<th>狀態</th>'}<th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>主責醫師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
     L.map((p,i)=>(S.zone==='大'&&(i===0||L[i-1].mci!==p.mci)?`<tr class="grp t${p.mci}"><td colspan="${(S.ho?20:19)+(LAYOUT==='B'?SLOTS.length-1:0)}">大量傷患｜${p.mci}級（${L.filter(x=>x.mci===p.mci).length} 位）</td></tr>`:'')+`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
-      <td title="到院 ${new Date(p.arrive).toLocaleString('zh-TW',{hour12:false})}"><b>${p.id}</b> <small class="arr">${new Date(p.arrive).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</small></td><td><b>${p.bed}</b></td>${LAYOUT==='B'?SLOTS.map(k=>`<td class="slc">${slotHtml(p,k)}</td>`).join(''):`<td>${stat(p)}</td>`}<td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
+      <td title="到院 ${new Date(p.arrive).toLocaleString('zh-TW',{hour12:false})}"><b>${p.id}</b> <small class="arr">${new Date(p.arrive).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</small></td><td><b>${p.bed}</b></td>${LAYOUT==='B'?SLOTS.map(k=>`<td class="slc g${SLOT_GRP[k]}${k==='危'||k==='住'||k==='行'?' gs':''}">${slotHtml(p,k)}</td>`).join(''):`<td>${stat(p)}</td>`}<td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
       ${LAYOUT==='B'&&p.adm>=0&&!activeCons(p).length?dirCell(p).replace(/<\/td>$/,`<small class="admst a${p.adm}">${ADM_STEPS[p.adm]}</small></td>`):dirCell(p)}<td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td>
       ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k],p,k)}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
   }

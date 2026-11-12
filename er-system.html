@@ -930,7 +930,7 @@ setInterval(tickStay,30000);
 /* ===== 篩選 ===== */
 const MR={重:0,中:1,輕:2};
 const MCI_T=['重','中','輕'];
-const SLOTS=['危','住','ICU','會','隔','大'];
+const SLOTS=['危','住','ICU','隔','大'];
 const slotOn=(p,k)=>k==='危'?(p.crit||[]).length>0:k==='住'?p.adm>=0&&p.zone!=='ICU待床'&&p.dir!=='等ICU':k==='ICU'?p.zone==='ICU待床'||p.dir==='等ICU':k==='會'?activeCons(p).length>0:k==='隔'?p.zone==='F':k==='大'?!!p.mci:false;
 const slotHtml=(p,k)=>{
   if(!slotOn(p,k))return '<span class="slot none"></span>';

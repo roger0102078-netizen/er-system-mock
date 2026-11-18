@@ -714,6 +714,31 @@ body.dark table.emr .st.P{background:#3f7a2a;color:#e4f6d8}
 .adminc i.more{border-style:dashed}
 th.slh.gs,td.slc.gs{border-left:3px solid #7d9a7d}
 th.slh.gw{border-top:3px solid #c0282d}th.slh.gd{border-top:3px solid #4f7fb8}th.slh.ga{border-top:3px solid #9aa5a0}
+/* 交班作業／醫囑頁 */
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:none;align-items:center;justify-content:center}
+.ovp{background:var(--panel);color:inherit;border:1px solid var(--line);border-radius:10px;width:min(1180px,96vw);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.ovh{display:flex;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-size:18px}
+.ovb{padding:10px 14px;overflow:auto}.ovt{overflow:auto;max-height:52vh;border:1px solid var(--line)}
+.ovh .sp{flex:1}
+td.pend span{display:inline-block;margin:1px 3px 1px 0;padding:0 5px;border-radius:4px;background:rgba(120,120,120,.18);font-size:13px}
+input.hon{width:100%;min-width:200px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:#fff;color:#111}
+.hom{color:#2f6fbd;font-weight:800}
+.note{white-space:pre-wrap}
+.ordnav{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}.ordnav button{padding:5px 12px;border:1px solid var(--line);background:var(--panel);border-radius:6px;cursor:pointer;font-weight:700}.ordnav button.on{background:#2f6fbd;color:#fff;border-color:#2f6fbd}
+.ordsrch{border:2px solid #4f7fb8;border-radius:8px;padding:8px;margin-bottom:8px;background:rgba(79,127,184,.07)}
+.ores{display:flex;gap:8px;align-items:center;padding:5px 8px;border-bottom:1px solid var(--line);cursor:pointer}.ores:hover{background:rgba(79,127,184,.18)}
+.ores .star{margin-left:auto;font-size:20px;color:#aaa}.ores .star.on{color:#e0a800}
+.otp{display:inline-block;min-width:62px;text-align:center;font-size:12.5px;padding:1px 6px;border-radius:4px;color:#fff;background:#6b7a70}
+.otp.med{background:#2f8f5b}.otp.lab{background:#a05fb0}.otp.img{background:#3f7fb8}.otp.proc{background:#b3261e}.otp.ord{background:#8a6d1d}.otp.rt{background:#0f6e73}.otp.nut{background:#a86a2a}
+.ordrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:5px 0}
+.chip.set{border-color:#4f7fb8}.chip.set.mine{border-color:#e0a800}
+.crow{display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}.cspec{flex:1;min-width:160px;padding:3px 6px;border:1px solid var(--line);border-radius:5px;background:#fff;color:#111}
+table.ordtab tr.stopped{opacity:.5;text-decoration:line-through}
+.setg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}.setc{border:1px solid var(--line);border-radius:8px;padding:8px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:8px}
+.dsp{border:2px solid var(--line);border-radius:8px;padding:8px;cursor:pointer}.dsp.on{border-color:#2f6fbd;background:rgba(79,127,184,.12)}
+.dsp .dh{display:flex;gap:8px;align-items:center;margin-bottom:4px}.dsp .dl{display:inline-flex;width:26px;height:26px;border-radius:50%;background:#2f6fbd;color:#fff;align-items:center;justify-content:center;font-weight:800}
+.dsp .db label{margin-right:12px}.sugg{margin:6px 0;padding:5px 8px;border-radius:6px;background:rgba(224,144,42,.18)}.warnl{color:#b3261e;margin-top:4px}
 </style>
 
 </head>
@@ -1016,7 +1041,7 @@ function renderList(){
     $('#view').innerHTML=`<table class="emr"><thead><tr>${S.ho?'<th></th>':''}<th>流水號 <small>到院</small></th><th>床號</th>${LAYOUT==='B'?SLOTS.map(k=>`<th class="slh g${SLOT_GRP[k]}${k==='危'||k==='住'||k==='行'?' gs':''} ${S.sf.has(k)?'on':''}" data-sf="${k}" title="點一下只看有「${SLOT_NAME[k]}」的病人">${k==='行'?'行政':k}</th>`).join(''):'<th>狀態</th>'}<th>檢</th><th>主訴</th><th>姓名</th><th>性/齡</th><th>動向</th><th>停留</th><th>主責醫師</th><th>藥囑</th><th>處置</th><th>CT/MRI</th><th>X光</th><th>生化</th><th>鏡檢</th><th>血液</th><th>EKG</th></tr></thead><tbody>`+
     L.map((p,i)=>(S.zone==='大'&&(i===0||L[i-1].mci!==p.mci)?`<tr class="grp t${p.mci}"><td colspan="${(S.ho?20:19)+(LAYOUT==='B'?SLOTS.length-1:0)}">大量傷患｜${p.mci}級（${L.filter(x=>x.mci===p.mci).length} 位）</td></tr>`:'')+`<tr class="${S.sel===p.id?'sel':''}" data-id="${p.id}">${S.ho?`<td>${ck(p).replace('class="ck"','')}</td>`:''}
       <td title="到院 ${new Date(p.arrive).toLocaleString('zh-TW',{hour12:false})}"><b>${p.id}</b> <small class="arr">${new Date(p.arrive).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</small></td><td><b>${p.bed}</b></td>${LAYOUT==='B'?SLOTS.map(k=>`<td class="slc g${SLOT_GRP[k]}${k==='危'||k==='住'||k==='行'?' gs':''}">${slotHtml(p,k)}</td>`).join(''):`<td>${stat(p)}</td>`}<td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td>
-      ${LAYOUT==='B'&&p.adm>=0&&!activeCons(p).length?dirCell(p).replace(/<\/td>$/,`<small class="admst a${p.adm}">${ADM_STEPS[p.adm]}</small></td>`):dirCell(p)}<td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td>${p.doc}</td>
+      ${LAYOUT==='B'&&p.adm>=0&&!activeCons(p).length?dirCell(p).replace(/<\/td>$/,`<small class="admst a${p.adm}">${ADM_STEPS[p.adm]}</small></td>`):dirCell(p)}<td class="stay ${stayCls(hrs(p))}" data-arr="${p.arrive}">${fmtH(hrs(p))}</td><td title="主責醫師">${p.doc}${hoMark(p)}</td>
       ${['med','proc','ct','xr','bio','scope','lab','ekg'].map(k=>`<td class="stc">${stCell(p.st[k],p,k)}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
   }
   $('#hoN').textContent=S.checked.size;
@@ -1081,6 +1106,7 @@ function renderTab(){
       <button class="btn primary" id="cAdd">開立會診</button></div>
       <div class="lbl" style="margin-top:6px">開立後，清單的「動向」會自動顯示「會診＋科別」；全部完成後恢復原本動向。</div></fieldset>
       <fieldset class="fs"><legend>會診紀錄</legend>${cs.length?cs.map((c,i)=>`<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line)"><b style="min-width:84px">${c.dept}</b><span style="flex:1">${c.note||''}</span><span class="lbl">${tm(c.at)}</span>${c.done?'<span class="lbl">已完成</span>':`<b class="cons">會診中</b><button class="btn" data-cdone="${i}">完成會診</button>`}</div>`).join(''):'<div class="lbl">尚無會診紀錄</div>'}</fieldset>`;
+  }else if(S.tab==='醫囑'){Ord.render(p,tb)
   }else if(S.tab==='病程'){
     tb.innerHTML=`<div class="row"><textarea id="nt" rows="2" placeholder="輸入病程紀錄…" style="flex:1"></textarea><button class="btn primary" id="addNt">新增</button></div>
     <div id="nts">${p.notes.map(n=>`<div class="note">${n.t}<br><small>${n.at}</small></div>`).reverse().join('')||'<div class="empty">尚無病程紀錄</div>'}</div>`;
@@ -3215,6 +3241,7 @@ document.addEventListener('change',e=>{
   }
   if(t.id==='zSel'||t.id==='bedIn'){
     const p=cur(),oz=p.zone,ob=p.bed;
+    if(t.id==='zSel'){Hand.zoneAsk(p,t.value);t.value=p.zone;return}
     if(t.id==='zSel'){
       const z=zInfo(t.value);p.zone=z.k;
       if(patients.filter(x=>x.zone===z.k).length>z.cap)toast(`${z.name} 已超過床位上限`);
@@ -3320,6 +3347,246 @@ $('#hoApply').onclick=()=>{
   S.checked.clear();save();renderList();renderDetail();
   toast(`已將 ${n} 位病人交班給 ${doc}`);
 };
+
+/* ===== 交班作業 v2 + 轉區交班病程 ===== */
+const ME=DOCTORS[0];
+const NLc=String.fromCharCode(10);
+const nowS=()=>new Date().toLocaleString('zh-TW',{hour12:false});
+const ST_LBL={med:'藥囑',proc:'處置',ct:'CT/MRI',xr:'X光',bio:'生化',scope:'鏡檢',lab:'血液',ekg:'EKG'};
+function pendingOf(p){const o=[];
+  const c=critOpen(p);if(c)o.push('危急值 '+c+' 筆待知悉');
+  if(p.adm>=0)o.push('住院進度：'+ADM_STEPS[p.adm]);
+  const cs=activeCons(p);if(cs.length)o.push('會診中：'+cs.map(x=>x.dept).join('、'));
+  const w=[];Object.keys(ST_LBL).forEach(k=>{const v=(p.st||{})[k];if(v&&v!=='Y'){const r=stCnt(p,k,v);w.push(ST_LBL[k]+' '+(v==='O'?'逾時':r[0]+'/'+r[1]))}});
+  if(w.length)o.push('未完成：'+w.join('、'));
+  if(p.dir&&!cs.length)o.push('動向：'+p.dir);
+  const od=(p.orders||[]).filter(x=>x.status==='待執行').length;if(od)o.push('待執行醫囑 '+od+' 項');
+  return o}
+const hoMark=p=>{const l=(p.hoLog||[]).slice(-1)[0];if(!l||Date.now()-l.at>4*36e5)return'';return` <small class="hom" title="${l.from} → ${l.to}（${new Date(l.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})} 交班）">⇄</small>`};
+const Hand={
+  zone:'全部',from:'',sel:new Set(),note:{},
+  log(){try{return JSON.parse(localStorage.getItem('er-ho-log')||'[]')}catch(e){return[]}},
+  open(){this.sel.clear();this.note={};let m=$('#hoModal');if(!m){m=document.createElement('div');m.id='hoModal';m.className='ovl';document.body.appendChild(m)}m.style.display='flex';this.draw()},
+  close(){const m=$('#hoModal');if(m)m.style.display='none';$('#hoBtn').classList.remove('on')},
+  list(){return patients.filter(p=>(this.zone==='全部'||p.zone===this.zone)&&(!this.from||p.doc===this.from)).sort((a,b)=>a.bed<b.bed?-1:1)},
+  draw(){const m=$('#hoModal'),L=this.list(),lg=this.log().slice(-5).reverse();
+    m.innerHTML=`<div class="ovp"><div class="ovh"><b>交班作業</b><span class="lbl">登入醫師：${ME}</span><span class="sp"></span><button class="btn" data-ho="close">✕ 關閉</button></div>
+    <div class="ovb">
+    <div class="row" style="margin-bottom:6px">
+      <label>區域 <select data-ho="zone"><option>全部</option>${ZONES.map(z=>`<option value="${z.k}" ${this.zone===z.k?'selected':''}>${z.name}</option>`).join('')}</select></label>
+      <label>原主責醫師 <select data-ho="from"><option value="">全部</option>${DOCTORS.map(d=>`<option ${this.from===d?'selected':''}>${d}</option>`).join('')}</select></label>
+      <button class="btn" data-ho="all">全選目前名單</button><button class="btn" data-ho="none">清除</button>
+      <span>名單 ${L.length} 位，已選 <b id="hoSel">${this.sel.size}</b> 位</span>
+      <span class="lbl">區域與醫師可同時篩選；「待辦」由系統自動整理，交班重點可自行補充。</span></div>
+    <div class="ovt"><table class="emr"><thead><tr><th></th><th>床號</th><th>姓名</th><th>性/齡</th><th>檢</th><th>主訴</th><th>原主責</th><th>系統整理：未完成事項</th><th>交班重點（可輸入）</th></tr></thead><tbody>
+    ${L.map(p=>`<tr><td><input type="checkbox" data-hock="${p.id}" ${this.sel.has(p.id)?'checked':''}></td><td><b>${p.bed}</b></td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td><td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td>${p.doc}</td>
+      <td class="l pend">${pendingOf(p).map(x=>`<span>${x}</span>`).join('')||'<span class="lbl">無</span>'}</td>
+      <td><input class="hon" data-hon="${p.id}" value="${esc(this.note[p.id]||'')}" placeholder="例：待 CT 報告，家屬在外等候"></td></tr>`).join('')||'<tr><td colspan="9" class="lbl">此條件下沒有病人</td></tr>'}</tbody></table></div>
+    <div class="row" style="margin-top:8px"><b>接班醫師</b><select id="hoTo">${DOCTORS.map(d=>`<option>${d}</option>`).join('')}</select>
+      <button class="btn primary" data-ho="apply">確認交班</button><button class="btn" data-ho="print">列印交班表</button>
+      <span class="lbl">確認後：主責醫師更換、病程自動留下交班紀錄、清單的主責醫師旁出現 ⇄ 標記（4 小時內）。</span></div>
+    ${lg.length?`<div class="lbl" style="margin-top:8px"><b>最近交班紀錄</b>　${lg.map(x=>`${new Date(x.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})} ${x.froms.join('、')} → ${x.to}（${x.n} 位）`).join('　｜　')}</div>`:''}
+    </div></div>`},
+  apply(){const to=$('#hoTo').value,ids=[...this.sel];if(!ids.length)return toast('請先勾選要交班的病人');
+    const froms=new Set();
+    ids.forEach(id=>{const p=patients.find(x=>x.id===id);if(!p||p.doc===to)return;const nt=(this.note[id]||'').trim();froms.add(p.doc);
+      (p.hoLog=p.hoLog||[]).push({at:Date.now(),from:p.doc,to,note:nt,by:ME});
+      const pd=pendingOf(p);
+      p.notes.push({t:'【交班】主責醫師 '+p.doc+' → '+to+(nt?NLc+'交班重點：'+nt:'')+(pd.length?NLc+'未完成事項：'+pd.join('；'):''),at:nowS()});
+      p.doc=to});
+    if(!froms.size)return toast('所選病人已經是該醫師負責');
+    const lg=this.log();lg.push({at:Date.now(),froms:[...froms],to,n:ids.length});try{localStorage.setItem('er-ho-log',JSON.stringify(lg.slice(-30)))}catch(e){}
+    this.sel.clear();this.note={};save();renderList();renderDetail();this.draw();toast('已將 '+ids.length+' 位病人交班給 '+to)},
+  print(){const L=this.sel.size?patients.filter(p=>this.sel.has(p.id)):this.list();const to=$('#hoTo').value;
+    const w=window.open('','_blank');if(!w)return toast('瀏覽器擋住了列印視窗');
+    w.document.write('<html><head><meta charset="utf-8"><title>急診交班表</title><style>body{font-family:sans-serif;font-size:13px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:3px 5px;text-align:left;vertical-align:top}</style></head><body><h3>急診交班表　'+nowS()+'　交班：'+(this.from||'（多位）')+' → '+to+'</h3><table><tr><th>床號</th><th>姓名</th><th>性/齡</th><th>檢</th><th>主訴</th><th>原主責</th><th>未完成事項</th><th>交班重點</th></tr>'+
+      L.map(p=>'<tr><td>'+p.bed+'</td><td>'+p.name+'</td><td>'+p.sex+'/'+p.age+'</td><td>'+p.lvl+'</td><td>'+p.cc+'</td><td>'+p.doc+'</td><td>'+pendingOf(p).join('；')+'</td><td>'+esc(this.note[p.id]||'')+'</td></tr>').join('')+'</table></body></html>');
+    w.document.close();setTimeout(()=>{try{w.print()}catch(e){}},300)},
+  /* 轉區：必須先寫交班病程 */
+  moveZone(p,v){const oz=p.zone,ob=p.bed,z=zInfo(v);p.zone=z.k;
+    if(patients.filter(x=>x.zone===z.k).length>z.cap)toast(z.name+' 已超過床位上限');
+    if(!p.bed.startsWith(z.k)){const n=patients.filter(x=>x.zone===z.k).length;p.bed=z.k+String(n).padStart(2,'0')}
+    return'區域/床位：'+oz+' '+ob+' → '+p.zone+' '+p.bed},
+  zoneAsk(p,nz){if(nz===p.zone)return;const z=zInfo(nz);this.zp=p.id;this.zn=nz;
+    const pd=pendingOf(p);
+    const draft='【轉區交班】'+p.zone+'區 '+p.bed+' → '+z.name+NLc+'病人：'+p.name+' '+p.sex+'/'+p.age+'歲，檢傷 '+p.lvl+NLc+'主訴：'+p.cc+(p.imp?NLc+'Impression：'+p.imp:'')+NLc+'目前狀況／未完成事項：'+NLc+(pd.length?pd.map(x=>'‧ '+x).join(NLc):'‧ 無')+NLc+'注意事項：';
+    let m=$('#zoneModal');if(!m){m=document.createElement('div');m.id='zoneModal';m.className='ovl';document.body.appendChild(m)}
+    m.style.display='flex';
+    m.innerHTML=`<div class="ovp" style="max-width:640px"><div class="ovh"><b>轉區：${p.bed} ${p.name} → ${z.name}</b><span class="sp"></span></div><div class="ovb">
+      <div class="lbl" style="margin-bottom:4px">開立轉區醫囑時，需先留下交班病程（系統已依目前資料自動草擬，可直接修改）。</div>
+      <textarea id="zoneTxt" rows="10" style="width:100%">${esc(draft)}</textarea>
+      <div class="row" style="margin-top:8px"><label>接班醫師 <select id="zoneDoc">${DOCTORS.map(d=>`<option ${d===p.doc?'selected':''}>${d}</option>`).join('')}</select></label><span class="sp"></span>
+      <button class="btn" data-zn="cancel">取消轉區</button><button class="btn primary" data-zn="ok">確認轉區並存入病程</button></div></div></div>`},
+  zoneOk(){const p=patients.find(x=>x.id===this.zp);if(!p)return;const txt=$('#zoneTxt').value.trim(),doc=$('#zoneDoc').value;if(!txt)return toast('請填寫交班病程');
+    const line=this.moveZone(p,this.zn);p.notes.push({t:txt+NLc+'（'+line+'）',at:nowS()});
+    if(doc!==p.doc){(p.hoLog=p.hoLog||[]).push({at:Date.now(),from:p.doc,to:doc,note:'轉區',by:ME});p.notes.push({t:'【交班】主責醫師 '+p.doc+' → '+doc,at:nowS()});p.doc=doc}
+    $('#zoneModal').style.display='none';save();renderChips();renderList();renderDetail();toast('已轉區並留下交班病程')},
+  zoneCancel(){$('#zoneModal').style.display='none';renderDetail()}
+};
+document.addEventListener('click',e=>{const t=e.target;
+  const h=t.dataset&&t.dataset.ho;if(h){e.stopPropagation();
+    if(h==='close')Hand.close();else if(h==='all'){Hand.list().forEach(p=>Hand.sel.add(p.id));Hand.draw()}
+    else if(h==='none'){Hand.sel.clear();Hand.draw()}else if(h==='apply')Hand.apply();else if(h==='print')Hand.print();return}
+  if(t.dataset&&t.dataset.zn){e.stopPropagation();t.dataset.zn==='ok'?Hand.zoneOk():Hand.zoneCancel()}
+},true);
+document.addEventListener('change',e=>{const t=e.target;
+  if(t.dataset&&t.dataset.ho==='zone'){Hand.zone=t.value;Hand.draw()}
+  else if(t.dataset&&t.dataset.ho==='from'){Hand.from=t.value;Hand.draw()}
+  else if(t.dataset&&t.dataset.hock){t.checked?Hand.sel.add(t.dataset.hock):Hand.sel.delete(t.dataset.hock);const n=$('#hoSel');if(n)n.textContent=Hand.sel.size}
+},true);
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.hon)Hand.note[t.dataset.hon]=t.value});
+$('#hoBtn').onclick=()=>{$('#hoBtn').classList.add('on');Hand.open()};
+
+/* ===== 醫囑頁（示範資料，非真實藥局／醫令代碼）===== */
+const OC=(n,k,t,spec,st)=>({n,k:k||'',t,spec:spec||'',st:st||''});
+const OT={med:'藥囑',lab:'檢驗',img:'檢查',proc:'處置',ord:'一般醫囑',rt:'呼吸治療',nut:'營養'};
+const OCAT0={'衛教醫囑':['傷口照護衛教','發燒衛教','腹痛飲食衛教','頭部外傷返診注意事項','跌倒預防衛教'],
+ '轉區醫囑':['轉 A 區','轉 B 區','轉 C 區','轉觀察區','轉隔離區 F'],
+ '計價醫囑':['急診觀察床位費','縫合計價（≤5 cm）','換藥計價','石膏固定計價'],
+ '護理醫囑':['生命徵象監測 Q1H','心電圖監視','臥床休息','NPO','抬高床頭 30 度','I/O 記錄','血糖監測 Q6H'],
+ '外傷換藥':['小傷口換藥','中大型傷口換藥','燒燙傷換藥','口內傷口處置']};
+const DRESS={'小傷口換藥':['Gentamicin 軟膏','Sperin 粉'],'中大型傷口換藥':['Gentamicin 軟膏','Sperin 粉'],'燒燙傷換藥':['Silver sulfadiazine 軟膏','Gentamicin 軟膏'],'口內傷口處置':['Dexamethasone 口內膏']};
+const OBASE=[
+ OC('Ketorolac 30 mg 針','toradol 止痛 nsaid','med','30 mg IV ST','med'),OC('Acetaminophen 500 mg 錠','普拿疼 panadol paracetamol 退燒 止痛','med','500 mg PO Q6H PRN','med'),
+ OC('Morphine 5 mg 針','嗎啡 止痛 opioid','med','5 mg IV ST','med'),OC('Fentanyl 50 mcg 針','止痛 opioid','med','50 mcg IV ST','med'),OC('Tramadol 50 mg 錠','止痛','med','50 mg PO Q8H PRN','med'),
+ OC('Metoclopramide 10 mg 針','primperan 止吐 噁心','med','10 mg IV ST','med'),OC('Ondansetron 4 mg 針','zofran 止吐 噁心','med','4 mg IV ST','med'),OC('Scopolamine 20 mg 針','buscopan 腹痙攣 腹痛','med','20 mg IV ST','med'),
+ OC('Omeprazole 40 mg 針','ppi 胃藥 胃痛','med','40 mg IV QD','med'),OC('Famotidine 20 mg 針','胃藥','med','20 mg IV Q12H','med'),
+ OC('Normal saline 0.9% 1000 mL','ns 生理食鹽水 輸液 點滴','med','1000 mL IV 100 mL/hr','med'),OC("Lactated Ringer's 1000 mL",'lr 輸液 點滴','med','1000 mL IV 100 mL/hr','med'),OC('5% Dextrose 500 mL','d5w 輸液','med','500 mL IV 80 mL/hr','med'),OC('KCl 20 mEq 補充','鉀 低血鉀','med','20 mEq IV 慢速','med'),
+ OC('Ceftriaxone 1 g 針','rocephin 抗生素 肺炎 尿路感染','med','1 g IV Q24H','med'),OC('Cefazolin 1 g 針','抗生素 傷口','med','1 g IV Q8H','med'),OC('Piperacillin/tazobactam 4.5 g 針','tazocin 抗生素 敗血症','med','4.5 g IV Q6H','med'),OC('Levofloxacin 500 mg 針','抗生素','med','500 mg IV QD','med'),OC('Metronidazole 500 mg 針','抗生素 厭氧','med','500 mg IV Q8H','med'),OC('Amoxicillin/clavulanate 625 mg 錠','augmentin 抗生素','med','625 mg PO Q8H','med'),
+ OC('Epinephrine 1 mg 針','adrenaline bosmin 腎上腺素 心跳停止 過敏性休克','med','1 mg IV Q3-5min','med'),OC('Atropine 0.5 mg 針','阿托平 心搏過緩','med','0.5 mg IV ST','med'),OC('Amiodarone 150 mg 針','心律不整','med','150 mg IV 10 min','med'),OC('Nitroglycerin 0.6 mg 舌下','ntg 硝化甘油 胸痛','med','0.6 mg SL ST','med'),
+ OC('Aspirin 300 mg 錠','阿斯匹靈 胸痛 acs','med','300 mg PO ST','med'),OC('Clopidogrel 75 mg 錠','plavix acs','med','300 mg PO ST','med'),OC('Heparin 5000 U 針','肝素 抗凝','med','5000 U IV ST','med'),OC('Furosemide 20 mg 針','lasix 利尿 肺水腫','med','20 mg IV ST','med'),OC('Labetalol 20 mg 針','降血壓','med','20 mg IV ST','med'),OC('Adenosine 6 mg 針','svt 心搏過速','med','6 mg IV rapid','med'),
+ OC('Salbutamol 噴霧','ventolin 氣喘 copd 支氣管擴張','med','2.5 mg NEB Q4H','med'),OC('Ipratropium 噴霧','atrovent 氣喘 copd','med','0.5 mg NEB Q6H','med'),OC('Methylprednisolone 40 mg 針','solu-medrol 類固醇 氣喘 過敏','med','40 mg IV ST','med'),OC('Dexamethasone 5 mg 針','類固醇','med','5 mg IV ST','med'),OC('Diphenhydramine 30 mg 針','benadryl 抗組織胺 過敏 蕁麻疹','med','30 mg IV ST','med'),
+ OC('Midazolam 5 mg 針','鎮靜 抽搐','med','2 mg IV ST','med'),OC('Diazepam 10 mg 針','抽搐 鎮靜','med','5 mg IV ST','med'),OC('Haloperidol 5 mg 針','躁動 精神','med','5 mg IM ST','med'),
+ OC('Insulin regular 10 U','胰島素 高血糖 dka','med','10 U IV ST','med'),OC('50% Glucose 50 mL','d50w 低血糖','med','50 mL IV ST','med'),
+ OC('Tranexamic acid 1 g 針','txa 止血 出血 外傷','med','1 g IV 10 min','med'),OC('Vitamin K 10 mg 針','凝血 inr','med','10 mg IV ST','med'),OC('破傷風類毒素 Td 0.5 mL','td tetanus 傷口 外傷','med','0.5 mL IM ST','med'),
+ OC('Gentamicin 軟膏','慶大黴素 傷口 換藥','med','適量 外用 QD','med'),OC('Sperin 粉','傷口 換藥 抗生素粉','med','適量 外用','med'),OC('Silver sulfadiazine 軟膏','燒燙傷 換藥','med','適量 外用 QD','med'),OC('Dexamethasone 口內膏','口內 潰瘍 傷口','med','適量 口內 TID','med'),
+ OC('CBC/DC 全血球及白血球分類','血液 cbc 血球 貧血','lab','','lab'),OC('生化 Panel（BUN/Cr/Na/K/Glu）','生化 腎功能 電解質','lab','','bio'),OC('肝功能 AST/ALT','生化 肝','lab','','bio'),OC('Troponin I','肌鈣蛋白 胸痛 心肌梗塞','lab','','bio'),OC('D-dimer','肺栓塞 血栓','lab','','lab'),OC('動脈血氣 ABG','abg 血氣','lab','','lab'),OC('乳酸 Lactate','敗血症','lab','','bio'),OC('尿液分析 U/A','尿 解尿 尿路感染','lab','','scope'),OC('血液培養 ×2','blood culture 敗血症 發燒','lab','','lab'),OC('血型／備血 Type & Screen','輸血 備血 外傷','lab','','lab'),
+ OC('胸部 X光 CXR','chest 胸 肺','img','','xr'),OC('腹部 X光 KUB','abdomen 腹','img','','xr'),OC('骨盆 X光','pelvis 外傷','img','','xr'),OC('頭部 CT（不打顯影劑）','brain head 中風 頭部外傷 ct','img','','ct'),OC('腹部 CT','abdomen ct 腹痛','img','','ct'),OC('頭頸 CT 血管攝影','cta 中風','img','','ct'),OC('12 導程心電圖 ECG','ekg 心電圖 胸痛','img','','ekg'),OC('床邊超音波 / FAST','echo 超音波 fast 外傷','img','','xr'),
+ OC('氣管內管插管','ett intubation 插管','proc','','proc'),OC('中央靜脈導管 CVC','central line 中心靜脈','proc','','proc'),OC('呼吸器 Ventilator 設定','vent 呼吸器','proc','','proc'),OC('抽痰','suction','proc','','proc'),OC('注射幫浦 Pump','pump 升壓劑','proc','','proc'),OC('Trauma set','外傷 創傷','proc','','proc'),OC('動脈導管 A-line','a line 動脈壓','proc','','proc'),OC('ECMO','葉克膜','proc','','proc'),OC('IABP','主動脈內球囊','proc','','proc'),OC('REBOA','主動脈阻斷','proc','','proc'),OC('鼻胃管 NG','ng tube 鼻胃管','proc','','proc'),OC('導尿管 Foley','foley 導尿','proc','','proc'),OC('胸管 Chest tube','氣胸 血胸','proc','','proc'),
+ OC('鼻導管氧氣','o2 氧氣','rt','2–5 L/min',''),OC('面罩氧氣','o2 氧氣 mask','rt','6–10 L/min',''),OC('高流量鼻導管 HFNC','hfnc','rt','FiO2 0.5 / 40 L',''),OC('非侵襲性正壓 BiPAP','niv bipap','rt','IPAP 12 / EPAP 5',''),
+ OC('一般飲食','飲食 營養','nut','',''),OC('軟食','飲食 營養','nut','',''),OC('流質飲食','飲食 營養','nut','',''),OC('糖尿病飲食','飲食 營養 dm','nut','',''),OC('管灌飲食','tube feeding 營養','nut','','')];
+const OSETS0=[{n:'胸痛（ACS）組套',g:'科部',i:['12 導程心電圖 ECG','Troponin I','胸部 X光 CXR','生化 Panel（BUN/Cr/Na/K/Glu）','Aspirin 300 mg 錠','Nitroglycerin 0.6 mg 舌下']},
+ {n:'腹痛組套',g:'科部',i:['CBC/DC 全血球及白血球分類','生化 Panel（BUN/Cr/Na/K/Glu）','尿液分析 U/A','腹部 X光 KUB','Normal saline 0.9% 1000 mL','Scopolamine 20 mg 針']},
+ {n:'敗血症組套',g:'科部',i:['血液培養 ×2','乳酸 Lactate','CBC/DC 全血球及白血球分類','Ceftriaxone 1 g 針','Normal saline 0.9% 1000 mL']},
+ {n:'OHCA 組套',g:'科部',i:['Epinephrine 1 mg 針','氣管內管插管','動脈血氣 ABG','12 導程心電圖 ECG','Amiodarone 150 mg 針','呼吸器 Ventilator 設定']},
+ {n:'Major trauma 組套',g:'科部',i:['Trauma set','血型／備血 Type & Screen','CBC/DC 全血球及白血球分類','Tranexamic acid 1 g 針','胸部 X光 CXR','骨盆 X光','床邊超音波 / FAST','Normal saline 0.9% 1000 mL']},
+ {n:'氣喘急性發作組套',g:'科部',i:['Salbutamol 噴霧','Ipratropium 噴霧','Methylprednisolone 40 mg 針','面罩氧氣']}];
+const OOTHER=[{n:'氣喘快速組套',by:'李婉婷',i:['Salbutamol 噴霧','Methylprednisolone 40 mg 針']},{n:'縫合後處置',by:'張宇軒',i:['縫合計價（≤5 cm）','Cefazolin 1 g 針','破傷風類毒素 Td 0.5 mL']}];
+const OPD_MEDS=[['Amlodipine 5 mg 錠','5 mg PO QD'],['Metformin 500 mg 錠','500 mg PO BID'],['Atorvastatin 20 mg 錠','20 mg PO QN']];
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const Ord={
+  sub:'open',q:'',tf:'',cart:{},dis:{},
+  cats(){return lsGet('er-ord-cats',OCAT0)},
+  fav(){return lsGet('er-ord-fav',['Ketorolac 30 mg 針','Normal saline 0.9% 1000 mL'])},
+  mysets(){return lsGet('er-ord-sets',[])},
+  all(){const c=this.cats(),x=[];Object.keys(c).forEach(g=>c[g].forEach(n=>x.push({n,k:g,t:'ord',spec:'',st:'',g})));return OBASE.concat(x)},
+  byName(n){return this.all().find(x=>x.n===n)},
+  search(){const toks=this.q.toLowerCase().split(/\s+/).filter(Boolean);
+    return this.all().filter(x=>(!this.tf||x.t===this.tf)&&toks.every(t=>(x.n+' '+x.k).toLowerCase().includes(t)))},
+  cartOf(p){return this.cart[p.id]=this.cart[p.id]||[]},
+  add(p,n,quiet){const it=this.byName(n);if(!it)return;const c=this.cartOf(p);if(c.some(x=>x.n===n)){if(!quiet)toast('已在待開立清單');return}
+    c.push({n:it.n,t:it.t,spec:it.spec,st:it.st,days:it.t==='med'?1:'',g:it.g||''})},
+  render(p,tb){
+    const sub=this.sub,tabs=[['open','開立醫囑'],['dispo','出院醫囑（決定去向）'],['sets','組套'],['cats','一般醫囑分類維護']];
+    tb.innerHTML=`<div class="ordnav">${tabs.map(t=>`<button data-o="sub" data-v="${t[0]}" class="${sub===t[0]?'on':''}">${t[1]}</button>`).join('')}<button class="btn" data-o="big">${document.getElementById('detail').classList.contains('full')?'✕ 縮小':'⛶ 放大醫囑'}</button><span class="sp"></span><span class="lbl">開立醫師：${ME}　存檔後即送護理、藥局、批價（示範）</span></div><div id="ordbody"></div>`;
+    this['r_'+sub](p,$('#ordbody'))},
+  r_open(p,b){
+    const fav=this.fav(),res=this.q||this.tf?this.search().slice(0,14):[],cart=this.cartOf(p),sets=OSETS0.concat(this.mysets().map(s=>({...s,g:'個人'})));
+    const typ=[['','全部']].concat(Object.keys(OT).map(k=>[k,OT[k]]));
+    const sug=[...new Set(cart.flatMap(x=>DRESS[x.n]||[]))].filter(n=>!cart.some(x=>x.n===n));
+    const od=p.orders||[];
+    b.innerHTML=`<div class="ordsrch"><div class="row" style="flex-wrap:nowrap"><input class="search" id="ordQ" value="${esc(this.q)}" placeholder="全搜尋：醫囑、藥囑、檢驗檢查、處置都在這裡找（中英文／商品名／症狀，例如 止吐 / ketorolac / 胸痛 / CVC）" autocomplete="off" style="flex:1;font-size:16px;padding:8px">
+      <span class="lbl">Enter＝加入第一筆</span></div>
+      <div class="chips" style="margin:4px 0">${typ.map(t=>`<button class="chip ${this.tf===t[0]?'on':''}" data-o="tf" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>
+      <div id="ordRes">${res.length?res.map(x=>`<div class="ores" data-o="add" data-n="${esc(x.n)}"><span class="otp ${x.t}">${OT[x.t]}</span><b>${esc(x.n)}</b><span class="lbl">${x.g?x.g:esc(x.spec)}</span><span class="star ${fav.includes(x.n)?'on':''}" data-o="fav" data-n="${esc(x.n)}" title="加入／移出個人常用">★</span></div>`).join(''):(this.q||this.tf?'<div class="lbl">找不到符合的項目</div>':'')}</div></div>
+    <div class="ordrow"><b>個人常用</b>${fav.map(n=>`<button class="chip" data-o="add" data-n="${esc(n)}">${esc(n)}</button>`).join('')||'<span class="lbl">點搜尋結果的 ★ 加入</span>'}</div>
+    <div class="ordrow"><b>組套</b>${sets.map(s=>`<button class="chip set ${s.g==='個人'?'mine':''}" data-o="useset" data-n="${esc(s.n)}" title="${s.g}組套：${esc(s.i.join('、'))}">${s.g==='個人'?'★ ':''}${esc(s.n)}</button>`).join('')}</div>
+    <div class="ordrow"><b>門診用藥</b><button class="chip" data-o="opd">帶入門診用藥（${OPD_MEDS.length} 項，全部 1 天，不帶慢簽 28 天）</button></div>
+    <fieldset class="fs"><legend>待開立（${cart.length}）</legend>
+      ${cart.length?cart.map((x,i)=>`<div class="crow"><span class="otp ${x.t}">${OT[x.t]}</span><b style="min-width:200px">${esc(x.n)}</b><input class="cspec" data-o="spec" data-i="${i}" value="${esc(x.spec)}" placeholder="${x.t==='med'?'劑量 途徑 頻率':'備註'}">${x.t==='med'?`<label class="lbl">天數 <input type="number" min="1" data-o="days" data-i="${i}" value="${x.days||1}" style="width:54px"></label>`:''}<button class="btn" data-o="del" data-i="${i}">✕</button></div>`).join(''):'<div class="lbl">從上方搜尋、常用、組套加入項目</div>'}
+      ${sug.length?`<div class="ordrow"><b>建議藥物（科部維護）</b>${sug.map(n=>`<button class="chip" data-o="add" data-n="${esc(n)}">＋ ${esc(n)}</button>`).join('')}</div>`:''}
+      <div class="row" style="margin-top:6px"><button class="btn primary" data-o="save" ${cart.length?'':'disabled'}>存檔（送護理／藥局／批價）</button><button class="btn" data-o="mkset" ${cart.length?'':'disabled'}>存成個人組套</button><button class="btn" data-o="clear" ${cart.length?'':'disabled'}>清空</button></div></fieldset>
+    <fieldset class="fs"><legend>已開立醫囑（${od.length}）</legend>${od.length?`<table class="emr ordtab"><thead><tr><th>時間</th><th>類別</th><th>內容</th><th>開立</th><th>狀態</th><th></th></tr></thead><tbody>${od.slice().reverse().map(o=>`<tr class="${o.status==='已停止'?'stopped':''}"><td>${new Date(o.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</td><td><span class="otp ${o.t}">${OT[o.t]}</span></td><td class="l"><b>${esc(o.n)}</b> ${esc(o.spec||'')}</td><td>${o.by}</td><td>${o.status}</td><td>${o.status==='已停止'?'':`<button class="btn" data-o="renew" data-id="${o.id}" title="以現在時間重新開立">續用</button><button class="btn" data-o="stop" data-id="${o.id}">停止</button>`}</td></tr>`).join('')}</tbody></table>`:'<div class="lbl">尚未開立醫囑</div>'}</fieldset>`},
+  r_sets(p,b){const mine=this.mysets();
+    const card=(s,own)=>`<div class="setc"><b>${esc(s.n)}</b>${s.by?`<span class="lbl">（${s.by}）</span>`:''}<div class="chips">${s.i.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div><div class="row"><button class="btn" data-o="useset" data-n="${esc(s.n)}">帶入待開立</button>${own?`<button class="btn" data-o="delset" data-n="${esc(s.n)}">刪除</button>`:''}${s.by?`<button class="btn" data-o="copyset" data-n="${esc(s.n)}">拷貝到我的組套</button>`:''}</div></div>`;
+    b.innerHTML=`<div class="lbl" style="margin-bottom:6px">組套的開立方式與開醫囑相同：用全搜尋加進「待開立」後，按「存成個人組套」即可。科部組套由急診部維護，個人組套由自己維護；可以拷貝同事的組套。</div>
+    <fieldset class="fs"><legend>科部組套（急診部維護）</legend><div class="setg">${OSETS0.map(s=>card(s,false)).join('')}</div></fieldset>
+    <fieldset class="fs"><legend>個人組套（${ME}）</legend><div class="setg">${mine.map(s=>card(s,true)).join('')||'<div class="lbl">還沒有個人組套。到「開立醫囑」加好項目後按「存成個人組套」。</div>'}</div></fieldset>
+    <fieldset class="fs"><legend>同事分享的組套</legend><div class="setg">${OOTHER.map(s=>card(s,false)).join('')}</div></fieldset>`},
+  r_cats(p,b){const c=this.cats();
+    b.innerHTML=`<div class="lbl" style="margin-bottom:6px">一般醫囑的分類與內容由急診部自行維護（衛教、轉區、計價、護理、外傷換藥…）。修改後立刻反映在「全搜尋」。外傷換藥點選後會自動建議相關藥物（Gentamicin、Sperin、Dexamethasone 口內膏），藥名隨藥局更新時由科部調整。</div>
+    ${Object.keys(c).map(g=>`<fieldset class="fs"><legend>${esc(g)}</legend><div class="chips">${c[g].map((n,i)=>`<span class="chip">${esc(n)} <a data-o="catdel" data-g="${esc(g)}" data-i="${i}" style="cursor:pointer">✕</a></span>`).join('')}</div>
+      <div class="row" style="margin-top:4px"><input class="search" id="catin_${esc(g)}" placeholder="新增到「${esc(g)}」" style="width:240px"><button class="btn" data-o="catadd" data-g="${esc(g)}">新增項目</button><button class="btn" data-o="catrm" data-g="${esc(g)}">刪除此分類</button></div></fieldset>`).join('')}
+    <div class="row"><input class="search" id="newCat" placeholder="新分類名稱，例如：藥師溝通" style="width:240px"><button class="btn primary" data-o="catnew">新增分類</button><button class="btn" data-o="catreset">還原預設</button></div>`},
+  /* 出院醫囑 A–F */
+  suggestLvl(p){const r=[];if(p.lvl<=2)r.push('檢傷 '+p.lvl+' 級');if(critOpen(p))r.push('危急值未知悉');if(p.zone==='ICU待床'||p.dir==='等ICU')r.push('已評估需 ICU');
+    if(['O','N'].includes((p.st||{}).ekg))r.push('心電圖未完成');if((p.st||{}).lab==='O')r.push('檢驗逾時');
+    const n=parseInt(p.id,10)||0;if(n%7===0)r.push('24 小時內曾有不穩定生命跡象（示範）');if(n%11===0)r.push('使用呼吸器（示範）');
+    return{lv:r.length>=2||p.lvl<=2?3:r.length?2:1,r}},
+  LVN:{1:'一般運送（傳送員）',2:'護理師隨行',3:'醫師隨行＋監視器'},
+  r_dispo(p,b){const D=this.dis[p.id]=this.dis[p.id]||{g:'A',a:'出院',lv:0,er1:'不掛',br:'本棟 ER1 診'},sg=this.suggestLvl(p);if(!D.lv)D.lv=sg.lv;
+    const row=(g,title,body)=>`<div class="dsp ${D.g===g?'on':''}" data-o="dg" data-v="${g}"><div class="dh"><span class="dl">${g}</span><b>${title}</b></div><div class="db">${body}</div></div>`;
+    const rd=(name,vals,cur)=>vals.map(v=>`<label><input type="radio" name="${name}" data-o="dv" data-k="${name}" data-v="${v}" ${cur===v?'checked':''}> ${v}</label>`).join('');
+    b.innerHTML=`<div class="lbl" style="margin-bottom:6px">選一個去向後按「確認」。A 仍綁掛號系統；C 的轉送等級由系統依 24 小時內生命跡象、呼吸器等條件給出建議；F 不需選原因。</div>
+    <div class="dgrid">
+    ${row('A','出院 / AAD（綁掛號系統）',rd('a',['出院','AAD'],D.a))}
+    ${row('B','轉院',`<input class="search" id="dTo" value="${esc(D.to||'')}" placeholder="轉入院所／科別" style="width:100%">`)}
+    ${row('C','住院 / 住院（ICU）',`${rd('c',['住院','住院（ICU）'],D.c||'住院')}<div class="sugg">建議轉送等級：<b>${this.LVN[sg.lv]}</b>${sg.r.length?'<br><span class="lbl">依據：'+sg.r.join('、')+'</span>':'<br><span class="lbl">目前沒有不穩定指標</span>'}</div>
+       <label>採用等級 <select data-o="dlv">${[1,2,3].map(n=>`<option value="${n}" ${D.lv===n?'selected':''}>${n}：${this.LVN[n]}</option>`).join('')}</select></label>${D.lv<sg.lv?'<div class="warnl">低於系統建議，請於病程註明原因</div>':''}`)}
+    ${row('D','掛 / 不掛各棟 ER1 診',`${rd('er1',['不掛','掛'],D.er1)}<label>棟別 <select data-o="dbr">${['本棟 ER1 診','北棟 ER1 診','南棟 ER1 診'].map(x=>`<option ${D.br===x?'selected':''}>${x}</option>`).join('')}</select></label>`)}
+    ${row('E','死亡 / 病危出院',rd('e',['死亡','病危出院'],D.e||'死亡'))}
+    ${row('F','Escape（離院，不需選原因）','<span class="lbl">病人自行離開，不用再選原因。</span>')}
+    </div><div class="row" style="margin-top:8px"><button class="btn primary" data-o="dok">確認去向（${D.g}）</button><button class="btn" data-o="dclr">清除動向</button><span class="lbl">目前動向：${p.dir||'無'}</span></div>`},
+  dispoApply(p){const D=this.dis[p.id];if(!D)return;let dir='',txt='';
+    switch(D.g){case'A':dir=D.a==='AAD'?'AAD':'回家';txt=D.a;break;case'B':dir='等轉院';txt='轉院'+(D.to?'：'+D.to:'');break;
+      case'C':dir=(D.c==='住院（ICU）')?'等ICU':'等住院';if(p.adm<0)p.adm=0;txt=(D.c||'住院')+'，轉送等級 '+D.lv+'（'+this.LVN[D.lv]+'）';break;
+      case'D':dir=D.er1==='掛'?'ER1診':'回家';txt=D.er1==='掛'?'掛 '+D.br:'不掛 ER1 診';break;
+      case'E':dir=D.e==='病危出院'?'病危出院':'死亡';txt=D.e||'死亡';break;default:dir='Escape';txt='Escape'}
+    p.notes.push({t:'出院醫囑：'+txt,at:nowS()});setDir(p.id,dir);renderDetail()},
+  act(t,p){const o=t.dataset.o;
+    switch(o){
+    case'big':document.getElementById('detail').classList.toggle('full');renderTab();return;
+    case'sub':this.sub=t.dataset.v;renderTab();return;
+    case'tf':this.tf=t.dataset.v;renderTab();return;
+    case'add':this.add(p,t.dataset.n);renderTab();return;
+    case'fav':{let f=this.fav();f=f.includes(t.dataset.n)?f.filter(x=>x!==t.dataset.n):f.concat(t.dataset.n);lsSet('er-ord-fav',f);renderTab();return}
+    case'useset':{const s=OSETS0.concat(this.mysets(),OOTHER).find(x=>x.n===t.dataset.n);if(s){s.i.forEach(n=>this.add(p,n,true));this.sub='open';renderTab();toast('已帶入「'+s.n+'」，請確認後存檔')}return}
+    case'copyset':{const s=OOTHER.find(x=>x.n===t.dataset.n);if(s){const m=this.mysets();m.push({n:s.n,i:s.i.slice()});lsSet('er-ord-sets',m);renderTab();toast('已拷貝到我的組套')}return}
+    case'delset':lsSet('er-ord-sets',this.mysets().filter(s=>s.n!==t.dataset.n));renderTab();return;
+    case'opd':OPD_MEDS.forEach(m=>{const n=m[0];if(!this.byName(n))OBASE.push(OC(n,'門診用藥 慢性','med',m[1],'med'));this.add(p,n,true);const c=this.cartOf(p).find(x=>x.n===n);if(c){c.spec=m[1];c.days=1}});renderTab();toast('已帶入門診用藥，天數設為 1 天');return;
+    case'del':this.cartOf(p).splice(+t.dataset.i,1);renderTab();return;
+    case'clear':this.cart[p.id]=[];renderTab();return;
+    case'mkset':{const nm=prompt('個人組套名稱');if(!nm)return;const m=this.mysets();m.push({n:nm,i:this.cartOf(p).map(x=>x.n)});lsSet('er-ord-sets',m);toast('已存成個人組套「'+nm+'」');renderTab();return}
+    case'save':{const c=this.cartOf(p);if(!c.length)return;const base=Date.now();p.orders=p.orders||[];p.st=p.st||{};
+      c.forEach((x,i)=>{p.orders.push({id:base+i,n:x.n,t:x.t,spec:(x.spec||'')+(x.t==='med'&&x.days?' × '+x.days+' 天':''),at:base,by:ME,status:'待執行'});
+        if(x.st){const v=p.st[x.st];if(!v)p.st[x.st]='N';else if(v==='Y')p.st[x.st]='P'}});
+      p.notes.push({t:'開立醫囑 '+c.length+' 項：'+c.map(x=>x.n).join('、'),at:nowS()});this.cart[p.id]=[];save();renderTab();renderList();toast('已存檔 '+c.length+' 項，送護理／藥局／批價');return}
+    case'renew':{const o=(p.orders||[]).find(x=>String(x.id)===t.dataset.id);if(o){const it=this.byName(o.n);if(it){this.add(p,o.n,true);const c=this.cartOf(p).find(x=>x.n===o.n);if(c)c.spec=(o.spec||'').replace(/ × \d+ 天$/,'')}toast('已帶入待開立，時間以存檔當下為準')}renderTab();return}
+    case'stop':{const o=(p.orders||[]).find(x=>String(x.id)===t.dataset.id);if(o){o.status='已停止';p.notes.push({t:'停止醫囑：'+o.n,at:nowS()});save();renderTab()}return}
+    case'catdel':{const c=this.cats(),a=c[t.dataset.g];a.splice(+t.dataset.i,1);lsSet('er-ord-cats',c);renderTab();return}
+    case'catadd':{const c=this.cats(),i=document.getElementById('catin_'+t.dataset.g),v=i&&i.value.trim();if(v){c[t.dataset.g].push(v);lsSet('er-ord-cats',c);renderTab()}return}
+    case'catrm':{const c=this.cats();delete c[t.dataset.g];lsSet('er-ord-cats',c);renderTab();return}
+    case'catnew':{const v=$('#newCat').value.trim();if(v){const c=this.cats();c[v]=c[v]||[];lsSet('er-ord-cats',c);renderTab()}return}
+    case'catreset':try{localStorage.removeItem('er-ord-cats')}catch(e){}renderTab();return;
+    case'dg':this.dis[p.id].g=t.dataset.v;this.r_dispo(p,$('#ordbody'));return;
+    case'dok':this.dispoApply(p);return;
+    case'dclr':setDir(p.id,'');renderDetail();return}}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-o]');if(!t||S.tab!=='醫囑')return;const p=cur();if(!p)return;
+  if(t.dataset.o==='dg'&&e.target.closest('input,select,label'))return;
+  e.stopPropagation();Ord.act(t,p)},true);
+document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='醫囑'||!t.dataset||!t.dataset.o)return;const p=cur();if(!p)return;
+  const D=Ord.dis[p.id];
+  if(t.dataset.o==='dv'&&D){D[t.dataset.k]=t.dataset.v;D.g=({a:'A',c:'C',er1:'D',e:'E'})[t.dataset.k];Ord.r_dispo(p,$('#ordbody'))}
+  else if(t.dataset.o==='dlv'&&D){D.lv=+t.value;Ord.r_dispo(p,$('#ordbody'))}
+  else if(t.dataset.o==='dbr'&&D){D.br=t.value;D.g='D'}
+  else if(t.dataset.o==='spec'){Ord.cartOf(p)[+t.dataset.i].spec=t.value}
+  else if(t.dataset.o==='days'){Ord.cartOf(p)[+t.dataset.i].days=t.value}});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='dTo'&&Ord.dis[cur()&&cur().id])Ord.dis[cur().id].to=t.value;
+  if(t.id==='ordQ'){Ord.q=t.value;const p=cur(),res=$('#ordRes');if(!p||!res)return;const fav=Ord.fav(),r=(Ord.q||Ord.tf)?Ord.search().slice(0,14):[];
+    res.innerHTML=r.length?r.map(x=>`<div class="ores" data-o="add" data-n="${esc(x.n)}"><span class="otp ${x.t}">${OT[x.t]}</span><b>${esc(x.n)}</b><span class="lbl">${x.g?x.g:esc(x.spec)}</span><span class="star ${fav.includes(x.n)?'on':''}" data-o="fav" data-n="${esc(x.n)}" title="加入／移出個人常用">★</span></div>`).join(''):(Ord.q?'<div class="lbl">找不到符合的項目</div>':'')}});
+document.addEventListener('keydown',e=>{if(e.target.id==='ordQ'&&e.key==='Enter'){e.preventDefault();const p=cur(),r=Ord.search()[0];if(p&&r){Ord.add(p,r.n);Ord.q='';renderTab();const i=$('#ordQ');if(i)i.focus()}}});
 
 /* 初始化 */
 layoutLbl();renderChips();renderList();renderDetail();

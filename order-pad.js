@@ -7,13 +7,14 @@
  */
 (function(){
 'use strict';
-const TYPES={med:'藥品',lab:'檢驗',img:'影像',proc:'處置',nur:'護理',con:'會診'};
-const BADGE={med:'藥',lab:'檢',img:'影',proc:'處',nur:'護',con:'會'};
+const TYPES={med:'藥品',lab:'檢驗',img:'影像',proc:'處置',nur:'護理',con:'會診',ord:'一般醫囑',nut:'營養'};
+const BADGE={med:'藥',lab:'檢',img:'影',proc:'處',nur:'護',con:'會',ord:'囑',nut:'營'};
+const hooks={}; // 由 er-system.html 接入：items/sets/alias/suggest/opdNames/saveSet/note/save
 const e=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const hhmm=ts=>new Date(ts).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'});
 
 /* ---------- 目錄（m: 藥品預設 [劑量,單位,途徑,頻次]）---------- */
-const D=[
+const BASE=[
  {t:'med',n:'Ceftriaxone 1 g',zh:'頭孢曲松',al:'rocephin cef cro 抗生素',m:['1','g','IV','Q24H'],flag:'w',fn:'Penicillin 過敏：低度交叉反應，請確認'},
  {t:'med',n:'Piperacillin/Tazobactam 4.5 g',zh:'tazocin 盤尼西林類',al:'tazo pip 抗生素',m:['4.5','g','IV','Q8H'],allergy:'penicillin',fn:'Penicillin 類藥物'},
  {t:'med',n:'Amoxicillin/Clavulanate 1.2 g',zh:'安滅菌 augmentin',al:'amox 抗生素',m:['1.2','g','IV','Q8H'],allergy:'penicillin',fn:'Penicillin 類藥物'},
@@ -94,19 +95,22 @@ const D=[
  {t:'con',n:'Orthopedics 骨科',zh:'骨科會診',al:'ortho 骨折 consult'},
  {t:'con',n:'ICU 加護病房',zh:'加護會診',al:'icu 重症 consult'},
 ];
-D.forEach((d,i)=>{d.id=i;d.hay=(d.n+' '+d.zh+' '+(d.al||'')).toLowerCase()});
-const byName=n=>D.find(d=>d.n===n);
-const SETS=[
+let D=[];
+function rebuild(){D=BASE.concat(hooks.items?hooks.items():[]);D.forEach((d,i)=>{d.id=i;d.zh=d.zh||'';d.hay=(d.n+' '+d.zh+' '+(d.al||'')).toLowerCase()})}
+rebuild();
+const byName=n=>D.find(d=>d.n===n)||(hooks.alias&&hooks.alias[n]?D.find(d=>d.n===hooks.alias[n]):null);
+const SETS0=[
  {n:'敗血症 Bundle',ids:['Blood Culture x2','Lactate','CBC + DC','Procalcitonin','Ceftriaxone 1 g','Normal Saline 0.9% 1000 mL','Vital Signs Q15MIN']},
  {n:'胸痛 / ACS',ids:['12-lead ECG','Troponin I (hs)','CBC + DC','Electrolytes (Na/K/Cl)','Aspirin 300 mg','Cardiac Monitor + SpO₂','Chest X-ray (portable)']},
  {n:'急性中風',ids:['CT Brain without contrast','Glucose (POCT)','PT / aPTT / INR','12-lead ECG','Neurology 神經內科']},
  {n:'呼吸困難',ids:['Chest X-ray (portable)','ABG 動脈血液氣體','BNP / NT-proBNP','Salbutamol 2.5 mg Neb','Oxygen Therapy']},
  {n:'過敏性休克',ids:['Epinephrine 0.3 mg IM','Diphenhydramine 50 mg','Methylprednisolone 40 mg','Oxygen Therapy','Cardiac Monitor + SpO₂','IV Access (18G)']},
 ];
+const setsAll=()=>hooks.sets?hooks.sets():SETS0.map(s=>({n:s.n,g:'科部',i:s.ids}));
 const ROUTES=['IV','PO','SC','IM','SL','NEB','TOP'];
-const FREQS=['ONCE','STAT','Q4H','Q6H','Q8H','Q12H','Q24H','BID','TID','QID','Q4H PRN','Q6H PRN','Q8H PRN','Q5MIN x3','持續'];
+const FREQS=['ONCE','ST','QD','QN','STAT','Q4H','Q6H','Q8H','Q12H','Q24H','BID','TID','QID','Q4H PRN','Q6H PRN','Q8H PRN','Q5MIN x3','持續'];
 const PRIS=['STAT','ASAP','Routine'];
-const STATUS={wait:'待收件',run:'執行中',done:'已完成'};
+const STATUS={wait:'待收件',run:'執行中',done:'已完成',stop:'已停止'};
 
 /* ---------- 病人資料輔助 ---------- */
 const allergies=p=>p.allergy||(p.allergy=/過敏/.test(p.cc||'')?['penicillin']:[]);
@@ -114,7 +118,7 @@ const egfr=p=>p.egfr??(p.egfr=(+p.age>=65?42:90));
 const rnd=seed=>{let s=seed>>>0||1;return()=>(s=(s*1664525+1013904223)>>>0)/4294967296};
 
 function toOrder(d,o,by,ts,status){
-  const detail=d.t==='med'?`${o.route} ${o.freq}${String(o.dose)!==String(d.m[0])?`（劑量 ${o.dose} ${o.unit}）`:''}`:d.t==='lab'?(d.tube||''):'';
+  const detail=d.t==='med'?`${o.route} ${o.freq}${String(o.dose)!==String(d.m[0])?`（劑量 ${o.dose} ${o.unit}）`:''}${o.days?' × '+o.days+' 天':''}`:d.t==='lab'?(d.tube||''):'';
   return {ts,t:d.t,name:d.n,zh:d.zh,detail,pri:o.pri,status,by,note:o.note||''};
 }
 function seedHistory(p){
@@ -142,13 +146,14 @@ const CSS=`
 .op .hint b{color:var(--accent)}
 .op .ttl{font-weight:700}
 .op .bd{display:inline-block;min-width:26px;text-align:center;border-radius:4px;color:#fff;font-size:12px;padding:1px 4px;font-weight:600}
-.op .bd.med{background:#7c3aed}.op .bd.lab{background:#0891b2}.op .bd.img{background:#4f46e5}.op .bd.proc{background:#c2410c}.op .bd.nur{background:#2f7d4f}.op .bd.con{background:#be185d}
+.op .bd.med{background:#7c3aed}.op .bd.lab{background:#0891b2}.op .bd.img{background:#4f46e5}.op .bd.proc{background:#c2410c}.op .bd.nur{background:#2f7d4f}.op .bd.ord{background:#64748b}.op .bd.nut{background:#65a30d}.op .bd.con{background:#be185d}
 .op table{width:100%;border-collapse:collapse;background:var(--panel);color:var(--ink)}
 .op th{position:sticky;top:0;background:var(--accent-soft);text-align:left;padding:4px 8px;font-weight:600;border-bottom:1px solid var(--line);font-size:13px;z-index:1}
 .op td{padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 .op tbody tr{cursor:pointer}.op tbody tr:hover{background:var(--accent-soft)}.op tbody tr.sel{background:var(--sel)}
 .op .st{border-radius:999px;padding:0 10px;font-size:12px;white-space:nowrap}
-.op .st.wait{background:#fff04d;color:#3b3300}.op .st.run{background:#8bd55a;color:#12330a}.op .st.done{background:#8fe3ef;color:#08343b}
+.op .st.wait{background:#fff04d;color:#3b3300}.op .st.run{background:#8bd55a;color:#12330a}.op .st.done{background:#8fe3ef;color:#08343b}.op .st.stop{background:#ddd;color:#555}
+.op .sets .btn.mine{border-style:solid;border-color:#f59e0b}.op .sug{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-bottom:5px}.op .rb{padding:0 6px;font-size:12px}
 .op .pri-STAT{color:var(--danger);font-weight:700}.op .pri-ASAP{color:#b26a00;font-weight:600}
 .op .dtl{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px}
 .op .box{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;overflow:auto}
@@ -201,14 +206,15 @@ const CSS=`
 function css(){if(document.getElementById('op-css'))return;const s=document.createElement('style');s.id='op-css';s.textContent=CSS;document.head.appendChild(s)}
 
 /* ---------- 狀態 ---------- */
-const ST={pid:null,mode:'history',type:'all',q:'',sel:0,hsel:-1,hfilter:'all',hq:'',fav:new Set(['Normal Saline 0.9% 1000 mL','Acetaminophen 500 mg','12-lead ECG','CBC + DC','Glucose (POCT)']),recent:[],msg:''};
+const ST={pid:null,mode:'history',type:'all',q:'',sel:0,hsel:-1,hfilter:'all',hq:'',fav:new Set((()=>{try{const v=JSON.parse(localStorage.getItem('er-ord-fav2'));if(Array.isArray(v))return v}catch(_){}return['Normal Saline 0.9% 1000 mL','Acetaminophen 500 mg','12-lead ECG','CBC + DC','Glucose (POCT)']})()),recent:[],msg:''};
 let P=null,root=null,shown=[],msgT=0;
 const cart=()=>P._draft||(P._draft=[]);
+const saveFav=()=>{try{localStorage.setItem('er-ord-fav2',JSON.stringify([...ST.fav]))}catch(_){}};
 
 function render(p,tb){
   css();
   if(ST.pid!==p.id){ST.pid=p.id;ST.mode='history';ST.q='';ST.sel=0;ST.hsel=-1;ST.hfilter='all';ST.hq=''}
-  P=p;seedHistory(p);allergies(p);egfr(p);closeOv();
+  rebuild();P=p;seedHistory(p);allergies(p);egfr(p);closeOv();
   tb.innerHTML='<div class="op"></div>';
   root=tb.firstChild;
   summaryView();
@@ -237,7 +243,7 @@ function openOv(){
   if(ST.mode==='entry')entryView();else{historyView();ov.focus()}
 }
 function close(){closeOv();ST.mode='history';refresh()}
-const refresh=()=>{const tb=document.getElementById('tb');if(tb&&P)render(P,tb)};
+const refresh=()=>{if(typeof S!=='undefined'&&S.tab==='醫囑'&&typeof renderTab==='function'){renderTab();return}const tb=document.getElementById('tb');if(tb&&P)render(P,tb)};
 
 /* ---------- 已開立醫囑（單擊） ---------- */
 function historyView(){
@@ -254,12 +260,16 @@ function historyView(){
     <div class="chips" style="margin:0">${['all',...Object.keys(TYPES)].map(k=>`<button class="chip ${ST.hfilter===k?'on':''}" data-hf="${k}">${k==='all'?'全部':TYPES[k]}<span class="n">${cnt(k)}</span></button>`).join('')}</div>
     <input class="search" id="hq" placeholder="篩選已開醫囑" value="${e(ST.hq)}" style="width:150px">
   </div>
-  <div class="box hbox"><table><thead><tr><th>時間</th><th>類別</th><th>醫囑內容</th><th>優先</th><th>狀態</th><th>開立</th></tr></thead><tbody id="hb"></tbody></table></div>
+  <div class="box hbox"><table><thead><tr><th>時間</th><th>類別</th><th>醫囑內容</th><th>優先</th><th>狀態</th><th>開立</th><th></th></tr></thead><tbody id="hb"></tbody></table></div>
   <div class="dtl" id="hd"></div>`;
   paintHistory();
   root.onclick=ev=>{
     const a=ev.target.closest('[data-a]');if(a&&a.dataset.a==='enter'){enter();return}
     const f=ev.target.closest('[data-hf]');if(f){ST.hfilter=f.dataset.hf;ST.hsel=-1;historyView();return}
+    const rb=ev.target.closest('[data-r]');
+    if(rb){const o=P.orders[+rb.dataset.r],d=o&&byName(o.name);if(d){enter();addItem(d,true);flash('已帶入醫囑籃，時間以簽署當下為準')}return}
+    const pb=ev.target.closest('[data-p]');
+    if(pb){const o=P.orders[+pb.dataset.p];if(o){o.status='stop';hooks.note&&hooks.note(P,'停止醫囑：'+o.name);hooks.save&&hooks.save();paintHistory();if(typeof renderList==='function')try{renderList()}catch(_){}}return}
     const tr=ev.target.closest('tr[data-i]');
     if(tr){
       const i=+tr.dataset.i;
@@ -278,8 +288,8 @@ function paintHistory(){
   root.querySelector('#hb').innerHTML=L.length?L.map(({o,i})=>`<tr data-i="${i}" class="${ST.hsel===i?'sel':''}">
     <td>${hhmm(o.ts)}</td><td><span class="bd ${o.t}">${BADGE[o.t]}</span> ${TYPES[o.t]}</td>
     <td><b>${e(o.name)}</b>${o.detail?` <small style="color:var(--muted)">${e(o.detail)}</small>`:''}</td>
-    <td class="pri-${o.pri}">${o.pri}</td><td><span class="st ${o.status}">${STATUS[o.status]}</span></td><td>${e(o.by)}</td></tr>`).join('')
-    :`<tr><td colspan="6" class="empty">${P.orders.length?'沒有符合的醫囑':'尚未開立任何醫囑。雙擊「醫囑」開始開立。'}</td></tr>`;
+    <td class="pri-${o.pri}">${o.pri}</td><td><span class="st ${o.status}">${STATUS[o.status]}</span></td><td>${e(o.by)}</td><td style="white-space:nowrap">${o.status==='stop'?'':`<button class="btn rb" data-r="${i}" title="以現在時間重新開立">續用</button> <button class="btn rb" data-p="${i}">停止</button>`}</td></tr>`).join('')
+    :`<tr><td colspan="7" class="empty">${P.orders.length?'沒有符合的醫囑':'尚未開立任何醫囑。雙擊「醫囑」開始開立。'}</td></tr>`;
   const o=P.orders[ST.hsel];
   root.querySelector('#hd').innerHTML=o?`<b>${e(o.name)}</b>（${e(o.zh||'')}）　${e(o.detail)}　·　${TYPES[o.t]}　·　${o.pri}　·　${STATUS[o.status]}　·　${new Date(o.ts).toLocaleString('zh-TW',{hour12:false})}　·　${e(o.by)}${o.note?`　·　備註：${e(o.note)}`:''}`
     :'<span style="color:var(--muted)">點選一筆醫囑查看明細</span>';
@@ -296,14 +306,14 @@ function entryView(){
    <fieldset class="fs"><legend>搜尋（藥囑＋醫囑）</legend>
     <div class="sw"><input class="search" id="q" autocomplete="off" placeholder="例：cef、血糖、cxr、ct 腦、ntg、胸痛" value="${e(ST.q)}"></div>
     <div class="chips" id="chips"></div>
-    <div class="sets" id="sets"><span class="hint">套餐：</span>${SETS.map((s,i)=>`<button class="btn" data-s="${i}">＋ ${s.n}</button>`).join('')}</div>
+    <div class="sets" id="sets"><span class="hint">組套：</span>${setsAll().map((s,i)=>`<button class="btn ${s.g==='個人'?'mine':''}" data-s="${i}" title="${e(s.g)}組套：${e(s.i.join('、'))}">${s.g==='個人'?'★ ':'＋ '}${e(s.n)}</button>`).join('')}${hooks.opdNames?`<button class="btn" data-a="opd" title="全部設為 1 天，不帶慢簽 28 天">＋ 門診用藥</button>`:''}</div>
     <div class="box"><ul class="res" id="res"></ul></div>
    </fieldset>
    <fieldset class="fs"><legend>醫囑籃</legend>
-    <div class="alerts" id="alerts"></div>
+    <div class="alerts" id="alerts"></div><div class="sug" id="sug"></div>
     <div class="box cartbox" id="cart"></div>
     <div class="bar" style="margin-top:6px"><span id="msg" class="msg" style="display:none"></span><span class="grow"></span>
-     <button class="btn" data-a="clear">清空</button><button class="btn primary" id="go" data-a="submit">簽署並送出</button></div>
+     <button class="btn" data-a="mkset">存成個人組套</button><button class="btn" data-a="clear">清空</button><button class="btn primary" id="go" data-a="submit">簽署並送出</button></div>
    </fieldset>
   </div>`;
   root.onclick=entryClick;root.ondblclick=null;
@@ -320,6 +330,7 @@ function entryView(){
   };
   paintRes();paintCart();q.focus();
 }
+function paintSets(){const el=root.querySelector('#sets');if(!el)return;el.innerHTML=`<span class="hint">組套：</span>${setsAll().map((s,i)=>`<button class="btn ${s.g==='個人'?'mine':''}" data-s="${i}" title="${e(s.g)}組套：${e(s.i.join('、'))}">${s.g==='個人'?'★ ':'＋ '}${e(s.n)}</button>`).join('')}${hooks.opdNames?`<button class="btn" data-a="opd">＋ 門診用藥</button>`:''}`}
 function search(){
   const toks=ST.q.toLowerCase().split(/\s+/).filter(Boolean);
   const list=D.filter(d=>toks.every(t=>d.hay.includes(t)));
@@ -337,7 +348,7 @@ function paintRes(){
   shown=list.slice(0,60);if(ST.sel>=shown.length)ST.sel=Math.max(0,shown.length-1);
   const done=n=>P.orders.find(o=>o.name===n);
   root.querySelector('#res').innerHTML=(idle?'<li style="cursor:default;color:var(--muted);font-size:12px">★ 常用 / 最近（輸入以搜尋全部）</li>':'')+(shown.length?shown.map((d,i)=>{
-    const inCart=cart().some(c=>c.d.id===d.id),ord=done(d.n);
+    const inCart=cart().some(c=>c.d.n===d.n),ord=done(d.n);
     const sub=d.t==='med'?`${d.zh} · ${d.m.join(' ')}`:d.t==='lab'?`${d.zh} · ${d.tube}`:d.zh;
     const bad=d.allergy&&allergies(P).includes(d.allergy);
     return `<li data-i="${i}" class="${i===ST.sel?'sel':''}"><span class="bd ${d.t}">${BADGE[d.t]}</span><div class="nm"><b>${hl(d.n)}</b><small>${hl(sub)}</small></div>
@@ -346,12 +357,13 @@ function paintRes(){
      <button class="star ${ST.fav.has(d.n)?'on':''}" data-f="${i}" title="常用">★</button></li>`}).join(''):'<li class="empty" style="cursor:default">找不到符合項目</li>');
   const s=root.querySelector('#res li.sel');if(s)s.scrollIntoView({block:'nearest'});
 }
-function addItem(d,quiet){
+function addItem(d,quiet,silent){
   const c=cart();
-  if(c.some(x=>x.d.id===d.id)){flash('已在醫囑籃：'+d.n);return}
+  if(c.some(x=>x.d.n===d.n)){if(!silent)flash('已在醫囑籃：'+d.n);return}
   const o={d,pri:d.t==='nur'?'Routine':'ASAP',note:''};
   if(d.t==='med')[o.dose,o.unit,o.route,o.freq]=d.m;
   c.push(o);ST.recent=[d.n,...ST.recent.filter(x=>x!==d.n)].slice(0,8);
+  if(silent)return;
   if(!quiet)flash('已加入：'+d.n);
   paintCart();if(root.querySelector('#res'))paintRes();
 }
@@ -373,10 +385,12 @@ function check(){
 function paintCart(){
   const c=cart(),al=check(),opt=(a,v)=>a.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('');
   root.querySelector('#alerts').innerHTML=[...new Map(al.map(a=>[a.m,a])).values()].map(a=>`<div class="alert ${a.l}">${a.l==='d'?'⛔':a.l==='w'?'⚠':'ℹ'} ${e(a.m)}</div>`).join('');
+  const sg=hooks.suggest?hooks.suggest(c.map(x=>x.d.n)).filter(n=>!c.some(x=>x.d.n===n)&&byName(n)):[];
+  root.querySelector('#sug').innerHTML=sg.length?`<span class="hint">建議藥物（科部維護）：</span>${sg.map(n=>`<button class="btn" data-sg="${e(n)}">＋ ${e(n)}</button>`).join('')}`:'';
   root.querySelector('#cart').innerHTML=c.length?c.map((x,i)=>{
     const d=x.d;
     return `<div class="ord ${x.bad?'bad':''}"><div class="top"><span class="bd ${d.t}">${BADGE[d.t]}</span><b>${e(d.n)}</b><button class="x" data-x="${i}" title="移除">×</button></div>
-    <div class="f">${d.t==='med'?`<input class="dose" data-i="${i}" data-k="dose" value="${e(x.dose)}"><span>${e(x.unit)}</span><select data-i="${i}" data-k="route">${opt(ROUTES,x.route)}</select><select data-i="${i}" data-k="freq">${opt(FREQS,x.freq)}</select>`:''}
+    <div class="f">${d.t==='med'?`<input class="dose" data-i="${i}" data-k="dose" value="${e(x.dose)}"><span>${e(x.unit)}</span><select data-i="${i}" data-k="route">${opt(ROUTES,x.route)}</select><select data-i="${i}" data-k="freq">${opt(FREQS,x.freq)}</select><label class="hint">天數 <input class="dose" type="number" min="1" data-i="${i}" data-k="days" value="${e(x.days||'')}" placeholder="—" style="width:52px"></label>`:''}
     ${d.tube?`<span class="hint">${e(d.tube)}</span>`:''}
     <select data-i="${i}" data-k="pri">${opt(PRIS,x.pri)}</select><input class="note" data-i="${i}" data-k="note" placeholder="備註" value="${e(x.note)}"></div></div>`}).join('')
     :'<div class="empty">尚未開立。搜尋後按 Enter 加入，或套用常用套餐。</div>';
@@ -395,11 +409,14 @@ function entryClick(ev){
     if(a.dataset.a==='back')return back();
     if(a.dataset.a==='clear'){P._draft=[];paintCart();paintRes();return}
     if(a.dataset.a==='submit')return submit();
+    if(a.dataset.a==='mkset'){const c=cart();if(!c.length)return flash('醫囑籃是空的');const nm=prompt('個人組套名稱');if(nm&&hooks.saveSet){hooks.saveSet(nm,c.map(x=>x.d.n));paintSets();flash('已存成個人組套：'+nm)}return}
+    if(a.dataset.a==='opd'){(hooks.opdNames?hooks.opdNames():[]).forEach(n=>{const d=byName(n);if(!d)return;addItem(d,true,true);const x=cart().find(y=>y.d.n===d.n);if(x)x.days=1});paintCart();paintRes();flash('已帶入門診用藥，天數設為 1 天');return}
   }
   const k=T.closest('[data-k].chip');if(k){ST.type=k.dataset.k;ST.sel=0;paintRes();root.querySelector('#q').focus();return}
-  const s=T.closest('[data-s]');if(s){const set=SETS[+s.dataset.s];set.ids.forEach(n=>{const d=byName(n);if(d)addItem(d,true)});flash('已套用：'+set.n);return}
+  const sg=T.closest('[data-sg]');if(sg){const d=byName(sg.dataset.sg);if(d)addItem(d);return}
+  const s=T.closest('[data-s]');if(s){const set=setsAll()[+s.dataset.s];set.i.forEach(n=>{const d=byName(n);if(d)addItem(d,true,true)});paintCart();paintRes();flash('已套用：'+set.n);return}
   const x=T.closest('[data-x]');if(x){cart().splice(+x.dataset.x,1);paintCart();paintRes();return}
-  const st=T.closest('.star');if(st){const d=shown[+st.dataset.f];ST.fav.has(d.n)?ST.fav.delete(d.n):ST.fav.add(d.n);paintRes();return}
+  const st=T.closest('.star');if(st){const d=shown[+st.dataset.f];ST.fav.has(d.n)?ST.fav.delete(d.n):ST.fav.add(d.n);saveFav();paintRes();return}
   const li=T.closest('#res li[data-i]');if(li){addItem(shown[+li.dataset.i]);root.querySelector('#q').focus()}
 }
 function submit(){
@@ -408,9 +425,10 @@ function submit(){
   c.slice().reverse().forEach(x=>{
     P.orders.unshift(toOrder(x.d,x,P.doc||'—',now,'wait'));
     const k=x.d.t==='med'?'med':x.d.t==='proc'||x.d.t==='nur'?'proc':x.d.k;
-    if(k&&P.st)P.st[k]='N';
+    if(k&&P.st){const v=P.st[k];if(!v)P.st[k]='N';else if(v==='Y')P.st[k]='P'}
   });
   const n=c.length,stat=c.filter(x=>x.pri==='STAT').length;
+  hooks.note&&hooks.note(P,'開立醫囑 '+n+' 項：'+c.map(x=>x.d.n).join('、'));hooks.save&&hooks.save();
   P._draft=[];ST.mode='history';ST.hsel=0;ST.open=true;
   if(typeof renderList==='function')try{renderList()}catch(_){}
   refresh();
@@ -431,5 +449,6 @@ document.addEventListener('click',ev=>{
   if(ev.target.closest('.shortbar')&&typeof S!=='undefined'&&S.sel){S.tab='醫囑';renderDetail()}
 },true);
 
-window.OrderPad={render,enter,back};
+function addNames(p,names){rebuild();P=p;names.forEach(n=>{const d=byName(n);if(d)addItem(d,true,true)})}
+window.OrderPad={render,enter,back,hooks,addNames};
 })();

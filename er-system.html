@@ -821,6 +821,7 @@ table.ordtab tr.stopped{opacity:.5;text-decoration:line-through}
   </div>
 </div>
 
+<script src="order-pad.js?v=3"></script>
 <script>
 /* ===== 範例資料（皆為虛構）===== */
 const DOCTORS=['周明哲','李婉婷','張宇軒','吳佩珊','黃建宏','林怡君','陳柏翰','蔡雅惠'];
@@ -3361,7 +3362,7 @@ function pendingOf(p){const o=[];
   const w=[];Object.keys(ST_LBL).forEach(k=>{const v=(p.st||{})[k];if(v&&v!=='Y'){const r=stCnt(p,k,v);w.push(ST_LBL[k]+' '+(v==='O'?'逾時':r[0]+'/'+r[1]))}});
   if(w.length)o.push('未完成：'+w.join('、'));
   if(p.dir&&!cs.length)o.push('動向：'+p.dir);
-  const od=(p.ords||[]).filter(x=>x.status==='待執行').length;if(od)o.push('待執行醫囑 '+od+' 項');
+  const od=(p.orders||[]).filter(x=>x.status==='wait').length;if(od)o.push('待執行醫囑 '+od+' 項');
   return o}
 const hoMark=p=>{const l=(p.hoLog||[]).slice(-1)[0];if(!l||Date.now()-l.at>4*36e5)return'';return` <small class="hom" title="${l.from} → ${l.to}（${new Date(l.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})} 交班）">⇄</small>`};
 const Hand={
@@ -3477,38 +3478,14 @@ const OPD_MEDS=[['Amlodipine 5 mg 錠','5 mg PO QD'],['Metformin 500 mg 錠','50
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const Ord={
-  sub:'open',q:'',tf:'',cart:{},dis:{},
+  sub:'pad',dis:{},
   cats(){return lsGet('er-ord-cats',OCAT0)},
   fav(){return lsGet('er-ord-fav',['Ketorolac 30 mg 針','Normal saline 0.9% 1000 mL'])},
   mysets(){return lsGet('er-ord-sets',[])},
-  all(){const c=this.cats(),x=[];Object.keys(c).forEach(g=>c[g].forEach(n=>x.push({n,k:g,t:'ord',spec:'',st:'',g})));return OBASE.concat(x)},
-  byName(n){return this.all().find(x=>x.n===n)},
-  search(){const toks=this.q.toLowerCase().split(/\s+/).filter(Boolean);
-    return this.all().filter(x=>(!this.tf||x.t===this.tf)&&toks.every(t=>(x.n+' '+x.k).toLowerCase().includes(t)))},
-  cartOf(p){return this.cart[p.id]=this.cart[p.id]||[]},
-  add(p,n,quiet){const it=this.byName(n);if(!it)return;const c=this.cartOf(p);if(c.some(x=>x.n===n)){if(!quiet)toast('已在待開立清單');return}
-    c.push({n:it.n,t:it.t,spec:it.spec,st:it.st,days:it.t==='med'?1:'',g:it.g||''})},
   render(p,tb){
-    const sub=this.sub,tabs=[['open','開立醫囑'],['pad','全搜尋開立（OrderPad 版）'],['dispo','出院醫囑（決定去向）'],['sets','組套'],['cats','一般醫囑分類維護']];
+    const sub=this.sub,tabs=[['pad','開立醫囑'],['dispo','出院醫囑（決定去向）'],['sets','組套'],['cats','一般醫囑分類維護']];
     tb.innerHTML=`<div class="ordnav">${tabs.map(t=>`<button data-o="sub" data-v="${t[0]}" class="${sub===t[0]?'on':''}">${t[1]}</button>`).join('')}<button class="btn" data-o="big">${document.getElementById('detail').classList.contains('full')?'✕ 縮小':'⛶ 放大醫囑'}</button><span class="sp"></span><span class="lbl">開立醫師：${ME}　存檔後即送護理、藥局、批價（示範）</span></div><div id="ordbody"></div>`;
     this['r_'+sub](p,$('#ordbody'))},
-  r_open(p,b){
-    const fav=this.fav(),res=this.q||this.tf?this.search().slice(0,14):[],cart=this.cartOf(p),sets=OSETS0.concat(this.mysets().map(s=>({...s,g:'個人'})));
-    const typ=[['','全部']].concat(Object.keys(OT).map(k=>[k,OT[k]]));
-    const sug=[...new Set(cart.flatMap(x=>DRESS[x.n]||[]))].filter(n=>!cart.some(x=>x.n===n));
-    const od=p.ords||[];
-    b.innerHTML=`<div class="ordsrch"><div class="row" style="flex-wrap:nowrap"><input class="search" id="ordQ" value="${esc(this.q)}" placeholder="全搜尋：醫囑、藥囑、檢驗檢查、處置都在這裡找（中英文／商品名／症狀，例如 止吐 / ketorolac / 胸痛 / CVC）" autocomplete="off" style="flex:1;font-size:16px;padding:8px">
-      <span class="lbl">Enter＝加入第一筆</span></div>
-      <div class="chips" style="margin:4px 0">${typ.map(t=>`<button class="chip ${this.tf===t[0]?'on':''}" data-o="tf" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>
-      <div id="ordRes">${res.length?res.map(x=>`<div class="ores" data-o="add" data-n="${esc(x.n)}"><span class="otp ${x.t}">${OT[x.t]}</span><b>${esc(x.n)}</b><span class="lbl">${x.g?x.g:esc(x.spec)}</span><span class="star ${fav.includes(x.n)?'on':''}" data-o="fav" data-n="${esc(x.n)}" title="加入／移出個人常用">★</span></div>`).join(''):(this.q||this.tf?'<div class="lbl">找不到符合的項目</div>':'')}</div></div>
-    <div class="ordrow"><b>個人常用</b>${fav.map(n=>`<button class="chip" data-o="add" data-n="${esc(n)}">${esc(n)}</button>`).join('')||'<span class="lbl">點搜尋結果的 ★ 加入</span>'}</div>
-    <div class="ordrow"><b>組套</b>${sets.map(s=>`<button class="chip set ${s.g==='個人'?'mine':''}" data-o="useset" data-n="${esc(s.n)}" title="${s.g}組套：${esc(s.i.join('、'))}">${s.g==='個人'?'★ ':''}${esc(s.n)}</button>`).join('')}</div>
-    <div class="ordrow"><b>門診用藥</b><button class="chip" data-o="opd">帶入門診用藥（${OPD_MEDS.length} 項，全部 1 天，不帶慢簽 28 天）</button></div>
-    <fieldset class="fs"><legend>待開立（${cart.length}）</legend>
-      ${cart.length?cart.map((x,i)=>`<div class="crow"><span class="otp ${x.t}">${OT[x.t]}</span><b style="min-width:200px">${esc(x.n)}</b><input class="cspec" data-o="spec" data-i="${i}" value="${esc(x.spec)}" placeholder="${x.t==='med'?'劑量 途徑 頻率':'備註'}">${x.t==='med'?`<label class="lbl">天數 <input type="number" min="1" data-o="days" data-i="${i}" value="${x.days||1}" style="width:54px"></label>`:''}<button class="btn" data-o="del" data-i="${i}">✕</button></div>`).join(''):'<div class="lbl">從上方搜尋、常用、組套加入項目</div>'}
-      ${sug.length?`<div class="ordrow"><b>建議藥物（科部維護）</b>${sug.map(n=>`<button class="chip" data-o="add" data-n="${esc(n)}">＋ ${esc(n)}</button>`).join('')}</div>`:''}
-      <div class="row" style="margin-top:6px"><button class="btn primary" data-o="save" ${cart.length?'':'disabled'}>存檔（送護理／藥局／批價）</button><button class="btn" data-o="mkset" ${cart.length?'':'disabled'}>存成個人組套</button><button class="btn" data-o="clear" ${cart.length?'':'disabled'}>清空</button></div></fieldset>
-    <fieldset class="fs"><legend>已開立醫囑（${od.length}）</legend>${od.length?`<table class="emr ordtab"><thead><tr><th>時間</th><th>類別</th><th>內容</th><th>開立</th><th>狀態</th><th></th></tr></thead><tbody>${od.slice().reverse().map(o=>`<tr class="${o.status==='已停止'?'stopped':''}"><td>${new Date(o.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</td><td><span class="otp ${o.t}">${OT[o.t]}</span></td><td class="l"><b>${esc(o.n)}</b> ${esc(o.spec||'')}</td><td>${o.by}</td><td>${o.status}</td><td>${o.status==='已停止'?'':`<button class="btn" data-o="renew" data-id="${o.id}" title="以現在時間重新開立">續用</button><button class="btn" data-o="stop" data-id="${o.id}">停止</button>`}</td></tr>`).join('')}</tbody></table>`:'<div class="lbl">尚未開立醫囑</div>'}</fieldset>`},
   r_pad(p,b){if(window.OrderPad)OrderPad.render(p,b);else b.innerHTML='<div class="lbl">OrderPad 尚未載入</div>'},
   r_sets(p,b){const mine=this.mysets();
     const card=(s,own)=>`<div class="setc"><b>${esc(s.n)}</b>${s.by?`<span class="lbl">（${s.by}）</span>`:''}<div class="chips">${s.i.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div><div class="row"><button class="btn" data-o="useset" data-n="${esc(s.n)}">帶入待開立</button>${own?`<button class="btn" data-o="delset" data-n="${esc(s.n)}">刪除</button>`:''}${s.by?`<button class="btn" data-o="copyset" data-n="${esc(s.n)}">拷貝到我的組套</button>`:''}</div></div>`;
@@ -3550,22 +3527,9 @@ const Ord={
     switch(o){
     case'big':document.getElementById('detail').classList.toggle('full');renderTab();return;
     case'sub':this.sub=t.dataset.v;renderTab();return;
-    case'tf':this.tf=t.dataset.v;renderTab();return;
-    case'add':this.add(p,t.dataset.n);renderTab();return;
-    case'fav':{let f=this.fav();f=f.includes(t.dataset.n)?f.filter(x=>x!==t.dataset.n):f.concat(t.dataset.n);lsSet('er-ord-fav',f);renderTab();return}
-    case'useset':{const s=OSETS0.concat(this.mysets(),OOTHER).find(x=>x.n===t.dataset.n);if(s){s.i.forEach(n=>this.add(p,n,true));this.sub='open';renderTab();toast('已帶入「'+s.n+'」，請確認後存檔')}return}
+    case'useset':{const s=OSETS0.concat(this.mysets(),OOTHER).find(x=>x.n===t.dataset.n);if(s){OrderPad.addNames(p,s.i);this.sub='pad';renderTab();OrderPad.enter();toast('已帶入「'+s.n+'」，請在開立畫面確認後簽署')}return}
     case'copyset':{const s=OOTHER.find(x=>x.n===t.dataset.n);if(s){const m=this.mysets();m.push({n:s.n,i:s.i.slice()});lsSet('er-ord-sets',m);renderTab();toast('已拷貝到我的組套')}return}
     case'delset':lsSet('er-ord-sets',this.mysets().filter(s=>s.n!==t.dataset.n));renderTab();return;
-    case'opd':OPD_MEDS.forEach(m=>{const n=m[0];if(!this.byName(n))OBASE.push(OC(n,'門診用藥 慢性','med',m[1],'med'));this.add(p,n,true);const c=this.cartOf(p).find(x=>x.n===n);if(c){c.spec=m[1];c.days=1}});renderTab();toast('已帶入門診用藥，天數設為 1 天');return;
-    case'del':this.cartOf(p).splice(+t.dataset.i,1);renderTab();return;
-    case'clear':this.cart[p.id]=[];renderTab();return;
-    case'mkset':{const nm=prompt('個人組套名稱');if(!nm)return;const m=this.mysets();m.push({n:nm,i:this.cartOf(p).map(x=>x.n)});lsSet('er-ord-sets',m);toast('已存成個人組套「'+nm+'」');renderTab();return}
-    case'save':{const c=this.cartOf(p);if(!c.length)return;const base=Date.now();p.ords=p.ords||[];p.st=p.st||{};
-      c.forEach((x,i)=>{p.ords.push({id:base+i,n:x.n,t:x.t,spec:(x.spec||'')+(x.t==='med'&&x.days?' × '+x.days+' 天':''),at:base,by:ME,status:'待執行'});
-        if(x.st){const v=p.st[x.st];if(!v)p.st[x.st]='N';else if(v==='Y')p.st[x.st]='P'}});
-      p.notes.push({t:'開立醫囑 '+c.length+' 項：'+c.map(x=>x.n).join('、'),at:nowS()});this.cart[p.id]=[];save();renderTab();renderList();toast('已存檔 '+c.length+' 項，送護理／藥局／批價');return}
-    case'renew':{const o=(p.ords||[]).find(x=>String(x.id)===t.dataset.id);if(o){const it=this.byName(o.n);if(it){this.add(p,o.n,true);const c=this.cartOf(p).find(x=>x.n===o.n);if(c)c.spec=(o.spec||'').replace(/ × \d+ 天$/,'')}toast('已帶入待開立，時間以存檔當下為準')}renderTab();return}
-    case'stop':{const o=(p.ords||[]).find(x=>String(x.id)===t.dataset.id);if(o){o.status='已停止';p.notes.push({t:'停止醫囑：'+o.n,at:nowS()});save();renderTab()}return}
     case'catdel':{const c=this.cats(),a=c[t.dataset.g];a.splice(+t.dataset.i,1);lsSet('er-ord-cats',c);renderTab();return}
     case'catadd':{const c=this.cats(),i=document.getElementById('catin_'+t.dataset.g),v=i&&i.value.trim();if(v){c[t.dataset.g].push(v);lsSet('er-ord-cats',c);renderTab()}return}
     case'catrm':{const c=this.cats();delete c[t.dataset.g];lsSet('er-ord-cats',c);renderTab();return}
@@ -3582,18 +3546,43 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='醫囑'||!t.
   const D=Ord.dis[p.id];
   if(t.dataset.o==='dv'&&D){D[t.dataset.k]=t.dataset.v;D.g=({a:'A',c:'C',er1:'D',e:'E'})[t.dataset.k];Ord.r_dispo(p,$('#ordbody'))}
   else if(t.dataset.o==='dlv'&&D){D.lv=+t.value;Ord.r_dispo(p,$('#ordbody'))}
-  else if(t.dataset.o==='dbr'&&D){D.br=t.value;D.g='D'}
-  else if(t.dataset.o==='spec'){Ord.cartOf(p)[+t.dataset.i].spec=t.value}
-  else if(t.dataset.o==='days'){Ord.cartOf(p)[+t.dataset.i].days=t.value}});
-document.addEventListener('input',e=>{const t=e.target;if(t.id==='dTo'&&Ord.dis[cur()&&cur().id])Ord.dis[cur().id].to=t.value;
-  if(t.id==='ordQ'){Ord.q=t.value;const p=cur(),res=$('#ordRes');if(!p||!res)return;const fav=Ord.fav(),r=(Ord.q||Ord.tf)?Ord.search().slice(0,14):[];
-    res.innerHTML=r.length?r.map(x=>`<div class="ores" data-o="add" data-n="${esc(x.n)}"><span class="otp ${x.t}">${OT[x.t]}</span><b>${esc(x.n)}</b><span class="lbl">${x.g?x.g:esc(x.spec)}</span><span class="star ${fav.includes(x.n)?'on':''}" data-o="fav" data-n="${esc(x.n)}" title="加入／移出個人常用">★</span></div>`).join(''):(Ord.q?'<div class="lbl">找不到符合的項目</div>':'')}});
-document.addEventListener('keydown',e=>{if(e.target.id==='ordQ'&&e.key==='Enter'){e.preventDefault();const p=cur(),r=Ord.search()[0];if(p&&r){Ord.add(p,r.n);Ord.q='';renderTab();const i=$('#ordQ');if(i)i.focus()}}});
+  else if(t.dataset.o==='dbr'&&D){D.br=t.value;D.g='D'}});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='dTo'&&Ord.dis[cur()&&cur().id])Ord.dis[cur().id].to=t.value});
+
+/* 接入 OrderPad：我的組套／一般醫囑分類／換藥建議／門診用藥／病程與存檔 */
+(function(){
+  const ALIAS={'Ketorolac 30 mg 針':'Ketorolac 30 mg','Acetaminophen 500 mg 錠':'Acetaminophen 500 mg','Morphine 5 mg 針':'Morphine 4 mg','Fentanyl 50 mcg 針':'Fentanyl 50 mcg','Metoclopramide 10 mg 針':'Metoclopramide 10 mg','Ondansetron 4 mg 針':'Ondansetron 4 mg','Famotidine 20 mg 針':'Famotidine 20 mg',
+   'Normal saline 0.9% 1000 mL':'Normal Saline 0.9% 1000 mL',"Lactated Ringer's 1000 mL":"Lactated Ringer's 1000 mL",'Ceftriaxone 1 g 針':'Ceftriaxone 1 g','Piperacillin/tazobactam 4.5 g 針':'Piperacillin/Tazobactam 4.5 g','Levofloxacin 500 mg 針':'Levofloxacin 750 mg','Amoxicillin/clavulanate 625 mg 錠':'Amoxicillin/Clavulanate 1.2 g',
+   'Nitroglycerin 0.6 mg 舌下':'Nitroglycerin 0.6 mg SL','Aspirin 300 mg 錠':'Aspirin 300 mg','Clopidogrel 75 mg 錠':'Clopidogrel 300 mg','Heparin 5000 U 針':'Heparin 5000 U','Furosemide 20 mg 針':'Furosemide 20 mg','Salbutamol 噴霧':'Salbutamol 2.5 mg Neb','Ipratropium 噴霧':'Ipratropium 0.5 mg Neb',
+   'Methylprednisolone 40 mg 針':'Methylprednisolone 40 mg','Dexamethasone 5 mg 針':'Dexamethasone 5 mg','Diphenhydramine 30 mg 針':'Diphenhydramine 50 mg','Midazolam 5 mg 針':'Midazolam 2 mg','Insulin regular 10 U':'Regular Insulin 6 U','50% Glucose 50 mL':'50% Glucose 50 mL',
+   'CBC/DC 全血球及白血球分類':'CBC + DC','生化 Panel（BUN/Cr/Na/K/Glu）':'BUN / Creatinine / eGFR','肝功能 AST/ALT':'Liver Function (AST/ALT/Bil)','Troponin I':'Troponin I (hs)','動脈血氣 ABG':'ABG 動脈血液氣體','乳酸 Lactate':'Lactate','尿液分析 U/A':'Urine Routine + Culture','血液培養 ×2':'Blood Culture x2','血型／備血 Type & Screen':'Type & Screen',
+   '胸部 X光 CXR':'Chest X-ray (portable)','腹部 X光 KUB':'KUB / Abdomen X-ray','頭部 CT（不打顯影劑）':'CT Brain without contrast','腹部 CT':'CT Chest/Abdomen/Pelvis with contrast','12 導程心電圖 ECG':'12-lead ECG','床邊超音波 / FAST':'POCUS / FAST',
+   '氣管內管插管':'Endotracheal Intubation','鼻胃管 NG':'Nasogastric Tube','導尿管 Foley':'Foley Catheter 導尿','鼻導管氧氣':'Oxygen Therapy','面罩氧氣':'Oxygen Therapy'};
+  const parse=sp=>{sp=(sp||'').trim();let m;
+    if(m=sp.match(/^適量\s+(外用|口內)\s*(.*)$/))return['適量','','TOP',m[2]||'QD'];
+    if(m=sp.match(/^(\S+)\s+(\S+)\s+(\S+)\s*(.*)$/))return[m[1],m[2],m[3],m[4]||'ONCE'];
+    return['1','','IV','ONCE']};
+  const toD=x=>{const t=x.t==='rt'?'proc':x.t;const d={t,n:x.n,zh:(x.k||'').split(' ')[0],al:x.k||'',k:x.st||undefined};
+    if(t==='med'){d.m=parse(x.spec)}if(t==='lab')d.tube='';return d};
+  const H=OrderPad.hooks;
+  H.alias=ALIAS;
+  H.items=()=>{const out=[],seen=new Set();
+    OBASE.forEach(x=>{if(!ALIAS[x.n])out.push(toD(x))});
+    OPD_MEDS.forEach(m=>out.push(toD(OC(m[0],'門診用藥 慢性','med',m[1],'med'))));
+    const c=Ord.cats();Object.keys(c).forEach(g=>c[g].forEach(n=>out.push({t:'ord',n,zh:g,al:g+' 一般醫囑',k:undefined})));
+    return out.filter(d=>!seen.has(d.n)&&seen.add(d.n))};
+  H.sets=()=>OSETS0.map(s=>({n:s.n,g:'科部',i:s.i})).concat(Ord.mysets().map(s=>({n:s.n,g:'個人',i:s.i})),OOTHER.map(s=>({n:s.n,g:'同事',i:s.i,by:s.by})));
+  H.opdNames=()=>OPD_MEDS.map(m=>m[0]);
+  H.suggest=names=>[...new Set(names.flatMap(n=>DRESS[n]||[]))];
+  H.saveSet=(nm,names)=>{const m=Ord.mysets();m.push({n:nm,i:names});lsSet('er-ord-sets',m);toast('已存成個人組套「'+nm+'」')};
+  H.note=(p,t)=>{p.notes.push({t,at:nowS()})};
+  H.save=()=>{save()};
+})();
 
 /* 初始化 */
 layoutLbl();renderChips();renderList();renderDetail();
 document.addEventListener('click',e=>{if(e.target.dataset.z)renderChips()});
 </script>
-<script src="order-pad.js"></script>
+
 </body>
 </html>

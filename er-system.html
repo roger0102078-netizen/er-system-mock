@@ -3361,7 +3361,7 @@ function pendingOf(p){const o=[];
   const w=[];Object.keys(ST_LBL).forEach(k=>{const v=(p.st||{})[k];if(v&&v!=='Y'){const r=stCnt(p,k,v);w.push(ST_LBL[k]+' '+(v==='O'?'逾時':r[0]+'/'+r[1]))}});
   if(w.length)o.push('未完成：'+w.join('、'));
   if(p.dir&&!cs.length)o.push('動向：'+p.dir);
-  const od=(p.orders||[]).filter(x=>x.status==='待執行').length;if(od)o.push('待執行醫囑 '+od+' 項');
+  const od=(p.ords||[]).filter(x=>x.status==='待執行').length;if(od)o.push('待執行醫囑 '+od+' 項');
   return o}
 const hoMark=p=>{const l=(p.hoLog||[]).slice(-1)[0];if(!l||Date.now()-l.at>4*36e5)return'';return` <small class="hom" title="${l.from} → ${l.to}（${new Date(l.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})} 交班）">⇄</small>`};
 const Hand={
@@ -3489,14 +3489,14 @@ const Ord={
   add(p,n,quiet){const it=this.byName(n);if(!it)return;const c=this.cartOf(p);if(c.some(x=>x.n===n)){if(!quiet)toast('已在待開立清單');return}
     c.push({n:it.n,t:it.t,spec:it.spec,st:it.st,days:it.t==='med'?1:'',g:it.g||''})},
   render(p,tb){
-    const sub=this.sub,tabs=[['open','開立醫囑'],['dispo','出院醫囑（決定去向）'],['sets','組套'],['cats','一般醫囑分類維護']];
+    const sub=this.sub,tabs=[['open','開立醫囑'],['pad','全搜尋開立（OrderPad 版）'],['dispo','出院醫囑（決定去向）'],['sets','組套'],['cats','一般醫囑分類維護']];
     tb.innerHTML=`<div class="ordnav">${tabs.map(t=>`<button data-o="sub" data-v="${t[0]}" class="${sub===t[0]?'on':''}">${t[1]}</button>`).join('')}<button class="btn" data-o="big">${document.getElementById('detail').classList.contains('full')?'✕ 縮小':'⛶ 放大醫囑'}</button><span class="sp"></span><span class="lbl">開立醫師：${ME}　存檔後即送護理、藥局、批價（示範）</span></div><div id="ordbody"></div>`;
     this['r_'+sub](p,$('#ordbody'))},
   r_open(p,b){
     const fav=this.fav(),res=this.q||this.tf?this.search().slice(0,14):[],cart=this.cartOf(p),sets=OSETS0.concat(this.mysets().map(s=>({...s,g:'個人'})));
     const typ=[['','全部']].concat(Object.keys(OT).map(k=>[k,OT[k]]));
     const sug=[...new Set(cart.flatMap(x=>DRESS[x.n]||[]))].filter(n=>!cart.some(x=>x.n===n));
-    const od=p.orders||[];
+    const od=p.ords||[];
     b.innerHTML=`<div class="ordsrch"><div class="row" style="flex-wrap:nowrap"><input class="search" id="ordQ" value="${esc(this.q)}" placeholder="全搜尋：醫囑、藥囑、檢驗檢查、處置都在這裡找（中英文／商品名／症狀，例如 止吐 / ketorolac / 胸痛 / CVC）" autocomplete="off" style="flex:1;font-size:16px;padding:8px">
       <span class="lbl">Enter＝加入第一筆</span></div>
       <div class="chips" style="margin:4px 0">${typ.map(t=>`<button class="chip ${this.tf===t[0]?'on':''}" data-o="tf" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>
@@ -3509,6 +3509,7 @@ const Ord={
       ${sug.length?`<div class="ordrow"><b>建議藥物（科部維護）</b>${sug.map(n=>`<button class="chip" data-o="add" data-n="${esc(n)}">＋ ${esc(n)}</button>`).join('')}</div>`:''}
       <div class="row" style="margin-top:6px"><button class="btn primary" data-o="save" ${cart.length?'':'disabled'}>存檔（送護理／藥局／批價）</button><button class="btn" data-o="mkset" ${cart.length?'':'disabled'}>存成個人組套</button><button class="btn" data-o="clear" ${cart.length?'':'disabled'}>清空</button></div></fieldset>
     <fieldset class="fs"><legend>已開立醫囑（${od.length}）</legend>${od.length?`<table class="emr ordtab"><thead><tr><th>時間</th><th>類別</th><th>內容</th><th>開立</th><th>狀態</th><th></th></tr></thead><tbody>${od.slice().reverse().map(o=>`<tr class="${o.status==='已停止'?'stopped':''}"><td>${new Date(o.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</td><td><span class="otp ${o.t}">${OT[o.t]}</span></td><td class="l"><b>${esc(o.n)}</b> ${esc(o.spec||'')}</td><td>${o.by}</td><td>${o.status}</td><td>${o.status==='已停止'?'':`<button class="btn" data-o="renew" data-id="${o.id}" title="以現在時間重新開立">續用</button><button class="btn" data-o="stop" data-id="${o.id}">停止</button>`}</td></tr>`).join('')}</tbody></table>`:'<div class="lbl">尚未開立醫囑</div>'}</fieldset>`},
+  r_pad(p,b){if(window.OrderPad)OrderPad.render(p,b);else b.innerHTML='<div class="lbl">OrderPad 尚未載入</div>'},
   r_sets(p,b){const mine=this.mysets();
     const card=(s,own)=>`<div class="setc"><b>${esc(s.n)}</b>${s.by?`<span class="lbl">（${s.by}）</span>`:''}<div class="chips">${s.i.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div><div class="row"><button class="btn" data-o="useset" data-n="${esc(s.n)}">帶入待開立</button>${own?`<button class="btn" data-o="delset" data-n="${esc(s.n)}">刪除</button>`:''}${s.by?`<button class="btn" data-o="copyset" data-n="${esc(s.n)}">拷貝到我的組套</button>`:''}</div></div>`;
     b.innerHTML=`<div class="lbl" style="margin-bottom:6px">組套的開立方式與開醫囑相同：用全搜尋加進「待開立」後，按「存成個人組套」即可。科部組套由急診部維護，個人組套由自己維護；可以拷貝同事的組套。</div>
@@ -3559,12 +3560,12 @@ const Ord={
     case'del':this.cartOf(p).splice(+t.dataset.i,1);renderTab();return;
     case'clear':this.cart[p.id]=[];renderTab();return;
     case'mkset':{const nm=prompt('個人組套名稱');if(!nm)return;const m=this.mysets();m.push({n:nm,i:this.cartOf(p).map(x=>x.n)});lsSet('er-ord-sets',m);toast('已存成個人組套「'+nm+'」');renderTab();return}
-    case'save':{const c=this.cartOf(p);if(!c.length)return;const base=Date.now();p.orders=p.orders||[];p.st=p.st||{};
-      c.forEach((x,i)=>{p.orders.push({id:base+i,n:x.n,t:x.t,spec:(x.spec||'')+(x.t==='med'&&x.days?' × '+x.days+' 天':''),at:base,by:ME,status:'待執行'});
+    case'save':{const c=this.cartOf(p);if(!c.length)return;const base=Date.now();p.ords=p.ords||[];p.st=p.st||{};
+      c.forEach((x,i)=>{p.ords.push({id:base+i,n:x.n,t:x.t,spec:(x.spec||'')+(x.t==='med'&&x.days?' × '+x.days+' 天':''),at:base,by:ME,status:'待執行'});
         if(x.st){const v=p.st[x.st];if(!v)p.st[x.st]='N';else if(v==='Y')p.st[x.st]='P'}});
       p.notes.push({t:'開立醫囑 '+c.length+' 項：'+c.map(x=>x.n).join('、'),at:nowS()});this.cart[p.id]=[];save();renderTab();renderList();toast('已存檔 '+c.length+' 項，送護理／藥局／批價');return}
-    case'renew':{const o=(p.orders||[]).find(x=>String(x.id)===t.dataset.id);if(o){const it=this.byName(o.n);if(it){this.add(p,o.n,true);const c=this.cartOf(p).find(x=>x.n===o.n);if(c)c.spec=(o.spec||'').replace(/ × \d+ 天$/,'')}toast('已帶入待開立，時間以存檔當下為準')}renderTab();return}
-    case'stop':{const o=(p.orders||[]).find(x=>String(x.id)===t.dataset.id);if(o){o.status='已停止';p.notes.push({t:'停止醫囑：'+o.n,at:nowS()});save();renderTab()}return}
+    case'renew':{const o=(p.ords||[]).find(x=>String(x.id)===t.dataset.id);if(o){const it=this.byName(o.n);if(it){this.add(p,o.n,true);const c=this.cartOf(p).find(x=>x.n===o.n);if(c)c.spec=(o.spec||'').replace(/ × \d+ 天$/,'')}toast('已帶入待開立，時間以存檔當下為準')}renderTab();return}
+    case'stop':{const o=(p.ords||[]).find(x=>String(x.id)===t.dataset.id);if(o){o.status='已停止';p.notes.push({t:'停止醫囑：'+o.n,at:nowS()});save();renderTab()}return}
     case'catdel':{const c=this.cats(),a=c[t.dataset.g];a.splice(+t.dataset.i,1);lsSet('er-ord-cats',c);renderTab();return}
     case'catadd':{const c=this.cats(),i=document.getElementById('catin_'+t.dataset.g),v=i&&i.value.trim();if(v){c[t.dataset.g].push(v);lsSet('er-ord-cats',c);renderTab()}return}
     case'catrm':{const c=this.cats();delete c[t.dataset.g];lsSet('er-ord-cats',c);renderTab();return}

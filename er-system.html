@@ -3131,6 +3131,7 @@ function onClick(e){
   const nav=e.target.closest('nav.steps a');if(nav){e.preventDefault();const el=$('#s-'+nav.dataset.k);if(el)el.scrollIntoView({block:'start'});return true}
   if(e.target.closest('#triBadge')){openTri();return true}
   const b=e.target.closest('button');if(!b)return false;const d=b.dataset;
+  if(d.ct==='menu'){ctMenu(b);return true}
   if(b.id==='fullBtn'){DOC.getElementById('detail').classList.toggle('full');fullLbl();return true}
   if(b.id==='kbBtn'){$('#kb').hidden=!$('#kb').hidden;return true}
   if(b.id==='copyNote'){flushTr().then(()=>copy(noteText(),Z('已複製病歷文字','Note text copied')));return true}
@@ -3156,6 +3157,7 @@ function render(p,el){
   root.innerHTML=`<div class="chart" id="chart"><div class="cbar">
     <div class="modebar"><span>病歷類型</span><div class="seg" id="modeSeg"><button type="button" class="nt" data-mode="nt">非外傷</button><button type="button" class="tr" data-mode="tr">外傷</button><button type="button" class="pd" data-mode="pd">小兒</button></div></div>
     <button type="button" class="btn" id="ohcaBtn" data-act="ohca" title="OHCA 病人：帶出 OHCA 紀錄欄位">OHCA</button>
+    <button type="button" class="btn" id="ctBtn" data-ct="menu" title="套用或儲存你自己的現病史表單範本">📋 個人病歷組套</button>
     <button type="button" class="btn" id="newPt" title="清空本病人的所有病歷欄位">清空病歷</button><button type="button" class="btn" id="undoPt" hidden title="復原剛清空的資料">復原</button>
     <button type="button" class="btn" id="kbBtn" aria-controls="kb">快速鍵 ?</button><span id="ptAge" hidden></span>
     <div id="triBadge"></div><nav class="steps" id="steps"></nav><button type="button" class="btn pri" id="saveBtn">💾 存檔</button><button type="button" class="btn" id="fullBtn"></button></div>
@@ -3187,6 +3189,37 @@ function render(p,el){
   if(obs){obs.disconnect();obs=null}
   rebuild();update();renderNL();startObs();applyLang();fullLbl();
 }
+
+/* ---------- 個人病歷組套（現病史表單範本）---------- */
+const CTK='er-chart-tpl';
+const CT0=()=>[
+ {n:'胸痛：否認 ACS 常見伴隨症狀',mode:'nt',d:{cc:['胸痛'],hpi:{...blankHpi(),sym:{'冒冷汗':-1,'呼吸困難':-1,'放射至左手':-1,'噁心':-1,'暈厥':-1}}}},
+ {n:'腹痛：腸胃症狀基本問診',mode:'nt',d:{cc:['腹痛'],hpi:{...blankHpi(),sym:{'噁心':1,'嘔吐':-1,'腹瀉':-1,'發燒':-1,'血便':-1}}}},
+ {n:'小兒發燒：無警訊',mode:'pd',d:{cc:['小兒發燒'],hpi:{...blankHpi(),sym:{'活動力下降':-1,'嘔吐':-1,'抽搐':-1,'頸部僵硬':-1}}}}];
+const ctGet=()=>{try{const v=JSON.parse(localStorage.getItem(CTK));if(Array.isArray(v))return v}catch(e){}return CT0()};
+const ctPut=v=>{try{localStorage.setItem(CTK,JSON.stringify(v))}catch(e){}};
+const ctSnap=()=>{const d={};
+  if(S.mode==='tr'){d.tr=structuredClone(S.tr);d.tr.time='';d.tr.when=''}
+  else{['cc','cnt','hpi','pe','dx','pmh','soc','surg','oth'].forEach(k=>{d[k]=structuredClone(S[k])});if(d.hpi){d.hpi.ext={};d.hpi.on='';d.hpi.nrs=null}}
+  return {mode:S.mode,d}};
+function ctApply(t){if(t.mode!==S.mode)setMode(t.mode);
+  Object.keys(t.d).forEach(k=>{S[k]=structuredClone(t.d[k])});
+  if(S.mode!=='tr')prune();rebuild();update();toast('已套用個人組套「'+t.n+'」，請依病人情況修改')}
+function ctMenu(btn){let m=DOC.getElementById('ctMenu');if(m){m.remove();return}
+  m=DOC.createElement('div');m.id='ctMenu';const r=btn.getBoundingClientRect(),L=ctGet();
+  m.style.cssText='position:fixed;z-index:70;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.3);padding:6px;min-width:280px;max-width:420px;left:'+Math.max(8,Math.min(r.left,innerWidth-430))+'px;top:'+(r.bottom+4)+'px';
+  const nm={nt:'非外傷',tr:'外傷',pd:'小兒'};
+  m.innerHTML=(L.map((t,i)=>`<div style="display:flex;gap:6px;align-items:center;padding:3px 4px"><button type="button" class="btn" data-ctm="use" data-i="${i}" style="flex:1;text-align:left">${esc(t.n)} <small style="opacity:.6">${nm[t.mode]||''}</small></button><a data-ctm="del" data-i="${i}" title="刪除" style="cursor:pointer;padding:0 4px">✕</a></div>`).join('')||'<div class="hint" style="padding:6px">尚無組套</div>')+
+   `<hr style="border:0;border-top:1px solid var(--line);margin:4px 0"><button type="button" class="btn pri" data-ctm="save" style="width:100%">＋ 把目前表單存成組套</button><div class="hint" style="padding:4px 2px">只存主訴、症狀、理學檢查、診斷、病史等選項；不含時間、NRS 與過敏史。</div>`;
+  DOC.body.appendChild(m)}
+DOC.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ctm]'),m=DOC.getElementById('ctMenu');
+  if(!t){if(m&&!e.target.closest('#ctBtn'))m.remove();return}
+  e.stopPropagation();const L=ctGet(),a=t.dataset.ctm;
+  if(a==='use'){const x=L[+t.dataset.i];m.remove();if(x&&S)ctApply(x)}
+  else if(a==='del'){const x=L[+t.dataset.i];if(x&&confirm('刪除組套「'+x.n+'」？')){L.splice(+t.dataset.i,1);ctPut(L);m.remove();ctMenu(DOC.getElementById('ctBtn'))}}
+  else if(a==='save'){const n=prompt('組套名稱，例如：我的胸痛問診');if(!n)return;const x=ctSnap();x.n=n;L.push(x);ctPut(L);m.remove();toast('已存成個人病歷組套「'+n+'」')}
+},true);
+
 return {render};
 })();
 function renderDx(){

@@ -739,6 +739,18 @@ table.ordtab tr.stopped{opacity:.5;text-decoration:line-through}
 .dsp{border:2px solid var(--line);border-radius:8px;padding:8px;cursor:pointer}.dsp.on{border-color:#2f6fbd;background:rgba(79,127,184,.12)}
 .dsp .dh{display:flex;gap:8px;align-items:center;margin-bottom:4px}.dsp .dl{display:inline-flex;width:26px;height:26px;border-radius:50%;background:#2f6fbd;color:#fff;align-items:center;justify-content:center;font-weight:800}
 .dsp .db label{margin-right:12px}.sugg{margin:6px 0;padding:5px 8px;border-radius:6px;background:rgba(224,144,42,.18)}.warnl{color:#b3261e;margin-top:4px}
+
+/* 詳細區可拖曳高度／放大 */
+#dResize{height:8px;cursor:ns-resize;background:var(--accent);opacity:.3;flex:none;position:relative}
+#dResize::after{content:"";position:absolute;left:50%;top:2px;width:44px;height:3px;margin-left:-22px;border-radius:2px;background:#fff}
+#dResize:hover,#dResize.on{opacity:.85}
+body.dresz{user-select:none;cursor:ns-resize}
+.detail.rs{height:var(--dh)!important;max-height:none!important}
+.actchip{background:var(--danger);color:#fff;border-radius:10px;padding:1px 8px;font-size:12px;white-space:nowrap}
+.whis{border-left:4px solid #8b5cf6;background:var(--panel);padding:5px 10px;margin:4px 0;border-radius:4px}
+.whis.priv{border-left-color:#999;opacity:.85}.whis small{color:var(--muted)}
+.tplbar{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.actrow{display:flex;gap:8px;align-items:center;padding:3px 0}
 </style>
 
 </head>
@@ -805,6 +817,7 @@ table.ordtab tr.stopped{opacity:.5;text-decoration:line-through}
   </aside>
   </div>
 
+  <div id="dResize" title="拖曳調整病人詳細區高度，雙擊還原"></div>
   <div class="detail" id="detail"></div>
 </div>
 
@@ -1052,7 +1065,7 @@ function renderList(){
 /* ===== 病人詳細 ===== */
 const cur=()=>patients.find(p=>p.id===S.sel);
 const FK1=['病歷','檢傷','診斷','病程','查詢','檢驗','報查','累報','醫囑','會診','證明','出院','住院','其他','發報告','呼叫'];
-const FK2=['照相','護理紀錄','VTS','ICU空','ICU待床','提報','待床','流程','鎮靜評估','兒少保','DNR','影像流程','緊急醫療','醫雲','在宅'];
+const FK2=['悄悄話','照相','護理紀錄','VTS','ICU空','ICU待床','提報','待床','流程','鎮靜評估','兒少保','DNR','影像流程','緊急醫療','醫雲','在宅'];
 function renderDetail(){
   const p=cur(), d=$('#detail');
   d.classList.toggle('none',!p);d.classList.toggle('min',!!S.dmin);
@@ -1069,7 +1082,11 @@ function renderDetail(){
     <span><span class="k">主責醫師</span><b>${p.doc}</b></span>
     <span><span class="k">停留</span><span id="stayNow">${fmtH(hrs(p))}</span></span>
     <label style="font-weight:600">大量傷患 <select id="mciSel"><option value="">無</option>${MCI_T.map(t=>`<option ${p.mci===t?'selected':''}>${t}</option>`).join('')}</select></label>
-    <button class="btn" id="dToggle" style="margin-left:auto;padding:2px 12px">${S.dmin?'▲ 展開':'▼ 收合'}</button>
+    <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${(p.act||[]).map(a=>`<span class="actchip" title="啟動者 ${a.by}">${a.type} ${new Date(a.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</span>`).join('')}
+    <button class="btn" id="dWh" title="醫師悄悄話（僅醫師可見）">🤫 ${(p.whis||[]).filter(w=>!w.priv||w.by===ME).length}</button>
+    <button class="btn" id="dAct" style="background:var(--danger);color:#fff;border-color:var(--danger)">🚨 一鍵會診</button>
+    <button class="btn" id="dFull" style="padding:2px 12px">${d.classList.contains('full')?'✕ 縮小':'⛶ 放大'}</button>
+    <button class="btn" id="dToggle" style="padding:2px 12px">${S.dmin?'▲ 展開':'▼ 收合'}</button></span>
   </div>
   <div class="fkeys">${FK1.concat(FK2).map(t=>`<button class="fk ${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>
   <div class="tabbody" id="tb"></div>
@@ -1107,10 +1124,11 @@ function renderTab(){
       <button class="btn primary" id="cAdd">開立會診</button></div>
       <div class="lbl" style="margin-top:6px">開立後，清單的「動向」會自動顯示「會診＋科別」；全部完成後恢復原本動向。</div></fieldset>
       <fieldset class="fs"><legend>會診紀錄</legend>${cs.length?cs.map((c,i)=>`<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line)"><b style="min-width:84px">${c.dept}</b><span style="flex:1">${c.note||''}</span><span class="lbl">${tm(c.at)}</span>${c.done?'<span class="lbl">已完成</span>':`<b class="cons">會診中</b><button class="btn" data-cdone="${i}">完成會診</button>`}</div>`).join(''):'<div class="lbl">尚無會診紀錄</div>'}</fieldset>`;
+  }else if(S.tab==='悄悄話'){Whis.render(p,tb)
   }else if(S.tab==='醫囑'){Ord.render(p,tb)
   }else if(S.tab==='病程'){
-    tb.innerHTML=`<div class="row"><textarea id="nt" rows="2" placeholder="輸入病程紀錄…" style="flex:1"></textarea><button class="btn primary" id="addNt">新增</button></div>
-    <div id="nts">${p.notes.map(n=>`<div class="note">${n.t}<br><small>${n.at}</small></div>`).reverse().join('')||'<div class="empty">尚無病程紀錄</div>'}</div>`;
+    tb.innerHTML=`<div id="tplBar" class="tplbar"></div><div class="row"><textarea id="nt" rows="2" placeholder="輸入病程紀錄…" style="flex:1"></textarea><button class="btn primary" id="addNt">新增</button></div>
+    <div id="nts">${p.notes.map(n=>`<div class="note">${n.t}<br><small>${n.at}</small></div>`).reverse().join('')||'<div class="empty">尚無病程紀錄</div>'}</div>`;Tpl.paint(p);
   }else if(S.tab==='醫囑'){OrderPad.render(p,tb)}
   else{
     tb.innerHTML=`<div class="empty">「${S.tab}」模組（示意，之後串接）</div>`;
@@ -3472,6 +3490,7 @@ const OSETS0=[{n:'胸痛（ACS）組套',g:'科部',i:['12 導程心電圖 ECG',
  {n:'敗血症組套',g:'科部',i:['血液培養 ×2','乳酸 Lactate','CBC/DC 全血球及白血球分類','Ceftriaxone 1 g 針','Normal saline 0.9% 1000 mL']},
  {n:'OHCA 組套',g:'科部',i:['Epinephrine 1 mg 針','氣管內管插管','動脈血氣 ABG','12 導程心電圖 ECG','Amiodarone 150 mg 針','呼吸器 Ventilator 設定']},
  {n:'Major trauma 組套',g:'科部',i:['Trauma set','血型／備血 Type & Screen','CBC/DC 全血球及白血球分類','Tranexamic acid 1 g 針','胸部 X光 CXR','骨盆 X光','床邊超音波 / FAST','Normal saline 0.9% 1000 mL']},
+ {n:'急性中風組套',g:'科部',i:['CT Brain without contrast','Glucose (POCT)','PT / aPTT / INR','12-lead ECG','CBC + DC']},
  {n:'氣喘急性發作組套',g:'科部',i:['Salbutamol 噴霧','Ipratropium 噴霧','Methylprednisolone 40 mg 針','面罩氧氣']}];
 const OOTHER=[{n:'氣喘快速組套',by:'李婉婷',i:['Salbutamol 噴霧','Methylprednisolone 40 mg 針']},{n:'縫合後處置',by:'張宇軒',i:['縫合計價（≤5 cm）','Cefazolin 1 g 針','破傷風類毒素 Td 0.5 mL']}];
 const OPD_MEDS=[['Amlodipine 5 mg 錠','5 mg PO QD'],['Metformin 500 mg 錠','500 mg PO BID'],['Atorvastatin 20 mg 錠','20 mg PO QN']];
@@ -3578,6 +3597,98 @@ document.addEventListener('input',e=>{const t=e.target;if(t.id==='dTo'&&Ord.dis[
   H.note=(p,t)=>{p.notes.push({t,at:nowS()})};
   H.save=()=>{save()};
 })();
+
+/* ===== 詳細區：拖曳高度、放大、點姓名展開 ===== */
+(function(){
+  const det=$('#detail'),h=$('#dResize'),KEY='er-dh';
+  const setH=v=>{if(v){det.style.setProperty('--dh',v+'px');det.classList.add('rs')}else{det.classList.remove('rs');det.style.removeProperty('--dh')}};
+  try{const v=+localStorage.getItem(KEY);if(v>=140)setH(v)}catch(_){}
+  const sync=()=>{h.style.display=(det.classList.contains('none')||det.classList.contains('min')||det.classList.contains('full'))?'none':''};
+  new MutationObserver(sync).observe(det,{attributes:true,attributeFilter:['class']});sync();
+  let y0=0,h0=0,drag=false;
+  h.addEventListener('pointerdown',e=>{drag=true;y0=e.clientY;h0=det.offsetHeight;h.setPointerCapture(e.pointerId);h.classList.add('on');document.body.classList.add('dresz')});
+  h.addEventListener('pointermove',e=>{if(!drag)return;setH(Math.max(140,Math.min(innerHeight-150,h0+(y0-e.clientY))))});
+  const end=()=>{if(!drag)return;drag=false;h.classList.remove('on');document.body.classList.remove('dresz');try{const v=parseInt(det.style.getPropertyValue('--dh'));if(v)localStorage.setItem(KEY,v)}catch(_){}};
+  h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end);
+  h.addEventListener('dblclick',()=>{setH(0);try{localStorage.removeItem(KEY)}catch(_){}});
+  const full=on=>{det.classList.toggle('full',on);renderDetail();if(typeof fullLbl==='function')fullLbl()};
+  document.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;
+    if(t.closest('#dFull')){e.stopPropagation();full(!det.classList.contains('full'));return}
+    const n=t.closest('#view .nm');
+    if(n){const row=n.closest('[data-id]');if(row){e.stopPropagation();S.sel=row.dataset.id;S.tab=S.tab||'病歷';det.classList.remove('min');S.dmin=false;renderList();full(true)}}
+  },true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&det.classList.contains('full')&&!document.getElementById('op-ov')&&!document.querySelector('.ovl[style*="flex"]')&&!/INPUT|TEXTAREA|SELECT/.test((e.target.tagName||'')))full(false)});
+})();
+
+/* ===== 醫師悄悄話 ===== */
+const Whis={
+  vis(p){return(p.whis||[]).filter(w=>!w.priv||w.by===ME)},
+  render(p,tb){const L=this.vis(p).slice().reverse(),tm=t=>new Date(t).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    tb.innerHTML=`<fieldset class="fs"><legend>🤫 醫師悄悄話（僅醫師可見）</legend>
+      <div class="lbl" style="margin-bottom:6px">給接班同事的提醒，例如「家屬情緒不穩、溝通困難，建議兩人一起解釋」。不會寫進病歷、不會列印、不會出現在給病人的資料（示範）。仍屬系統紀錄，請使用專業、客觀的字詞。</div>
+      <div class="row"><textarea id="whT" rows="2" placeholder="例：家屬很難溝通，建議找社工協助；病人曾辱罵護理人員" style="flex:1"></textarea>
+      <div style="display:grid;gap:4px"><label class="lbl"><input type="checkbox" id="whP"> 只有我看得到</label><button class="btn primary" data-wh="add">送出</button></div></div></fieldset>
+      <fieldset class="fs"><legend>悄悄話（${L.length}）</legend>${L.map(w=>`<div class="whis ${w.priv?'priv':''}"><b>${esc(w.by)}</b> <small>${tm(w.at)}${w.priv?'　🔒 只有自己看得到':''}</small> ${w.by===ME?`<button class="btn" data-wh="del" data-id="${w.id}" style="float:right;padding:0 8px">刪除</button>`:''}<div>${esc(w.t)}</div></div>`).join('')||'<div class="lbl">目前沒有悄悄話</div>'}</fieldset>`}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-wh],#dWh');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();
+  if(t.id==='dWh'){S.tab='悄悄話';renderDetail();return}
+  if(t.dataset.wh==='add'){const v=$('#whT').value.trim();if(!v)return toast('請輸入內容');(p.whis=p.whis||[]).push({id:Date.now(),by:ME,at:Date.now(),t:v,priv:$('#whP').checked});save();renderDetail();toast('已送出悄悄話')}
+  else if(t.dataset.wh==='del'){p.whis=(p.whis||[]).filter(w=>String(w.id)!==t.dataset.id);save();renderDetail()}
+},true);
+
+/* ===== 重大疾病一鍵會診 ===== */
+const ACT={'STEMI':{depts:['心臟內科','心導管室'],set:'胸痛（ACS）組套',tip:'ECG 確認 ST 上升後啟動；記錄 door-to-ECG／door-to-balloon（示範）'},
+  'STROKE':{depts:['神經內科','放射科（CT）'],set:'急性中風組套',tip:'請記錄最後正常時間 LKW 與 NIHSS（示範）'},
+  'Major Trauma':{depts:['一般外科','骨科','神經外科','放射科（CT）','麻醉科'],set:'Major trauma 組套',tip:'依創傷小組流程；同步通知血庫與開刀房（示範）'}};
+const Act={
+  ask(p,type){const a=ACT[type];this.p=p.id;this.type=type;
+    let m=$('#actModal');if(!m){m=document.createElement('div');m.id='actModal';m.className='ovl';document.body.appendChild(m)}
+    m.style.display='flex';
+    m.innerHTML=`<div class="ovp" style="max-width:560px"><div class="ovh"><b>🚨 啟動 ${type} 一鍵會診：${esc(p.bed)} ${esc(p.name)}</b><span class="sp"></span></div><div class="ovb">
+      <div class="lbl" style="margin-bottom:6px">${esc(a.tip)}</div>
+      <div><b>同時會診（可取消不需要的科別）</b>${a.depts.map((d,i)=>`<label class="actrow"><input type="checkbox" data-act="d" value="${esc(d)}" checked> ${esc(d)}</label>`).join('')}</div>
+      <label class="actrow"><input type="checkbox" id="actSet" checked> 同時帶入「${esc(a.set)}」到醫囑籃（仍需你到醫囑頁確認簽署）</label>
+      <label class="actrow"><input type="checkbox" id="actNote" checked> 寫入病程（含啟動時間）</label>
+      <div class="row" style="margin-top:8px"><span class="lbl">啟動後病人詳細區會顯示啟動時間</span><span class="sp"></span><button class="btn" data-act="cancel">取消</button><button class="btn primary" style="background:var(--danger);border-color:var(--danger)" data-act="ok">確認啟動</button></div></div></div>`},
+  ok(){const p=patients.find(x=>x.id===this.p);if(!p)return;const type=this.type,a=ACT[type],at=Date.now();
+    const ds=[...document.querySelectorAll('#actModal [data-act="d"]:checked')].map(x=>x.value);
+    ds.forEach(d=>(p.consults=p.consults||[]).push({dept:d,note:'【'+type+'】一鍵會診',at,done:false}));
+    (p.act=p.act||[]).push({type,at,by:ME});
+    if($('#actNote').checked)p.notes.push({t:'【'+type+' 啟動】'+new Date(at).toLocaleTimeString('zh-TW',{hour12:false})+'，已同時會診：'+(ds.join('、')||'無'),at:nowS()});
+    if($('#actSet').checked&&window.OrderPad){const s=OrderPad.hooks.sets().find(x=>x.n===a.set);if(s){OrderPad.addNames(p,s.i);Ord.sub='pad'}}
+    $('#actModal').style.display='none';save();renderList();S.tab=$('#actSet').checked?'醫囑':S.tab;renderDetail();
+    toast(type+' 已啟動，會診 '+ds.length+' 科'+($('#actSet').checked?'；醫囑組套已放入醫囑籃，請確認簽署':''))},
+  menu(btn){let m=$('#actMenu');if(m){m.remove();return}
+    m=document.createElement('div');m.id='actMenu';const r=btn.getBoundingClientRect();
+    m.style.cssText='position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.3);padding:6px;display:grid;gap:4px;right:'+(innerWidth-r.right)+'px;top:'+(r.bottom+4)+'px';
+    m.innerHTML=Object.keys(ACT).map(k=>`<button class="btn" data-act="go" data-t="${k}" style="text-align:left;padding:6px 16px;font-weight:700">${k}</button>`).join('');document.body.appendChild(m)}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#dAct,[data-act]');
+  if(!t){const m=$('#actMenu');if(m)m.remove();return}
+  e.stopPropagation();const p=cur();
+  if(t.id==='dAct'){Act.menu(t);return}
+  const a=t.dataset.act;
+  if(a==='go'){const m=$('#actMenu');if(m)m.remove();if(p)Act.ask(p,t.dataset.t)}
+  else if(a==='cancel')$('#actModal').style.display='none';
+  else if(a==='ok')Act.ok()
+},true);
+
+/* ===== 醫師個人病歷（病程）組套 ===== */
+const TPL0=[{n:'胸痛初步評估',t:'{age}歲{sex}，因「{cc}」就診。生命徵象穩定。已安排 ECG、Troponin、CXR，待結果後評估是否需心臟內科會診。'},
+ {n:'說明病情並同意',t:'已向病人／家屬說明病情、檢查與治療計畫及可能風險，病人／家屬了解並同意。'},
+ {n:'離院衛教',t:'已衛教返診注意事項（症狀加重、發燒、持續疼痛請立即回診），病人／家屬複述了解。'}];
+const Tpl={key:'er-note-tpl',
+  all(){return lsGet(this.key,TPL0)},
+  fill(p,t){return t.replace(/\{(\w+)\}/g,(m,k)=>({name:p.name,age:p.age,sex:p.sex,cc:p.cc,imp:p.imp||'',doc:p.doc,bed:p.bed})[k]??m)},
+  paint(p){const el=$('#tplBar');if(!el)return;
+    el.innerHTML=`<b>個人病歷組套</b>${this.all().map((x,i)=>`<span class="chip" style="cursor:pointer" data-tp="use" data-i="${i}" title="${esc(x.t)}">${esc(x.n)} <a data-tp="del" data-i="${i}" title="刪除" style="cursor:pointer">✕</a></span>`).join('')||'<span class="lbl">尚無組套</span>'}<button class="btn" data-tp="save">＋ 把輸入框內容存成組套</button><span class="lbl">可用 {age} {sex} {cc} {imp} {name} 自動帶入病人資料</span>`}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-tp]');if(!t)return;e.stopPropagation();const p=cur();if(!p)return;
+  const a=t.dataset.tp,L=Tpl.all();
+  if(a==='use'){const x=L[+t.dataset.i],nt=$('#nt');if(x&&nt){nt.value+=(nt.value?'\n':'')+Tpl.fill(p,x.t);nt.focus()}}
+  else if(a==='del'){const x=L[+t.dataset.i];if(x&&confirm('刪除組套「'+x.n+'」？')){L.splice(+t.dataset.i,1);lsSet(Tpl.key,L);Tpl.paint(p)}}
+  else if(a==='save'){const nt=$('#nt'),v=nt&&nt.value.trim();if(!v)return toast('請先在輸入框寫好內容');const n=prompt('組套名稱');if(n){L.push({n,t:v});lsSet(Tpl.key,L);Tpl.paint(p);toast('已存成個人病歷組套「'+n+'」')}}
+},true);
 
 /* 初始化 */
 layoutLbl();renderChips();renderList();renderDetail();

@@ -3702,7 +3702,7 @@ const Act={
   menu(btn){let m=$('#actMenu');if(m){m.remove();return}
     m=document.createElement('div');m.id='actMenu';const r=btn.getBoundingClientRect();
     m.style.cssText='position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.3);padding:6px;display:grid;gap:4px;right:'+(innerWidth-r.right)+'px;top:'+(r.bottom+4)+'px';
-    m.innerHTML=Object.keys(ACT).map(k=>`<button class="btn" data-act="go" data-t="${k}" style="text-align:left;padding:6px 16px;font-weight:700">${k}</button>`).join('');document.body.appendChild(m)}
+    m.innerHTML=Object.keys(ACT).map(k=>`<button class="btn" data-act="go" data-t="${k}" style="text-align:left;padding:6px 16px;font-weight:700">${k}</button>`).join('');document.body.appendChild(m);const h=m.offsetHeight;if(r.bottom+4+h>innerHeight-6)m.style.top=Math.max(6,r.top-h-4)+'px'}
 };
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#dAct,[data-act]');
   if(!t){const m=$('#actMenu');if(m)m.remove();return}

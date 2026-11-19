@@ -450,5 +450,5 @@ document.addEventListener('click',ev=>{
 },true);
 
 function addNames(p,names){rebuild();P=p;names.forEach(n=>{const d=byName(n);if(d)addItem(d,true,true)})}
-window.OrderPad={render,enter,back,hooks,addNames};
+window.OrderPad={render,enter,back,hooks,addNames,names:t=>{rebuild();return D.filter(d=>!t||d.t===t).map(d=>d.n)}};
 })();

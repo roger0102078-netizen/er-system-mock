@@ -766,6 +766,8 @@ body.dresz{user-select:none;cursor:ns-resize}
 .cn .cs{display:inline-block;border-radius:999px;padding:0 10px;font-size:12px;background:var(--accent-soft);color:var(--ink)}
 .cn .cs.late{background:#fde8e8;color:#b91c1c;font-weight:700}.cn .cs.ok{background:#d9f2e0;color:#14532d}
 .cn .urg{color:#b91c1c;font-weight:700}
+.cs{display:inline-block;border-radius:999px;padding:0 10px;font-size:12px;background:var(--accent-soft);color:var(--ink)}.cs.late{background:#fde8e8;color:#b91c1c;font-weight:700}.cs.ok{background:#d9f2e0;color:#14532d}
+tr.crit td{background:#fff1f1}
 .cn .hist{font-size:12px;color:var(--muted);margin-top:2px}
 .cn .steps{display:flex;gap:2px;margin:4px 0}.cn .steps i{flex:1;height:5px;border-radius:3px;background:var(--line)}.cn .steps i.on{background:var(--accent)}
 .hxg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -860,7 +862,7 @@ body.dresz{user-select:none;cursor:ns-resize}
   </div>
 </div>
 
-<script src="order-pad.js?v=3"></script>
+<script src="order-pad.js?v=4"></script>
 <script>
 /* ===== 範例資料（皆為虛構）===== */
 const DOCTORS=['周明哲','李婉婷','張宇軒','吳佩珊','黃建宏','林怡君','陳柏翰','蔡雅惠'];
@@ -1146,6 +1148,9 @@ function renderTab(){
   }else if(S.tab==='報查'){Rep.render(p,tb)
   }else if(S.tab==='病歷查詢'){Hx.render(p,tb)
   }else if(S.tab==='證明'){Cert.render(p,tb)
+  }else if(S.tab==='檢驗'){Lab.render(p,tb)
+  }else if(S.tab==='提報'||S.tab==='兒少保'){Rpt.render(p,tb)
+  }else if(S.tab==='在宅'){Home.render(p,tb)
   }else if(S.tab==='悄悄話'){Whis.render(p,tb)
   }else if(S.tab==='醫囑'){Ord.render(p,tb)
   }else if(S.tab==='病程'){Prog.render(p,tb);
@@ -3867,11 +3872,14 @@ const Cert={type:'診斷證明書',txt:{},
   fill(p,type,dt){const dx=(p.dx||[]).map(d=>d.name||d.code).filter(Boolean),head='姓名：'+p.name+'　性別／年齡：'+p.sex+'／'+p.age+' 歲　病歷號：'+(p.mrn||'')+'　流水號：'+p.id,fm=t=>new Date(t).toLocaleString('zh-TW',{hour12:false});
     if(type==='死亡診斷書')return '【死亡診斷書（示範，非正式文件）】'+NLc+head+NLc+'到院時間：'+fm(p.arrive)+NLc+'死亡時間：'+fm(dt||Date.now())+NLc+'死亡地點：急診'+NLc+'（甲）直接引起死亡之疾病：'+(dx[0]||'')+NLc+'（乙）先行原因：'+(dx[1]||'')+NLc+'死亡方式：病死或自然死'+NLc+'開立醫師：'+ME;
     if(type==='病危通知單')return '【病危通知單（示範）】'+NLc+head+NLc+'診斷：'+(dx.join('、')||p.imp||'')+NLc+'目前病況：病情危急，隨時可能惡化。已向家屬說明病情、可能處置與預後，家屬了解。'+NLc+'通知時間：'+fm(Date.now())+NLc+'通知醫師：'+ME;
+    if(type==='驗傷單')return '【驗傷診斷書（示範，非正式文件）】'+NLc+head+NLc+'就診時間：'+fm(p.arrive)+NLc+'主訴／受傷經過：'+p.cc+NLc+'傷勢描述（可點上方人形圖加入部位）：'+NLc+'診斷：'+(dx.join('、')||'')+NLc+'開立醫師：'+ME;
+    if(type==='司法相驗單')return '【司法相驗通知（示範，非正式文件）】'+NLc+head+NLc+'到院時間：'+fm(p.arrive)+NLc+'死亡時間：'+fm(dt||Date.now())+NLc+'死亡經過與可疑情形：'+NLc+'診斷（可由診斷書帶入）：'+(dx.join('、')||'')+NLc+'通報醫師：'+ME;
     return '【診斷證明書（示範）】'+NLc+head+NLc+'診斷：'+(dx.join('、')||p.imp||'')+NLc+'就診日期：'+fm(p.arrive)+NLc+'醫師囑言：'+NLc+'開立醫師：'+ME},
   render(p,tb){const ty=this.type,key=p.id+ty;if(this.txt[key]===undefined)this.txt[key]=this.fill(p,ty);
-    tb.innerHTML=`<fieldset class="fs"><legend>證明文件</legend><div class="row"><label>種類 <select data-ce="type">${['診斷證明書','病危通知單','死亡診斷書'].map(x=>`<option ${x===ty?'selected':''}>${x}</option>`).join('')}</select></label>
+    tb.innerHTML=`<fieldset class="fs"><legend>證明文件</legend><div class="row"><label>種類 <select data-ce="type">${['診斷證明書','病危通知單','死亡診斷書','驗傷單','司法相驗單'].map(x=>`<option ${x===ty?'selected':''}>${x}</option>`).join('')}</select></label>
       ${ty==='死亡診斷書'?`<label>死亡時間 <input type="datetime-local" id="ceDt" value="${new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16)}"></label><label>死亡方式 <select id="ceMode"><option>病死或自然死</option><option>意外</option><option>自殺</option><option>他殺</option><option>不詳</option></select></label>`:''}
       <button class="btn" data-ce="refill">重新帶入範本</button></div>
+      ${ty==='驗傷單'||ty==='司法相驗單'?`<div class="row" style="align-items:flex-start;margin-top:6px"><svg viewBox="0 0 120 220" width="110" style="flex:none;cursor:pointer" aria-label="人形圖"><g fill="#cfe3d4" stroke="#4a6b52" stroke-width="1.5">${[['頭部','<circle cx="60" cy="22" r="16"/>'],['頸部','<rect x="53" y="38" width="14" height="10"/>'],['胸部','<rect x="38" y="48" width="44" height="40" rx="6"/>'],['腹部','<rect x="40" y="90" width="40" height="36" rx="6"/>'],['左上肢','<rect x="14" y="50" width="20" height="62" rx="8"/>'],['右上肢','<rect x="86" y="50" width="20" height="62" rx="8"/>'],['左下肢','<rect x="40" y="130" width="18" height="80" rx="8"/>'],['右下肢','<rect x="62" y="130" width="18" height="80" rx="8"/>']].map(x=>`<g data-ce="part" data-v="${x[0]}"><title>${x[0]}</title>${x[1]}</g>`).join('')}</g></svg><div class="lbl">點人形圖的部位，會把部位加進下方文字（示範簡圖，之後可串接 PACS／正式小人圖）。${ty==='司法相驗單'?'<br><button class="btn" data-ce="death">帶入死亡診斷書內容</button>':''}</div></div>`:''}
       ${ty==='死亡診斷書'?'<div class="lbl" style="margin-top:4px">已自動帶入到院時間、診斷與死亡時間。死亡方式非「病死或自然死」時，請改開司法相驗單（尚未製作）。</div>':''}
       <textarea id="ceTxt" rows="12" style="width:100%;margin-top:6px">${esc(this.txt[key])}</textarea>
       <div class="row" style="margin-top:6px"><button class="btn primary" data-ce="note">存入病程</button><button class="btn" data-ce="print">列印</button></div></fieldset>`}
@@ -3879,10 +3887,74 @@ const Cert={type:'診斷證明書',txt:{},
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ce]');if(!t||t.tagName==='SELECT')return;const p=cur();if(!p)return;e.stopPropagation();
   const a=t.dataset.ce,ty=Cert.type,key=p.id+ty;
   if(a==='refill'){const dt=$('#ceDt')?new Date($('#ceDt').value).getTime():Date.now();let x=Cert.fill(p,ty,dt);const m=$('#ceMode');if(m)x=x.replace('病死或自然死',m.value);Cert.txt[key]=x;renderTab()}
+  else if(a==='part'){const x=$('#ceTxt');x.value+=(x.value.endsWith(NLc)?'':NLc)+'・'+t.dataset.v+'：';Cert.txt[key]=x.value;x.focus()}
+  else if(a==='death'){const x=$('#ceTxt');x.value+=NLc+NLc+Cert.fill(p,'死亡診斷書');Cert.txt[key]=x.value}
   else if(a==='note'){const v=$('#ceTxt').value.trim();if(v){p.notes.push({t:v,at:nowS()});save();toast('已存入病程')}}
   else if(a==='print'){const w=window.open('','_blank');if(w){w.document.write('<pre style="font:16px/1.7 sans-serif;white-space:pre-wrap">'+esc($('#ceTxt').value)+'</pre>');w.document.close();setTimeout(()=>{try{w.print()}catch(_){}},300)}}
 },true);
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.ce==='type'){Cert.type=t.value;renderTab()}},true);
+
+/* ===== 檢驗：個人檢驗快捷鍵（自行編輯）、床邊檢驗自動上傳與異常通知 ===== */
+const LAB0=['CBC + DC','Glucose (POCT)','BUN / Creatinine / eGFR','Electrolytes (Na/K/Cl)','Troponin I (hs)','Lactate','CRP','Urine Routine + Culture'];
+const POCT=[['床邊血糖','mg/dL',70,140,40,420],['血氣 GAS（pH）','',7.35,7.45,7.05,7.6],['Troponin I（POCT）','ng/mL',0,0.04,0,2.5],['D-dimer（POCT）','μg/mL',0,0.5,0.1,4.5],['PCT（POCT）','ng/mL',0,0.5,0.05,12]];
+const Lab={
+  fav(){return lsGet('er-lab-fav',LAB0)},
+  render(p,tb){const F=this.fav(),P=p.poct=p.poct||[],names=window.OrderPad?OrderPad.names('lab'):[];
+    tb.innerHTML=`<fieldset class="fs"><legend>個人檢驗快捷鍵（自己編輯，不需透過他人）</legend>
+      <div class="chips">${F.map((n,i)=>`<span class="chip" style="cursor:pointer" data-lb="use" data-n="${esc(n)}" title="加入醫囑籃">＋ ${esc(n)} <a data-lb="del" data-i="${i}" style="cursor:pointer" title="移出快捷鍵">✕</a></span>`).join('')||'<span class="lbl">尚無快捷鍵</span>'}</div>
+      <div class="row" style="margin-top:6px"><input class="search" id="lbIn" list="lbList" placeholder="搜尋檢驗項目加入快捷鍵" style="width:280px"><datalist id="lbList">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist><button class="btn" data-lb="add">加入快捷鍵</button><button class="btn primary" data-lb="go">前往開立（醫囑籃）</button><button class="btn" data-lb="reset">還原預設</button></div></fieldset>
+      <fieldset class="fs"><legend>床邊檢驗（POCT）結果自動上傳</legend>
+      <div class="row"><select id="lbT">${POCT.map((x,i)=>`<option value="${i}">${x[0]}</option>`).join('')}</select><button class="btn" data-lb="sim">模擬儀器上傳一筆結果</button><span class="lbl">真系統由儀器直接回傳，異常值自動通知主責醫師（示範）</span></div>
+      <table class="emr" style="width:100%;margin-top:6px"><thead><tr><th>時間</th><th>項目</th><th>結果</th><th>參考值</th><th>判讀</th><th>來源</th></tr></thead><tbody>${P.slice().reverse().map(r=>`<tr class="${r.flag?'crit':''}"><td>${hm(r.at)}</td><td>${esc(r.n)}</td><td><b>${r.v} ${esc(r.u)}</b></td><td>${r.lo}–${r.hi}</td><td>${r.flag?'<b style="color:#b91c1c">異常 '+r.flag+'　已通知 '+esc(p.doc)+'</b>':'正常'}</td><td>POCT 自動上傳</td></tr>`).join('')||'<tr><td colspan="6" class="lbl">尚無床邊檢驗結果</td></tr>'}</tbody></table></fieldset>`}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-lb]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();
+  const a=t.dataset.lb,F=Lab.fav();
+  if(a==='use'){OrderPad.addNames(p,[t.dataset.n]);toast('已加入醫囑籃：'+t.dataset.n+'（按「前往開立」簽署）')}
+  else if(a==='del'){F.splice(+t.dataset.i,1);lsSet('er-lab-fav',F);renderTab()}
+  else if(a==='add'){const v=$('#lbIn').value.trim();if(!v||!OrderPad.names('lab').includes(v))return toast('請從清單選擇檢驗項目');if(!F.includes(v)){F.push(v);lsSet('er-lab-fav',F)}renderTab()}
+  else if(a==='reset'){try{localStorage.removeItem('er-lab-fav')}catch(_){}renderTab()}
+  else if(a==='go'){S.tab='醫囑';Ord.sub='pad';renderDetail();OrderPad.enter()}
+  else if(a==='sim'){const x=POCT[+$('#lbT').value],ab=Math.random()<.4,v=ab?(Math.random()<.5?x[4]+(x[2]-x[4])*Math.random()*.6:x[3]+(x[5]-x[3])*(.3+Math.random()*.7)):x[2]+(x[3]-x[2])*Math.random();
+    const val=+(x[0].startsWith('血氣')?v.toFixed(2):v<10?v.toFixed(2):v.toFixed(0)),flag=val<x[2]?'↓':val>x[3]?'↑':'';
+    p.poct.push({n:x[0],v:val,u:x[1],lo:x[2],hi:x[3],at:Date.now(),flag});
+    if(flag){p.notes.push({t:'床邊檢驗異常：'+x[0]+' '+val+' '+x[1]+'（參考 '+x[2]+'–'+x[3]+'），已通知主責醫師 '+p.doc,at:nowS()});toast('⚠ 床邊檢驗異常：'+x[0]+' '+val)}
+    save();renderTab()}
+},true);
+
+/* ===== 通報作業：傳染病（中文搜尋顯示級別）、兒少保、併發症、廣播保全 ===== */
+const IDS=[['COVID-19／新冠肺炎','第四類'],['流感併發重症','第四類'],['登革熱','第二類'],['麻疹','第二類'],['德國麻疹','第二類'],['急性病毒性 A 型肝炎','第二類'],['桿菌性痢疾','第二類'],['傷寒','第二類'],['腸病毒感染併發重症','第三類'],['結核病','第三類'],['漢生病','第三類'],['梅毒','第四類'],['淋病','第四類'],['腸道出血性大腸桿菌感染症','第二類'],['屈公病','第二類'],['日本腦炎','第二類'],['猴痘','第二類'],['嚴重特殊傳染性肺炎','第五類（依公告）']];
+const Rpt={q:'',
+  render(p,tb){const R=p.rpts=p.rpts||[],only=S.tab==='兒少保',r=IDS.filter(x=>this.q&&(x[0].toLowerCase().includes(this.q.toLowerCase())));
+    const doctors=DOCTORS.map(d=>`<option>${d}</option>`).join('');
+    tb.innerHTML=`${only?'':`<fieldset class="fs"><legend>傳染病通報</legend><div class="row"><input class="search" id="rpQ" value="${esc(this.q)}" placeholder="輸入中文或英文疾病名稱，例如：登革熱、結核、COVID" style="flex:1;min-width:200px"></div>
+      <div id="rpRes">${r.map(x=>`<div class="cn row"><b style="flex:1">${esc(x[0])}</b><span class="cs late">${esc(x[1])}</span><button class="btn primary" data-rp2="ids" data-n="${esc(x[0])}" data-c="${esc(x[1])}">通報</button></div>`).join('')||(this.q?'<div class="lbl">找不到，請換關鍵字</div>':'<div class="lbl">輸入關鍵字後，系統顯示該疾病為第幾類</div>')}</div>
+      <div class="lbl">法定傳染病分類為示範資料，實際級別與通報時限依疾管署最新公告。</div></fieldset>`}
+      <fieldset class="fs"><legend>兒少保護</legend><div class="row"><label>事由 <input class="search" id="cpN" placeholder="疑似受虐／疏忽照顧等" style="width:220px"></label>
+        <label>是否通告社工 <select id="cpS"><option>是</option><option>否</option></select></label><span class="lbl">社工室電話：<b>02-0000-0000 分機 123（示範）</b></span><button class="btn primary" data-rp2="cp">送出兒少保通報</button></div></fieldset>
+      ${only?'':`<fieldset class="fs"><legend>併發症通報（依醫品部通報表單）</legend><div class="row"><label>事件類別 <select id="cmT"><option>用藥相關</option><option>處置／侵入性治療相關</option><option>跌倒</option><option>管路相關</option><option>檢查相關</option><option>其他</option></select></label>
+        <label>發生時間 <input type="datetime-local" id="cmD" value="${new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16)}"></label>
+        <label>住院醫師 <select id="cmR">${doctors}</select></label><label>主治醫師 <select id="cmA">${doctors}</select></label></div>
+        <div class="row" style="margin-top:6px"><textarea id="cmW" rows="2" placeholder="通報原因與經過" style="flex:1"></textarea><button class="btn primary" data-rp2="cm">送出併發症通報</button></div></fieldset>
+      <fieldset class="fs"><legend>廣播保全（醫療暴力）</legend><button class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)" data-rp2="sec">🚨 廣播保全</button><span class="lbl">　有醫療暴力時使用，會記錄廣播時間與地點（示範）</span></fieldset>`}
+      <fieldset class="fs"><legend>本病人通報紀錄（${R.length}）</legend>${R.slice().reverse().map(x=>`<div class="cn"><b>${esc(x.type)}</b>　${esc(x.text)}<div class="hist">${dtm(x.at)}　${esc(x.by)}</div></div>`).join('')||'<div class="lbl">尚無通報</div>'}</fieldset>`;
+    const q=$('#rpQ');if(q)q.oninput=ev=>{Rpt.q=ev.target.value;const rr=IDS.filter(x=>Rpt.q&&x[0].toLowerCase().includes(Rpt.q.toLowerCase()));$('#rpRes').innerHTML=rr.map(x=>`<div class="cn row"><b style="flex:1">${esc(x[0])}</b><span class="cs late">${esc(x[1])}</span><button class="btn primary" data-rp2="ids" data-n="${esc(x[0])}" data-c="${esc(x[1])}">通報</button></div>`).join('')||(Rpt.q?'<div class="lbl">找不到，請換關鍵字</div>':'')}}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-rp2]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();
+  const a=t.dataset.rp2,add=(type,text)=>{(p.rpts=p.rpts||[]).push({type,text,at:Date.now(),by:ME});p.notes.push({t:'【'+type+'】'+text,at:nowS()});save();renderTab();toast('已送出：'+type)};
+  if(a==='ids')add('傳染病通報',t.dataset.n+'（'+t.dataset.c+'）');
+  else if(a==='cp')add('兒少保通報',($('#cpN').value||'（未填事由）')+'；通告社工：'+$('#cpS').value+(($('#cpS').value==='是')?'，社工室 02-0000-0000 分機 123':''));
+  else if(a==='cm'){const w=$('#cmW').value.trim();if(!w)return toast('請填通報原因');add('併發症通報',$('#cmT').value+'；'+w+'；住院醫師 '+$('#cmR').value+'、主治醫師 '+$('#cmA').value)}
+  else if(a==='sec'){if(confirm('確定廣播保全？（示範）'))add('廣播保全','急診 '+p.bed+' 床附近發生醫療暴力，已廣播通知保全')}
+},true);
+
+/* ===== 在宅：病患地址與通勤距離 ===== */
+const Home={
+  render(p,tb){const n=parseInt(p.id,10)||1,km=p.homeKm??(3+n%27);
+    tb.innerHTML=`<fieldset class="fs"><legend>在宅照護收案評估（示範）</legend><div class="row"><label>病患地址 <input class="search" id="hmA" value="${esc(p.addr||'')}" placeholder="例：台北市○○區○○路 1 段 1 號" style="width:360px"></label><button class="btn primary" data-hm="save">儲存</button></div>
+      <div style="margin-top:8px">通勤距離（自院區估算，示範）：<b>${km} 公里</b>　${km<=15?'<span class="cs ok">適合收案距離</span>':'<span class="cs late">超出建議通勤距離</span>'}</div>
+      <div class="lbl" style="margin-top:6px">現階段收案需考量通勤距離，所以急診端先記錄病患地址。依收案標準自動篩選候選個案為 P1，尚未製作。</div></fieldset>`}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-hm]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();p.addr=$('#hmA').value.trim();save();renderTab();toast('已儲存地址')},true);
 
 /* 初始化 */
 layoutLbl();renderChips();renderList();renderDetail();

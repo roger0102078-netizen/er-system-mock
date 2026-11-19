@@ -3421,7 +3421,7 @@ function pendingOf(p){const o=[];
   const w=[];Object.keys(ST_LBL).forEach(k=>{const v=(p.st||{})[k];if(v&&v!=='Y'){const r=stCnt(p,k,v);w.push(ST_LBL[k]+' '+(v==='O'?'逾時':r[0]+'/'+r[1]))}});
   if(w.length)o.push('未完成：'+w.join('、'));
   if(p.dir&&!cs.length)o.push('動向：'+p.dir);
-  const od=(p.orders||[]).filter(x=>x.status==='wait').length;if(od)o.push('待執行醫囑 '+od+' 項');
+  const pc=p.notes.filter(x=>x.role&&!x.signed).length;if(pc)o.push('待主治核閱病程 '+pc+' 則');const od=(p.orders||[]).filter(x=>x.status==='wait').length;if(od)o.push('待執行醫囑 '+od+' 項');
   return o}
 const hoMark=p=>{const l=(p.hoLog||[]).slice(-1)[0];if(!l||Date.now()-l.at>4*36e5)return'';return` <small class="hom" title="${l.from} → ${l.to}（${new Date(l.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})} 交班）">⇄</small>`};
 const Hand={
@@ -3745,22 +3745,23 @@ const Prog={sel:null,
       '最近生命徵象（'+new Date(v.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})+'）：BP '+v.bp+'、HR '+v.hr+'、RR '+v.rr+'、BT '+v.bt+'、SpO2 '+v.spo2+'%'},
   render(p,tb){const L=p.notes.map((n,i)=>({n,i})).reverse();if(this.sel===null||this.sel>=p.notes.length||this.pid!==p.id){this.sel=p.notes.length-1;this.pid=p.id}
     const role=this.role(),need=role!==ROLES[0],n=p.notes[this.sel];
-    tb.innerHTML=`<div class="pgrid"><div class="pgl"><b style="font-size:13px">時間軸（${L.length}）</b>${L.map(x=>`<div class="tli ${x.i===this.sel?'on':''}" data-pg="sel" data-i="${x.i}"><small>${esc(x.n.at)}</small>${esc(String(x.n.t).replace(/\s+/g,' ').slice(0,18))}</div>`).join('')||'<div class="lbl">尚無紀錄</div>'}</div>
+    tb.innerHTML=`<div class="pgrid"><div class="pgl"><b style="font-size:13px">時間軸（${L.length}）</b>${L.map(x=>`<div class="tli ${x.i===this.sel?'on':''}" data-pg="sel" data-i="${x.i}"><small>${esc(x.n.at)}${x.n.role?(x.n.signed?' ✓':' ⏳'):''}</small>${esc(String(x.n.t).replace(/\s+/g,' ').slice(0,18))}</div>`).join('')||'<div class="lbl">尚無紀錄</div>'}</div>
       <div class="pgr"><div id="tplBar" class="tplbar"></div>
       <div class="tplbar"><button class="btn" data-pg="ditto" title="複製上一筆病程到輸入框">Ditto（上一筆）</button><button class="btn" data-pg="pi" title="抓取 PI、診斷、Daily 藥物、管路與最近一筆生命徵象">帶入急診 PI</button><span class="sp"></span>
         <label class="lbl">身分 <select data-pg="role">${ROLES.map(r=>`<option ${r===role?'selected':''}>${r}</option>`).join('')}</select></label>
         ${need?`<label class="lbl">指導醫師 <select id="pgSup">${DOCTORS.filter(d=>d!==ME).map(d=>`<option>${d}</option>`).join('')}</select></label>`:''}</div>
       <div class="row"><textarea id="nt" rows="4" placeholder="輸入病程紀錄（可自由輸入，或用上方 Ditto／帶入 PI／個人組套）…" style="flex:1"></textarea><button class="btn primary" data-pg="add">新增</button></div>
       <div class="lbl">${need?'專科護理師／住院醫師存檔時需填指導醫師（主治醫師）。':'以主治醫師身分存檔。'}　Procedure note 請至侵入性治療表單（示意，之後串接）。</div>
-      <div class="pgv">${n?`<small style="color:var(--muted)">${esc(n.at)}${n.by?'　'+esc(n.by):''}</small>${NLc}${esc(n.t)}`:'尚無病程紀錄'}</div></div></div>`;Tpl.paint(p)}
+      <div class="pgv">${n?`<small style="color:var(--muted)">${esc(n.at)}${n.by?'　'+esc(n.by):''}</small>${n.role?`${NLc}<b style="color:${n.signed?'#2f7d4f':'#b45309'}">${n.signed?'✓ 主治醫師 '+esc(n.sup)+' 已核閱簽署（'+esc(n.signAt)+'）':'⏳ 待主治醫師 '+esc(n.sup)+' 核閱簽署'}</b>${!n.signed&&role===ROLES[0]?` <button class="btn primary" data-pg="cosign" data-i="${this.sel}">以主治醫師身分核閱簽署</button>`:''}`:(n.by?`${NLc}<b style="color:#2f7d4f">主治醫師 ${esc(n.by)}</b>`:'')}${NLc}${esc(n.t)}`:'尚無病程紀錄'}</div></div></div>`;Tpl.paint(p)}
 };
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-pg]');if(!t||t.tagName==='SELECT')return;const p=cur();if(!p)return;e.stopPropagation();const a=t.dataset.pg,nt=$('#nt');
   if(a==='sel'){Prog.sel=+t.dataset.i;renderTab()}
   else if(a==='ditto'){const L=p.notes;if(!L.length)return toast('沒有上一筆病程');nt.value=String(L[L.length-1].t);nt.focus()}
   else if(a==='pi'){nt.value+=(nt.value?NLc:'')+Prog.pi(p);nt.focus()}
+  else if(a==='cosign'){const n=p.notes[+t.dataset.i];if(n){n.signed=true;n.signBy=ME;n.signAt=nowS();save();renderTab();toast('已核閱簽署')}}
   else if(a==='add'){const v=nt.value.trim();if(!v)return;const role=Prog.role();let by=ME;
     if(role!==ROLES[0]){const sup=$('#pgSup').value;by=ME+'（'+role+'，指導醫師：'+sup+'）'}
-    p.notes.push({t:v,at:nowS(),by});Prog.sel=p.notes.length-1;save();renderTab();toast('已新增病程')}
+    const nn={t:v,at:nowS(),by};if(role!==ROLES[0]){nn.role=role;nn.sup=$('#pgSup').value;nn.signed=false}p.notes.push(nn);Prog.sel=p.notes.length-1;save();renderTab();toast('已新增病程')}
 },true);
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.pg==='role'){lsSet('er-role',t.value);renderTab()}},true);
 

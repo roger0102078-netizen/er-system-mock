@@ -752,6 +752,15 @@ body.dresz{user-select:none;cursor:ns-resize}
 .whis.priv{border-left-color:#999;opacity:.85}.whis small{color:var(--muted)}
 .tplbar{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
 .actrow{display:flex;gap:8px;align-items:center;padding:3px 0}
+
+.pgrid{display:grid;grid-template-columns:190px minmax(0,1fr);gap:10px;height:100%}
+.pgl{border-right:1px solid var(--line);overflow:auto;padding-right:6px;max-height:100%}
+.pgl .tli{border-left:3px solid var(--line);padding:3px 8px;margin:0 0 4px 4px;cursor:pointer;font-size:13px}
+.pgl .tli:hover{background:var(--accent-soft)}.pgl .tli.on{border-left-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.pgl .tli small{display:block;color:var(--muted)}
+.pgr{min-width:0;overflow:auto}
+.pgv{white-space:pre-wrap;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:8px}
+@media(max-width:700px){.pgrid{grid-template-columns:1fr}.pgl{border-right:0;max-height:140px}}
 </style>
 
 </head>
@@ -1127,9 +1136,7 @@ function renderTab(){
       <fieldset class="fs"><legend>會診紀錄</legend>${cs.length?cs.map((c,i)=>`<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line)"><b style="min-width:84px">${c.dept}</b><span style="flex:1">${c.note||''}</span><span class="lbl">${tm(c.at)}</span>${c.done?'<span class="lbl">已完成</span>':`<b class="cons">會診中</b><button class="btn" data-cdone="${i}">完成會診</button>`}</div>`).join(''):'<div class="lbl">尚無會診紀錄</div>'}</fieldset>`;
   }else if(S.tab==='悄悄話'){Whis.render(p,tb)
   }else if(S.tab==='醫囑'){Ord.render(p,tb)
-  }else if(S.tab==='病程'){
-    tb.innerHTML=`<div id="tplBar" class="tplbar"></div><div class="row"><textarea id="nt" rows="2" placeholder="輸入病程紀錄…" style="flex:1"></textarea><button class="btn primary" id="addNt">新增</button></div>
-    <div id="nts">${p.notes.map(n=>`<div class="note">${n.t}<br><small>${n.at}</small></div>`).reverse().join('')||'<div class="empty">尚無病程紀錄</div>'}</div>`;Tpl.paint(p);
+  }else if(S.tab==='病程'){Prog.render(p,tb);
   }else if(S.tab==='醫囑'){OrderPad.render(p,tb)}
   else{
     tb.innerHTML=`<div class="empty">「${S.tab}」模組（示意，之後串接）</div>`;
@@ -3723,6 +3730,39 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   else if(a==='del'){const x=L[+t.dataset.i];if(x&&confirm('刪除組套「'+x.n+'」？')){L.splice(+t.dataset.i,1);lsSet(Tpl.key,L);Tpl.paint(p)}}
   else if(a==='save'){const nt=$('#nt'),v=nt&&nt.value.trim();if(!v)return toast('請先在輸入框寫好內容');const n=prompt('組套名稱');if(n){L.push({n,t:v});lsSet(Tpl.key,L);Tpl.paint(p);toast('已存成個人病歷組套「'+n+'」')}}
 },true);
+
+/* ===== 病程 v2：時間軸、Ditto、帶入急診 PI、專師/住院醫師需指導醫師 ===== */
+const ROLES=['主治醫師','住院醫師','專科護理師'];
+const Prog={sel:null,
+  role(){return lsGet('er-role',ROLES[0])},
+  vitals(p){if(!p.vs){const n=parseInt(p.id,10)||1;p.vs={bp:(108+n%40)+'/'+(64+n%24),hr:68+n%42,rr:14+n%8,bt:(36.2+(n%16)/10).toFixed(1),spo2:94+n%6,at:Date.now()-((n%9)+3)*60000}}return p.vs},
+  pi(p){const v=this.vitals(p),O=(p.orders||[]).filter(o=>o.status!=='stop'),
+      meds=O.filter(o=>o.t==='med').map(o=>o.name),
+      tubes=O.filter(o=>/Foley|Nasogastric|Chest tube|CVC|A-line|Endotracheal|導尿|鼻胃|胸管|中央靜脈|動脈導管|插管/i.test(o.name)).map(o=>o.name),
+      hpi=(p.chart&&p.chart.saved&&p.chart.saved.text)||'',dx=(p.dx||[]).map(d=>d.name||d.code).filter(Boolean);
+    return '【帶入急診 PI】'+NLc+'Impression：'+(p.imp||'（未填）')+NLc+'診斷：'+(dx.join('、')||'（未填）')+NLc+'PI：'+(hpi?hpi.replace(/\s+/g,' ').slice(0,160):'主訴 '+p.cc)+NLc+
+      'Daily 藥物：'+(meds.join('、')||'無')+NLc+'管路：'+(tubes.join('、')||'無')+NLc+
+      '最近生命徵象（'+new Date(v.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})+'）：BP '+v.bp+'、HR '+v.hr+'、RR '+v.rr+'、BT '+v.bt+'、SpO2 '+v.spo2+'%'},
+  render(p,tb){const L=p.notes.map((n,i)=>({n,i})).reverse();if(this.sel===null||this.sel>=p.notes.length||this.pid!==p.id){this.sel=p.notes.length-1;this.pid=p.id}
+    const role=this.role(),need=role!==ROLES[0],n=p.notes[this.sel];
+    tb.innerHTML=`<div class="pgrid"><div class="pgl"><b style="font-size:13px">時間軸（${L.length}）</b>${L.map(x=>`<div class="tli ${x.i===this.sel?'on':''}" data-pg="sel" data-i="${x.i}"><small>${esc(x.n.at)}</small>${esc(String(x.n.t).replace(/\s+/g,' ').slice(0,18))}</div>`).join('')||'<div class="lbl">尚無紀錄</div>'}</div>
+      <div class="pgr"><div id="tplBar" class="tplbar"></div>
+      <div class="tplbar"><button class="btn" data-pg="ditto" title="複製上一筆病程到輸入框">Ditto（上一筆）</button><button class="btn" data-pg="pi" title="抓取 PI、診斷、Daily 藥物、管路與最近一筆生命徵象">帶入急診 PI</button><span class="sp"></span>
+        <label class="lbl">身分 <select data-pg="role">${ROLES.map(r=>`<option ${r===role?'selected':''}>${r}</option>`).join('')}</select></label>
+        ${need?`<label class="lbl">指導醫師 <select id="pgSup">${DOCTORS.filter(d=>d!==ME).map(d=>`<option>${d}</option>`).join('')}</select></label>`:''}</div>
+      <div class="row"><textarea id="nt" rows="4" placeholder="輸入病程紀錄（可自由輸入，或用上方 Ditto／帶入 PI／個人組套）…" style="flex:1"></textarea><button class="btn primary" data-pg="add">新增</button></div>
+      <div class="lbl">${need?'專科護理師／住院醫師存檔時需填指導醫師（主治醫師）。':'以主治醫師身分存檔。'}　Procedure note 請至侵入性治療表單（示意，之後串接）。</div>
+      <div class="pgv">${n?`<small style="color:var(--muted)">${esc(n.at)}${n.by?'　'+esc(n.by):''}</small>${NLc}${esc(n.t)}`:'尚無病程紀錄'}</div></div></div>`;Tpl.paint(p)}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-pg]');if(!t||t.tagName==='SELECT')return;const p=cur();if(!p)return;e.stopPropagation();const a=t.dataset.pg,nt=$('#nt');
+  if(a==='sel'){Prog.sel=+t.dataset.i;renderTab()}
+  else if(a==='ditto'){const L=p.notes;if(!L.length)return toast('沒有上一筆病程');nt.value=String(L[L.length-1].t);nt.focus()}
+  else if(a==='pi'){nt.value+=(nt.value?NLc:'')+Prog.pi(p);nt.focus()}
+  else if(a==='add'){const v=nt.value.trim();if(!v)return;const role=Prog.role();let by=ME;
+    if(role!==ROLES[0]){const sup=$('#pgSup').value;by=ME+'（'+role+'，指導醫師：'+sup+'）'}
+    p.notes.push({t:v,at:nowS(),by});Prog.sel=p.notes.length-1;save();renderTab();toast('已新增病程')}
+},true);
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.pg==='role'){lsSet('er-role',t.value);renderTab()}},true);
 
 /* 初始化 */
 layoutLbl();renderChips();renderList();renderDetail();

@@ -761,6 +761,22 @@ body.dresz{user-select:none;cursor:ns-resize}
 .pgr{min-width:0;overflow:auto}
 .pgv{white-space:pre-wrap;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:8px}
 @media(max-width:700px){.pgrid{grid-template-columns:1fr}.pgl{border-right:0;max-height:140px}}
+
+.cn{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:6px 0;background:var(--panel)}
+.cn .cs{display:inline-block;border-radius:999px;padding:0 10px;font-size:12px;background:var(--accent-soft);color:var(--ink)}
+.cn .cs.late{background:#fde8e8;color:#b91c1c;font-weight:700}.cn .cs.ok{background:#d9f2e0;color:#14532d}
+.cn .urg{color:#b91c1c;font-weight:700}
+.cn .hist{font-size:12px;color:var(--muted);margin-top:2px}
+.cn .steps{display:flex;gap:2px;margin:4px 0}.cn .steps i{flex:1;height:5px;border-radius:3px;background:var(--line)}.cn .steps i.on{background:var(--accent)}
+.hxg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.hxg .big{grid-column:span 2}
+.hxc{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--panel)}
+.hxc h4{margin:0 0 6px;font-size:14px}
+.hxc.alg{border-color:#f5b5b5;background:#fff5f5;color:#7f1d1d}.hxc.pmh{border-left:5px solid #7c3aed}.hxc.med{border-left:5px solid #0891b2}
+.hxc table{width:100%;border-collapse:collapse}.hxc td,.hxc th{padding:3px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+.hxc .tag{display:inline-block;border-radius:4px;padding:0 6px;font-size:12px;background:var(--accent-soft);margin:1px}
+.hxc .tag.cloud{background:#dbeafe;color:#1e3a8a}
+@media(max-width:800px){.hxg{grid-template-columns:1fr}.hxg .big{grid-column:auto}}
 </style>
 
 </head>
@@ -1074,7 +1090,7 @@ function renderList(){
 
 /* ===== 病人詳細 ===== */
 const cur=()=>patients.find(p=>p.id===S.sel);
-const FK1=['病歷','檢傷','診斷','病程','查詢','檢驗','報查','累報','醫囑','會診','證明','出院','住院','其他','發報告'];
+const FK1=['病歷','檢傷','診斷','病程','病歷查詢','檢驗','報查','累報','醫囑','會診','證明','出院','住院','其他','發報告'];
 const FK2=['悄悄話','照相','護理紀錄','VTS','ICU空','ICU待床','提報','待床','流程','鎮靜評估','兒少保','DNR','影像流程','緊急醫療','醫雲','在宅'];
 function renderDetail(){
   const p=cur(), d=$('#detail');
@@ -1126,14 +1142,10 @@ function renderTab(){
       </div>
     </fieldset>`;
     renderDx();
-  }else if(S.tab==='會診'){
-    const cs=p.consults||[],tm=t=>new Date(t).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    tb.innerHTML=`<fieldset class="fs"><legend>開立會診</legend>
-      <div class="row"><select id="cDept">${CDEPTS.map(d=>`<option>${d}</option>`).join('')}</select>
-      <input class="search" id="cNote" placeholder="會診事由（選填）" style="flex:1;min-width:160px">
-      <button class="btn primary" id="cAdd">開立會診</button></div>
-      <div class="lbl" style="margin-top:6px">開立後，清單的「動向」會自動顯示「會診＋科別」；全部完成後恢復原本動向。</div></fieldset>
-      <fieldset class="fs"><legend>會診紀錄</legend>${cs.length?cs.map((c,i)=>`<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line)"><b style="min-width:84px">${c.dept}</b><span style="flex:1">${c.note||''}</span><span class="lbl">${tm(c.at)}</span>${c.done?'<span class="lbl">已完成</span>':`<b class="cons">會診中</b><button class="btn" data-cdone="${i}">完成會診</button>`}</div>`).join(''):'<div class="lbl">尚無會診紀錄</div>'}</fieldset>`;
+  }else if(S.tab==='會診'){Cons.render(p,tb)
+  }else if(S.tab==='報查'){Rep.render(p,tb)
+  }else if(S.tab==='病歷查詢'){Hx.render(p,tb)
+  }else if(S.tab==='證明'){Cert.render(p,tb)
   }else if(S.tab==='悄悄話'){Whis.render(p,tb)
   }else if(S.tab==='醫囑'){Ord.render(p,tb)
   }else if(S.tab==='病程'){Prog.render(p,tb);
@@ -3421,7 +3433,7 @@ function pendingOf(p){const o=[];
   const w=[];Object.keys(ST_LBL).forEach(k=>{const v=(p.st||{})[k];if(v&&v!=='Y'){const r=stCnt(p,k,v);w.push(ST_LBL[k]+' '+(v==='O'?'逾時':r[0]+'/'+r[1]))}});
   if(w.length)o.push('未完成：'+w.join('、'));
   if(p.dir&&!cs.length)o.push('動向：'+p.dir);
-  const pc=p.notes.filter(x=>x.role&&!x.signed).length;if(pc)o.push('待主治核閱病程 '+pc+' 則');const od=(p.orders||[]).filter(x=>x.status==='wait').length;if(od)o.push('待執行醫囑 '+od+' 項');
+  const cr=(p.crit||[]).filter(c=>c.ack&&!c.reply).length;if(cr)o.push('危急值已簽收未處置回覆 '+cr+' 筆');const fu=(p.fup||[]).filter(x=>x.state!=='已處理').length;if(fu)o.push('離院後報告待處理 '+fu+' 項');const cc=(p.consults||[]).filter(x=>!x.done&&x.status==='已回覆').length;if(cc)o.push('會診已回覆待確認 '+cc+' 筆');const pc=p.notes.filter(x=>x.role&&!x.signed).length;if(pc)o.push('待主治核閱病程 '+pc+' 則');const od=(p.orders||[]).filter(x=>x.status==='wait').length;if(od)o.push('待執行醫囑 '+od+' 項');
   return o}
 const hoMark=p=>{const l=(p.hoLog||[]).slice(-1)[0];if(!l||Date.now()-l.at>4*36e5)return'';return` <small class="hom" title="${l.from} → ${l.to}（${new Date(l.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})} 交班）">⇄</small>`};
 const Hand={
@@ -3764,6 +3776,113 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
     const nn={t:v,at:nowS(),by};if(role!==ROLES[0]){nn.role=role;nn.sup=$('#pgSup').value;nn.signed=false}p.notes.push(nn);Prog.sel=p.notes.length-1;save();renderTab();toast('已新增病程')}
 },true);
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.pg==='role'){lsSet('er-role',t.value);renderTab()}},true);
+
+const hm=t=>new Date(t).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'});
+const dtm=t=>new Date(t).toLocaleString('zh-TW',{hour12:false,month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+/* ===== 會診 v2：緊急程度、狀態流程、逾時提醒、改派、重複提示、回覆與確認 ===== */
+const CST=['已送出','已通知','已接收','已到診','已回覆','結案'];
+const Cons={
+  LIM:{'緊急':15,'一般':30},
+  norm(c){if(!c.h){c.h=[{s:'已送出',at:c.at}];if(c.done)c.h.push({s:'結案',at:c.doneAt||c.at})}c.urg=c.urg||'一般';c.status=c.status||(c.done?'結案':'已送出');return c},
+  late(c){return !c.done&&CST.indexOf(c.status)<2&&Date.now()-c.at>this.LIM[c.urg]*60000},
+  render(p,tb){const L=(p.consults=p.consults||[]).map(c=>this.norm(c));
+    tb.innerHTML=`<fieldset class="fs"><legend>開立會診</legend>
+      <div class="row"><select id="cDept">${CDEPTS.map(d=>`<option>${d}</option>`).join('')}</select>
+      <select id="cUrg"><option>一般</option><option>緊急</option></select>
+      <input class="search" id="cNote" placeholder="會診原因／想問的問題" style="flex:1;min-width:160px">
+      <button class="btn primary" data-cn="add">開立會診</button></div>
+      <div class="lbl" style="margin-top:6px">流程：已送出 → 已通知 → 已接收 → 已到診 → 已回覆 → 結案。緊急 15 分鐘、一般 30 分鐘未接收，系統標示逾時。動向欄會自動顯示「會診＋科別」。</div></fieldset>
+      <fieldset class="fs"><legend>會診紀錄（${L.length}）</legend>${L.map((c,i)=>{const k=CST.indexOf(c.status),lt=this.late(c),act=!c.done;
+      return `<div class="cn"><div class="row"><b style="min-width:90px">${esc(c.dept)}</b>${c.urg==='緊急'?'<span class="urg">緊急</span>':''}<span style="flex:1">${esc(c.note||'')}</span>
+        <span class="cs ${lt?'late':c.done?'ok':''}">${c.status}${lt?'　⚠ 逾時未接收 '+Math.floor((Date.now()-c.at)/60000)+' 分':''}</span></div>
+        ${c.status==='已取消'?'':`<div class="steps">${CST.map((x,j)=>`<i class="${j<=k?'on':''}" title="${x}"></i>`).join('')}</div>`}
+        <div class="hist">${c.h.map(x=>x.s+' '+hm(x.at)).join(' → ')}</div>
+        ${c.reply?`<div class="note"><b>會診回覆</b>（${hm(c.replyAt)}）：${esc(c.reply)}${c.advice?'<br><b>後續建議</b>：'+esc(c.advice):''}${c.confirmBy?'<br><small>急診醫師 '+esc(c.confirmBy)+' 已確認</small>':''}</div>`:''}
+        ${act?`<div class="row" style="margin-top:4px">${k<3?`<button class="btn primary" data-cn="next" data-i="${i}">→ ${CST[k+1]}</button>`:''}
+          ${k===3?`<input class="search" id="cr${i}" placeholder="會診回覆" style="flex:1;min-width:140px"><input class="search" id="ca${i}" placeholder="後續建議" style="flex:1;min-width:140px"><button class="btn primary" data-cn="reply" data-i="${i}">登錄回覆</button>`:''}
+          ${k===4?`<button class="btn primary" data-cn="close" data-i="${i}">急診醫師確認並結案</button>`:''}
+          ${k<3?`<select id="cx${i}">${CDEPTS.map(d=>`<option ${d===c.dept?'selected':''}>${d}</option>`).join('')}</select><button class="btn" data-cn="redo" data-i="${i}">改派</button>`:''}
+          <button class="btn" data-cn="cancel" data-i="${i}">取消會診</button></div>`:''}</div>`}).join('')||'<div class="lbl">尚無會診紀錄</div>'}</fieldset>`}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-cn]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();
+  const a=t.dataset.cn,c=(p.consults||[])[+t.dataset.i];const log=(st)=>{c.h.push({s:st,at:Date.now()})};const note=x=>p.notes.push({t:x,at:nowS()});
+  if(a==='add'){const d=$('#cDept').value,u=$('#cUrg').value,n=$('#cNote').value.trim();
+    if((p.consults||[]).some(x=>!x.done&&x.dept===d)&&!confirm('已有進行中的「'+d+'」會診，確定重複開立？'))return;
+    const at=Date.now();p.consults.push({dept:d,urg:u,note:n,at,done:false,status:'已送出',h:[{s:'已送出',at}]});note('開立會診：'+d+'（'+u+'）'+(n?'：'+n:''));save();renderTab();renderList();toast('已開立會診：'+d);return}
+  if(!c)return;
+  if(a==='next'){const k=CST.indexOf(c.status);c.status=CST[k+1];log(c.status);save();renderTab();renderList()}
+  else if(a==='redo'){const d=$('#cx'+t.dataset.i).value;if(d!==c.dept){note('會診改派：'+c.dept+' → '+d);c.h.push({s:'改派→'+d,at:Date.now()});c.dept=d;c.status='已送出';c.at=Date.now();save();renderTab();renderList()}}
+  else if(a==='cancel'){if(confirm('取消「'+c.dept+'」會診？')){c.status='已取消';c.done=true;log('已取消');note('取消會診：'+c.dept);save();renderTab();renderList()}}
+  else if(a==='reply'){const r=$('#cr'+t.dataset.i).value.trim();if(!r)return toast('請填會診回覆');c.reply=r;c.advice=$('#ca'+t.dataset.i).value.trim();c.replyAt=Date.now();c.status='已回覆';log('已回覆');note('會診回覆（'+c.dept+'）：'+r+(c.advice?'；建議：'+c.advice:''));save();renderTab();renderList()}
+  else if(a==='close'){c.status='結案';c.done=true;c.doneAt=Date.now();c.confirmBy=ME;log('結案');note('會診結案（'+c.dept+'），急診醫師 '+ME+' 已確認回覆內容');save();renderTab();renderList();toast('會診已結案')}
+},true);
+
+/* ===== 報告查詢：危急值簽收／處置回覆、離院後報告追蹤 ===== */
+const Rep={
+  render(p,tb){const C=p.crit||[],F=p.fup=p.fup||[],now=Date.now(),nu=C.filter(c=>!c.ack).length,nr=C.filter(c=>c.ack&&!c.reply).length;
+    tb.innerHTML=`<fieldset class="fs"><legend>危急值（未簽收 ${nu}、已簽收未回覆 ${nr}）</legend>${C.map((c,i)=>`<div class="cn"><div class="row"><b>${esc(c.name)}</b><span style="color:#b91c1c;font-weight:700">${esc(c.val)}</span><span class="lbl">參考 ${esc(c.ref||'')}　通知 ${hm(c.at)}（${Math.max(0,Math.round((now-c.at)/60000))} 分鐘前）</span><span style="flex:1"></span>
+      <span class="cs ${c.reply?'ok':!c.ack?'late':''}">${c.reply?'已處置回覆':c.ack?'已簽收，未回覆':'未簽收'}</span></div>
+      ${c.ack?`<div class="hist">簽收：${esc(c.ackBy||'—')} ${c.ackAt?hm(c.ackAt):''}</div>`:''}
+      ${c.reply?`<div class="note"><b>處置回覆</b>：${esc(c.reply)}<br><small>${esc(c.replyBy)} ${hm(c.replyAt)}</small></div>`:`<div class="row" style="margin-top:4px">${!c.ack?`<button class="btn primary" data-rp="ack" data-i="${i}">簽收</button>`:`<input class="search" id="rr${i}" placeholder="處置回覆，例如：已補鉀 40 mEq，1 小時後複驗" style="flex:1"><button class="btn primary" data-rp="reply" data-i="${i}">送出處置回覆</button>`}</div>`}</div>`).join('')||'<div class="lbl">此病人沒有危急值</div>'}</fieldset>
+    <fieldset class="fs"><legend>離院後才完成的報告追蹤（${F.filter(x=>x.state!=='已處理').length} 項待處理）</legend>
+      <div class="row"><input class="search" id="fuN" placeholder="報告／檢查名稱，例如：血液培養、病理報告" style="flex:1;min-width:180px"><select id="fuO">${DOCTORS.map(d=>`<option ${d===p.doc?'selected':''}>${d}</option>`).join('')}</select><button class="btn primary" data-rp="fadd">加入追蹤</button></div>
+      ${F.map((x,i)=>`<div class="cn"><div class="row"><b>${esc(x.name)}</b><span class="lbl">加入 ${dtm(x.at)}　責任醫師 <b>${esc(x.owner)}</b></span><span style="flex:1"></span><span class="cs ${x.state==='已處理'?'ok':''}">${x.state}</span></div>
+        ${x.h&&x.h.length?`<div class="hist">${x.h.map(y=>esc(y)).join('；')}</div>`:''}
+        ${x.state==='已處理'?'':`<div class="row" style="margin-top:4px"><button class="btn" data-rp="fnote" data-i="${i}">已通知病人</button><select id="fh${i}">${DOCTORS.map(d=>`<option ${d===x.owner?'selected':''}>${d}</option>`).join('')}</select><button class="btn" data-rp="fhand" data-i="${i}">交接給</button><button class="btn primary" data-rp="fdone" data-i="${i}">已處理</button></div>`}</div>`).join('')||'<div class="lbl">目前沒有追蹤項目。離院後才出結果的報告，在這裡指定責任醫師，換班時可交接。</div>'}</fieldset>`}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-rp]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();
+  const a=t.dataset.rp,i=+t.dataset.i,note=x=>p.notes.push({t:x,at:nowS()}),end=()=>{save();renderTab();renderList()};
+  if(a==='ack'){const c=p.crit[i];c.ack=true;c.ackBy=ME;c.ackAt=Date.now();note('危急值已知悉：'+c.name+' '+c.val);end()}
+  else if(a==='reply'){const v=$('#rr'+i).value.trim();if(!v)return toast('請填處置回覆');const c=p.crit[i];c.reply=v;c.replyBy=ME;c.replyAt=Date.now();note('危急值處置回覆（'+c.name+' '+c.val+'）：'+v);end()}
+  else if(a==='fadd'){const n=$('#fuN').value.trim();if(!n)return toast('請輸入報告名稱');p.fup.push({name:n,at:Date.now(),owner:$('#fuO').value,state:'待處理',h:[]});note('離院後報告追蹤：'+n+'，責任醫師 '+$('#fuO').value);end()}
+  else if(a==='fnote'){const x=p.fup[i];x.state='已通知病人';x.h.push('已通知病人 '+hm(Date.now())+'（'+ME+'）');end()}
+  else if(a==='fhand'){const x=p.fup[i],d=$('#fh'+i).value;if(d!==x.owner){x.h.push('交接 '+x.owner+' → '+d+' '+hm(Date.now()));note('離院後報告「'+x.name+'」責任交接：'+x.owner+' → '+d);x.owner=d;end()}}
+  else if(a==='fdone'){const x=p.fup[i];x.state='已處理';x.h.push('已處理 '+hm(Date.now())+'（'+ME+'）');note('離院後報告「'+x.name+'」已處理');end()}
+},true);
+
+/* ===== 病歷查詢首頁：過敏、過去病史、用藥、就醫紀錄 ===== */
+const HXP=[['高血壓','Amlodipine 5 mg QD'],['第 2 型糖尿病','Metformin 500 mg BID'],['高血脂','Atorvastatin 20 mg QN'],['心房顫動','Apixaban 5 mg BID'],['冠心病','Aspirin 100 mg QD'],['氣喘','Salbutamol 吸入 PRN'],['痛風','Allopurinol 100 mg QD'],['慢性腎臟病','（腎功能調整用藥）']];
+const HXV=[['內科門診','高血壓追蹤'],['急診','上呼吸道感染'],['心臟內科','胸悶評估'],['新陳代謝科','血糖控制'],['骨科門診','下背痛'],['急診','急性腸胃炎']];
+const NHI=[['Losartan 50 mg QD','外院心臟內科','28 天'],['Omeprazole 20 mg QD','外院家醫科','14 天'],['Diazepam 2 mg HS','診所','7 天']];
+const Hx={
+  data(p){if(!p.hx){const n=parseInt(p.id,10)||1,adult=+p.age>=18,k=adult?n%4:0,pm=[];for(let j=0;j<k;j++)pm.push(HXP[(n+j*3)%HXP.length]);
+      p.hx={pmh:pm.map(x=>x[0]),meds:pm.filter(x=>!/^（/.test(x[1])).map(x=>({n:x[1],src:'本院病歷',last:'近 3 個月'})),
+      visits:[0,1,2].map(j=>{const v=HXV[(n+j*2)%HXV.length];return{d:new Date(Date.now()-(20+j*47+n%15)*864e5).toLocaleDateString('zh-TW'),dept:v[0],dx:v[1]}}),cloud:false}}return p.hx},
+  render(p,tb){const h=this.data(p),ch=p.chart||{},pmh=[...new Set([...(h.pmh||[]),...(ch.pmh||[])])],alg=[...new Set([...(p.allergy||[]),...(ch.alg||[])])],dx=(p.dx||[]).map(d=>d.name||d.code).filter(Boolean);
+    tb.innerHTML=`<div class="hxg">
+     <div class="hxc alg"><h4>過敏</h4>${alg.length?alg.map(x=>`<span class="tag" style="background:#fde8e8;color:#b91c1c">${esc(x)}</span>`).join(''):'無已知過敏（NKDA）'}</div>
+     <div class="hxc"><h4>本次急診</h4>主訴：${esc(p.cc)}　檢傷 ${p.lvl} 級<br>診斷：${esc(dx.join('、')||p.imp||'（未填）')}<br>已開醫囑 ${(p.orders||[]).length} 筆</div>
+     <div class="hxc pmh big"><h4>過去病史 PH</h4>${pmh.length?pmh.map(x=>`<span class="tag" style="font-size:14px;padding:2px 10px">${esc(x)}</span>`).join(' '):'無特殊病史'}</div>
+     <div class="hxc med big"><h4>用藥 <button class="btn" data-hx="cloud" style="float:right;padding:0 10px">${h.cloud?'↻ 重新帶入健保雲端用藥':'⤓ 帶入健保雲端用藥'}</button></h4>
+       <table><tr><th>藥物</th><th>來源</th><th>最近領藥／天數</th></tr>${(h.meds||[]).map(m=>`<tr><td><b>${esc(m.n)}</b></td><td><span class="tag ${m.src==='健保雲端'?'cloud':''}">${esc(m.src)}</span></td><td>${esc(m.last)}</td></tr>`).join('')||'<tr><td colspan="3" class="lbl">沒有長期用藥紀錄</td></tr>'}</table>
+       <div class="lbl" style="margin-top:4px">健保雲端用藥為示範資料，非真實查詢。</div></div>
+     <div class="hxc big"><h4>就醫紀錄</h4><table><tr><th>日期</th><th>科別</th><th>診斷</th></tr>${(h.visits||[]).map(v=>`<tr><td>${esc(v.d)}</td><td>${esc(v.dept)}</td><td>${esc(v.dx)}</td></tr>`).join('')}</table></div></div>`}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-hx]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();
+  const h=Hx.data(p);if(t.dataset.hx==='cloud'){h.meds=(h.meds||[]).filter(m=>m.src!=='健保雲端');const n=parseInt(p.id,10)||1;[0,1].forEach(j=>{const x=NHI[(n+j)%NHI.length];h.meds.push({n:x[0],src:'健保雲端',last:x[1]+'，'+x[2]})});h.cloud=true;save();renderTab();toast('已帶入健保雲端用藥（示範）')}
+},true);
+
+/* ===== 證明：診斷證明書、病危通知單、死亡診斷書（示範模板，非正式文件）===== */
+const Cert={type:'診斷證明書',txt:{},
+  fill(p,type,dt){const dx=(p.dx||[]).map(d=>d.name||d.code).filter(Boolean),head='姓名：'+p.name+'　性別／年齡：'+p.sex+'／'+p.age+' 歲　病歷號：'+(p.mrn||'')+'　流水號：'+p.id,fm=t=>new Date(t).toLocaleString('zh-TW',{hour12:false});
+    if(type==='死亡診斷書')return '【死亡診斷書（示範，非正式文件）】'+NLc+head+NLc+'到院時間：'+fm(p.arrive)+NLc+'死亡時間：'+fm(dt||Date.now())+NLc+'死亡地點：急診'+NLc+'（甲）直接引起死亡之疾病：'+(dx[0]||'')+NLc+'（乙）先行原因：'+(dx[1]||'')+NLc+'死亡方式：病死或自然死'+NLc+'開立醫師：'+ME;
+    if(type==='病危通知單')return '【病危通知單（示範）】'+NLc+head+NLc+'診斷：'+(dx.join('、')||p.imp||'')+NLc+'目前病況：病情危急，隨時可能惡化。已向家屬說明病情、可能處置與預後，家屬了解。'+NLc+'通知時間：'+fm(Date.now())+NLc+'通知醫師：'+ME;
+    return '【診斷證明書（示範）】'+NLc+head+NLc+'診斷：'+(dx.join('、')||p.imp||'')+NLc+'就診日期：'+fm(p.arrive)+NLc+'醫師囑言：'+NLc+'開立醫師：'+ME},
+  render(p,tb){const ty=this.type,key=p.id+ty;if(this.txt[key]===undefined)this.txt[key]=this.fill(p,ty);
+    tb.innerHTML=`<fieldset class="fs"><legend>證明文件</legend><div class="row"><label>種類 <select data-ce="type">${['診斷證明書','病危通知單','死亡診斷書'].map(x=>`<option ${x===ty?'selected':''}>${x}</option>`).join('')}</select></label>
+      ${ty==='死亡診斷書'?`<label>死亡時間 <input type="datetime-local" id="ceDt" value="${new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16)}"></label><label>死亡方式 <select id="ceMode"><option>病死或自然死</option><option>意外</option><option>自殺</option><option>他殺</option><option>不詳</option></select></label>`:''}
+      <button class="btn" data-ce="refill">重新帶入範本</button></div>
+      ${ty==='死亡診斷書'?'<div class="lbl" style="margin-top:4px">已自動帶入到院時間、診斷與死亡時間。死亡方式非「病死或自然死」時，請改開司法相驗單（尚未製作）。</div>':''}
+      <textarea id="ceTxt" rows="12" style="width:100%;margin-top:6px">${esc(this.txt[key])}</textarea>
+      <div class="row" style="margin-top:6px"><button class="btn primary" data-ce="note">存入病程</button><button class="btn" data-ce="print">列印</button></div></fieldset>`}
+};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ce]');if(!t||t.tagName==='SELECT')return;const p=cur();if(!p)return;e.stopPropagation();
+  const a=t.dataset.ce,ty=Cert.type,key=p.id+ty;
+  if(a==='refill'){const dt=$('#ceDt')?new Date($('#ceDt').value).getTime():Date.now();let x=Cert.fill(p,ty,dt);const m=$('#ceMode');if(m)x=x.replace('病死或自然死',m.value);Cert.txt[key]=x;renderTab()}
+  else if(a==='note'){const v=$('#ceTxt').value.trim();if(v){p.notes.push({t:v,at:nowS()});save();toast('已存入病程')}}
+  else if(a==='print'){const w=window.open('','_blank');if(w){w.document.write('<pre style="font:16px/1.7 sans-serif;white-space:pre-wrap">'+esc($('#ceTxt').value)+'</pre>');w.document.close();setTimeout(()=>{try{w.print()}catch(_){}},300)}}
+},true);
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.ce==='type'){Cert.type=t.value;renderTab()}},true);
 
 /* 初始化 */
 layoutLbl();renderChips();renderList();renderDetail();

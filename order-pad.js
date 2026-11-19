@@ -15,7 +15,7 @@ const hhmm=ts=>new Date(ts).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-dig
 
 /* ---------- 目錄（m: 藥品預設 [劑量,單位,途徑,頻次]）---------- */
 const BASE=[
- {t:'med',n:'Ceftriaxone 1 g',zh:'頭孢曲松',al:'rocephin cef cro 抗生素',m:['1','g','IV','Q24H'],flag:'w',fn:'Penicillin 過敏：低度交叉反應，請確認'},
+ {t:'med',n:'Ceftriaxone 1 g',zh:'頭孢曲松',al:'rocephin cef cro 抗生素',m:['1','g','IV','Q24H'],flag:'w',cross:'penicillin',fn:'Penicillin 過敏：低度交叉反應，請確認'},
  {t:'med',n:'Piperacillin/Tazobactam 4.5 g',zh:'tazocin 盤尼西林類',al:'tazo pip 抗生素',m:['4.5','g','IV','Q8H'],allergy:'penicillin',fn:'Penicillin 類藥物'},
  {t:'med',n:'Amoxicillin/Clavulanate 1.2 g',zh:'安滅菌 augmentin',al:'amox 抗生素',m:['1.2','g','IV','Q8H'],allergy:'penicillin',fn:'Penicillin 類藥物'},
  {t:'med',n:'Levofloxacin 750 mg',zh:'左氧氟沙星 cravit',al:'levo 抗生素',m:['750','mg','IV','Q24H'],renal:1,fn:'eGFR<50 需調整劑量'},
@@ -113,7 +113,7 @@ const PRIS=['STAT','ASAP','Routine'];
 const STATUS={wait:'待收件',run:'執行中',done:'已完成',stop:'已停止'};
 
 /* ---------- 病人資料輔助 ---------- */
-const allergies=p=>p.allergy||(p.allergy=/過敏/.test(p.cc||'')?['penicillin']:[]);
+const allergies=p=>{const a=p.allergy||(p.allergy=/過敏/.test(p.cc||'')?['penicillin']:[]);const ch=(p.chart&&p.chart.alg)||[];if(ch.some(x=>/青黴素|penicillin|pcn|盤尼西林/i.test(x))&&!a.includes('penicillin'))a.push('penicillin');return a};
 const egfr=p=>p.egfr??(p.egfr=(+p.age>=65?42:90));
 const rnd=seed=>{let s=seed>>>0||1;return()=>(s=(s*1664525+1013904223)>>>0)/4294967296};
 
@@ -373,6 +373,8 @@ function check(){
     x.bad=false;
     if(x.d.allergy&&A.includes(x.d.allergy)){al.push({l:'d',m:`過敏衝突：${x.d.n} — ${x.d.fn}（病人過敏：${A.join('、')}）`});x.bad=true}
     else if(x.d.flag==='w'&&x.d.fn)al.push({l:'w',m:`${x.d.n}：${x.d.fn}`});
+    x.needReason=!!(x.d.cross&&A.includes(x.d.cross)&&!x.bad);
+    if(x.needReason)al.push({l:'w',m:`${x.d.n}：病人有 ${x.d.cross} 過敏，請在下方選擇處理原因才能送出`});
     if(x.d.renal&&ok<50)al.push({l:'w',m:`${x.d.n}：${x.d.fn}（eGFR ${ok}）`});
     const prev=P.orders.find(o=>o.name===x.d.n);
     if(prev)al.push({l:'i',m:`本次就診已於 ${hhmm(prev.ts)} 開立「${x.d.n}」（${STATUS[prev.status]}），請確認是否重複`});
@@ -392,15 +394,17 @@ function paintCart(){
     return `<div class="ord ${x.bad?'bad':''}"><div class="top"><span class="bd ${d.t}">${BADGE[d.t]}</span><b>${e(d.n)}</b><button class="x" data-x="${i}" title="移除">×</button></div>
     <div class="f">${d.t==='med'?`<input class="dose" data-i="${i}" data-k="dose" value="${e(x.dose)}"><span>${e(x.unit)}</span><select data-i="${i}" data-k="route">${opt(ROUTES,x.route)}</select><select data-i="${i}" data-k="freq">${opt(FREQS,x.freq)}</select><label class="hint">天數 <input class="dose" type="number" min="1" data-i="${i}" data-k="days" value="${e(x.days||'')}" placeholder="—" style="width:52px"></label>`:''}
     ${d.tube?`<span class="hint">${e(d.tube)}</span>`:''}
-    <select data-i="${i}" data-k="pri">${opt(PRIS,x.pri)}</select><input class="note" data-i="${i}" data-k="note" placeholder="備註" value="${e(x.note)}"></div></div>`}).join('')
+    <select data-i="${i}" data-k="pri">${opt(PRIS,x.pri)}</select>${x.needReason?`<select data-i="${i}" data-k="reason" style="border-color:#dc2626"><option value="">⚠ 請選擇過敏處理原因</option>${['已評估，風險可接受','病人曾使用且耐受','無替代藥物，已告知病人'].map(r=>`<option ${x.reason===r?'selected':''}>${r}</option>`).join('')}</select>`:''}<input class="note" data-i="${i}" data-k="note" placeholder="備註" value="${e(x.note)}"></div></div>`}).join('')
     :'<div class="empty">尚未開立。搜尋後按 Enter 加入，或套用常用套餐。</div>';
   const go=root.querySelector('#go'),bad=c.some(x=>x.bad);
-  go.disabled=!c.length||bad;go.textContent=bad?'請先處理過敏衝突':'簽署並送出';
+  const nr=c.some(x=>x.needReason&&!x.reason);
+  go.disabled=!c.length||bad||nr;go.textContent=bad?'請先處理過敏衝突':nr?'請先選擇過敏處理原因':'簽署並送出';
 }
 function flash(m){const el=root&&root.querySelector('#msg');if(!el)return;el.textContent=m;el.style.display='';clearTimeout(msgT);msgT=setTimeout(()=>{el.style.display='none'},2200)}
 function entryInput(ev){
   const t=ev.target;if(!t.dataset||t.dataset.k===undefined)return;
   const x=cart()[+t.dataset.i];if(x)x[t.dataset.k]=t.value;
+  if(t.dataset.k==='reason')paintCart();
 }
 function entryClick(ev){
   const T=ev.target;
@@ -421,6 +425,9 @@ function entryClick(ev){
 }
 function submit(){
   const c=cart();if(!c.length||c.some(x=>x.bad))return;
+  const nm=c.map(x=>x.d.n);
+  if(nm.some(n=>n.startsWith('Ceftriaxone'))&&!nm.includes('Blood Culture x2')&&!P.orders.some(o=>o.name==='Blood Culture x2')&&!confirm('尚未開立血液培養，仍要送出抗生素？'))return;
+  c.forEach(x=>{if(x.needReason&&x.reason)x.note=(x.note?x.note+'；':'')+'過敏警示處理：'+x.reason});
   const now=Date.now();
   c.slice().reverse().forEach(x=>{
     P.orders.unshift(toOrder(x.d,x,P.doc||'—',now,'wait'));

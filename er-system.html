@@ -779,6 +779,9 @@ tr.crit td{background:#fff1f1}
 .hxc .tag{display:inline-block;border-radius:4px;padding:0 6px;font-size:12px;background:var(--accent-soft);margin:1px}
 .hxc .tag.cloud{background:#dbeafe;color:#1e3a8a}
 @media(max-width:800px){.hxg{grid-template-columns:1fr}.hxg .big{grid-column:auto}}
+.side .lg div{display:inline-block;margin-right:8px;white-space:nowrap}
+.menubar .m{opacity:.6}
+@media(max-width:1280px){.side{width:150px}.side .lg+.lg{display:none}}
 </style>
 
 </head>
@@ -862,7 +865,7 @@ tr.crit td{background:#fff1f1}
   </div>
 </div>
 
-<script src="order-pad.js?v=4"></script>
+<script src="order-pad.js?v=5"></script>
 <script>
 /* ===== 範例資料（皆為虛構）===== */
 const DOCTORS=['周明哲','李婉婷','張宇軒','吳佩珊','黃建宏','林怡君','陳柏翰','蔡雅惠'];
@@ -1093,6 +1096,7 @@ function renderList(){
 /* ===== 病人詳細 ===== */
 const cur=()=>patients.find(p=>p.id===S.sel);
 const FK1=['病歷','檢傷','診斷','病程','病歷查詢','檢驗','報查','累報','醫囑','會診','證明','出院','住院','其他','發報告'];
+const FK_LIVE=['病歷','檢傷','診斷','病程','病歷查詢','檢驗','報查','醫囑','會診','證明','出院','住院','悄悄話','提報','兒少保','在宅'];
 const FK2=['悄悄話','照相','護理紀錄','VTS','ICU空','ICU待床','提報','待床','流程','鎮靜評估','兒少保','DNR','影像流程','緊急醫療','醫雲','在宅'];
 function renderDetail(){
   const p=cur(), d=$('#detail');
@@ -1107,7 +1111,7 @@ function renderDetail(){
     <span><span class="k">區域</span><select id="zSel">${ZONES.map(z=>`<option value="${z.k}" ${z.k===p.zone?'selected':''}>${z.name}</option>`).join('')}</select></span>
     <span><span class="k">床號</span><input id="bedIn" value="${p.bed}" size="5" style="border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--panel)"></span>
     <span><span class="k">主訴</span>${p.cc}</span>
-    <span><span class="k">主責醫師</span><b>${p.doc}</b></span>
+    <span><span class="k">主責醫師</span><b>${p.doc}</b></span><span>${allergyTag(p)}</span>
     <span><span class="k">停留</span><span id="stayNow">${fmtH(hrs(p))}</span></span>
     <label style="font-weight:600">大量傷患 <select id="mciSel"><option value="">無</option>${MCI_T.map(t=>`<option ${p.mci===t?'selected':''}>${t}</option>`).join('')}</select></label>
     <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${(p.act||[]).map(a=>`<span class="actchip" title="啟動者 ${a.by}">${a.type} ${new Date(a.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</span>`).join('')}
@@ -1116,7 +1120,7 @@ function renderDetail(){
     <button class="btn" id="dFull" style="padding:2px 12px">${d.classList.contains('full')?'✕ 縮小':'⛶ 放大'}</button>
     <button class="btn" id="dToggle" style="padding:2px 12px">${S.dmin?'▲ 展開':'▼ 收合'}</button></span>
   </div>
-  <div class="fkeys">${FK1.concat(FK2).map(t=>`<button class="fk ${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}</div>
+  <div class="fkeys">${FK_LIVE.map(t=>`<button class="fk ${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}<button class="fk" data-more="1" title="尚未開放的功能（示意）">更多 ${S.more?'▴':'▾'}</button>${S.more?FK1.concat(FK2).filter(t=>!FK_LIVE.includes(t)).map(t=>`<button class="fk ${S.tab===t?'on':''}" data-tab="${t}" style="opacity:.6" title="尚未開放（示意）">${t}</button>`).join(''):''}</div>
   <div class="tabbody" id="tb"></div>
   <div class="shortbar"><button>報查</button><button>醫囑</button><button>會診</button><button>病人重取</button><button>切換醫師</button></div>`;
   renderTab();
@@ -1161,6 +1165,13 @@ function renderTab(){
 }
 
 const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* 過敏：全系統單一來源（病歷 S.alg ＋ 系統記錄 p.allergy）*/
+const ALGN={penicillin:'青黴素類 (Penicillin)'};
+function allergyOf(p){const ch=((p.chart&&p.chart.alg)||[]),base=p.allergy||(/過敏/.test(p.cc||'')?['penicillin']:[]),L=[];
+  base.forEach(x=>L.push(ALGN[x]||x));ch.filter(x=>x!=='無已知過敏').forEach(x=>{if(!L.some(y=>y.includes(x)||x.includes(y.split(' ')[0])))L.push(x)});
+  return{list:L,none:ch.includes('無已知過敏')&&!L.length}}
+const allergyTag=p=>{const a=allergyOf(p);return a.list.length?`<b style="color:#b91c1c;background:#fde8e8;border-radius:4px;padding:0 6px">過敏：${a.list.map(esc).join('、')}</b>`:a.none?'<span style="color:#2f7d4f">NKDA</span>':'<b style="color:#b45309;background:#fff4e0;border-radius:4px;padding:0 6px">過敏史未確認</b>'};
+
 
 /* ===== 五級檢傷（TTAS 示意資料，非正式判定標準）===== */
 const TG={
@@ -1203,7 +1214,7 @@ function triRender(){
   const m=$('#triModal'),p=cur()||{},T=TT;
   const cats=TRI.find(c=>c[0]===T.cat)||TRI[0],cc=cats[1].find(c=>c[0]===T.cc);
   const bs=cc?triBasis(cc):[];
-  m.innerHTML=`<div class="tmb"><div class="tt"><b class="cross">✚</b>請選擇檢傷類別（五級檢傷）　<span style="font-size:14px;opacity:.8">${esc(p.name||'')}｜${esc(p.cc||'')}</span><button class="x" data-tx="cancel">×</button></div>
+  m.innerHTML=`<div class="tmb"><div class="tt"><b class="cross">✚</b>請選擇檢傷類別（五級檢傷）　<span style="font-size:14px;opacity:.8">${esc(p.name||'')}｜${esc(p.cc||'')}</span><button class="x" data-tx="cancel" title="取消（Esc）">×</button></div>
   <div class="tri3">
     <div class="cl c1"><div class="h">大分類</div>${TRI.map(c=>`<div class="it ${c[0]===T.cat?'on':''}" data-tcat="${c[0]}">${c[0]}</div>`).join('')}</div>
     <div class="cl c2"><div class="h">主訴</div>${cats[1].map(c=>`<div class="it ${c[0]===T.cc?'on':''}" data-tcc="${esc(c[0])}">${esc(c[0])}</div>`).join('')}</div>
@@ -2094,7 +2105,7 @@ function alertsNt(){const A=[],cc=S.cc.join('|'),sx=k=>S.hpi.sym[k]===1;
  uniExt().forEach(([l])=>{if(l.includes('最後正常時間')&&!S.hpi.ext[l])A.push(['warn','尚未填寫「'+l+'」','中風/意識改變評估必要資訊']);});
  if(cc.includes('陰道出血/婦科')&&S.hpi.ext['可能懷孕']==='是')A.push(['warn','可能懷孕合併陰道出血','考慮子宮外孕或流產']);
  if(cc.includes('精神/自傷')&&(sx('自傷意念')||sx('自傷行為')))A.push(['crit','自傷意念或行為','進行自殺風險評估並確保安全']);
- if(S.alg.length===0)A.push(['warn','過敏史未填','開藥前須確認']);
+ if(S.alg.length===0&&!(PT.allergy||[]).length&&!/過敏/.test(PT.cc||''))A.push(['warn','過敏史未填','開藥前須確認']);
  if(!S.dx.length)A.push(['warn','尚未填寫診斷','']);
  return A}
 function alertsTr(){const A=[],t=S.tr,a=t.abc,gcs=gset(t)?+t.gcs.e+ +t.gcs.v+ +t.gcs.m:15,hit=[];
@@ -2128,7 +2139,7 @@ function alertsTr(){const A=[],t=S.tr,a=t.abc,gcs=gset(t)?+t.gcs.e+ +t.gcs.v+ +t
  {const fb=t.det['異物/化學物濺入']||{};if(t.moi.includes('異物/化學物濺入')&&['咽喉','食道/吞入'].includes(fb['部位'])&&fb['物質']==='食物或骨頭')A.push(['warn','魚刺或骨頭卡住','評估是否穿孔或殘留，必要時影像或內視鏡']);}
  if(ABC_REQ.some(k=>!a[k]))A.push(['warn','初步評估 ABCDE 尚未完成','']);
  if(!t.teta&&Object.values(t.reg).some(e=>e.st==='a'&&(e.f||[]).some(f=>/撕裂|開放|穿刺|擦傷|咬/.test(f))))A.push(['warn','有傷口，尚未確認破傷風疫苗','']);
- if(S.alg.length===0)A.push(['warn','過敏史未填','開藥前須確認']);
+ if(S.alg.length===0&&!(PT.allergy||[]).length&&!/過敏/.test(PT.cc||''))A.push(['warn','過敏史未填','開藥前須確認']);
  if(!t.dx.length)A.push(['warn','尚未填寫診斷','']);
  return A}
 function alertsPd(){const A=[],p=S.pd,cc=S.cc.join('|'),sx=k=>S.hpi.sym[k]===1,am=ageMonths(),f=(s,x)=>(S.pe[s]?.f||[]).includes(x);
@@ -2146,7 +2157,7 @@ function alertsPd(){const A=[],p=S.pd,cc=S.cc.join('|'),sx=k=>S.hpi.sym[k]===1,a
  if(sx('吞入電池或磁鐵'))A.push(['crit','吞入電池或磁鐵','緊急影像與移除評估']);
  if(S.hpi.ext['尿量']==='超過 8 小時無尿')A.push(['warn','超過 8 小時無尿','評估脫水與腎功能']);
  if(p.vax==='未接種'&&fever)A.push(['warn','未接種疫苗的小兒發燒','提高對嚴重細菌感染與疫苗可預防疾病的警覺']);
- if(S.alg.length===0)A.push(['warn','過敏史未填','開藥前須確認']);
+ if(S.alg.length===0&&!(PT.allergy||[]).length&&!/過敏/.test(PT.cc||''))A.push(['warn','過敏史未填','開藥前須確認']);
  if(!S.dx.length)A.push(['warn','尚未填寫診斷','']);
  return A}
 const alerts=()=>ohcaOnly()?[]:isTr()?alertsTr():isPd()?alertsPd():alertsNt();
@@ -3100,7 +3111,7 @@ document.addEventListener('click',e=>{const b0=e.target.closest('button');if(b0&
  const id=b0?.id;if(!id)return;
  if(id==='nlAi')runAi();else if(id==='nlRule')runRule();else if(id==='nlStop')nlCtl?.abort();
  else if(id==='nlCancel'){S.nlres=null;NL.msg='';renderNL()}
- else if(id==='nlApply'&&S.nlres){const n=rowsOf(S.nlres).length;commit(S.nlres);S.nlres=null;NL.msg=Z('已套用 '+n+' 項，請檢查下方欄位。','Applied '+n+' item(s). Please check the fields below.');rebuild();update();renderNL();toast(Z('已套用 '+n+' 項','Applied '+n+' item(s)'))}});
+ else if(id==='nlApply'&&S.nlres){const rw=rowsOf(S.nlres),n=rw.length,lb=rw.map(x=>x[0]).join('、');commit(S.nlres);S.nlres=null;NL.msg=Z('已套用 '+n+' 項（'+lb+'），請檢查下方欄位；原文保留在上方輸入框。','Applied '+n+' item(s) ('+lb+'). Please check the fields below.');rebuild();update();renderNL();toast(Z('已套用 '+n+' 項','Applied '+n+' item(s)'))}});
 document.addEventListener('input',e=>{if(e.target.id==='nlText')S.nl=e.target.value});
 document.addEventListener('change',e=>{if(e.target.id==='nlDept'){NL.dept=e.target.value;if(NL.dept&&S.mode!==NL.dept){setMode(NL.dept);toast(Z('已切換病歷類型','Chart type switched'))}}});
 document.addEventListener('keydown',e=>{if(e.target.id==='nlText'&&e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();SMP?runAi():runRule()}});
@@ -3302,6 +3313,8 @@ document.addEventListener('click',e=>{
   if(t.id==='dToggle'){S.dmin=!S.dmin;renderDetail();return}
   if(t.dataset.icd){openIcd(t.dataset.icd);return}
   if(t.id==='icdClose'||t.id==='icdModal'){closeIcd();return}
+  if(t.dataset.more){S.more=!S.more;renderDetail();return}
+  if(t.dataset.tab==='出院'||t.dataset.tab==='住院'){S.tab='醫囑';Ord.sub='dispo';renderDetail();toast('出院／住院去向在「醫囑 → 出院醫囑」決定');return}
   if(t.dataset.tab){S.tab=t.dataset.tab;renderDetail();return}
   if(t.dataset.rm!==undefined){cur().dx.splice(+t.dataset.rm,1);renderDx();return}
   if(t.id==='saveDx'){cur().imp=$('#imp').value;save();toast('診斷已儲存');return}
@@ -3460,12 +3473,22 @@ const Hand={
     ${L.map(p=>`<tr><td><input type="checkbox" data-hock="${p.id}" ${this.sel.has(p.id)?'checked':''}></td><td><b>${p.bed}</b></td><td class="nm">${p.name}</td><td>${p.sex}/${p.age}</td><td><span class="tri l${p.lvl}">${p.lvl}</span></td><td class="l">${p.cc}</td><td>${p.doc}</td>
       <td class="l pend">${pendingOf(p).map(x=>`<span>${x}</span>`).join('')||'<span class="lbl">無</span>'}</td>
       <td><input class="hon" data-hon="${p.id}" value="${esc(this.note[p.id]||'')}" placeholder="例：待 CT 報告，家屬在外等候"></td></tr>`).join('')||'<tr><td colspan="9" class="lbl">此條件下沒有病人</td></tr>'}</tbody></table></div>
-    <div class="row" style="margin-top:8px"><b>接班醫師</b><select id="hoTo">${DOCTORS.map(d=>`<option>${d}</option>`).join('')}</select>
-      <button class="btn primary" data-ho="apply">確認交班</button><button class="btn" data-ho="print">列印交班表</button>
+    <div class="row" style="margin-top:8px"><b>接班醫師</b><select id="hoTo"><option value="">請選擇接班醫師</option>${DOCTORS.map(d=>`<option>${d}</option>`).join('')}</select>
+      <button class="btn primary" data-ho="apply">確認交班</button><button class="btn" data-ho="print">列印交班表</button>${this.undo&&Date.now()-this.undo.at<3e5?'<button class="btn" data-ho="undo">↶ 還原上次交班（5 分鐘內）</button>':''}
       <span class="lbl">確認後：主責醫師更換、病程自動留下交班紀錄、清單的主責醫師旁出現 ⇄ 標記（4 小時內）。</span></div>
     ${lg.length?`<div class="lbl" style="margin-top:8px"><b>最近交班紀錄</b>　${lg.map(x=>`${new Date(x.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})} ${x.froms.join('、')} → ${x.to}（${x.n} 位）`).join('　｜　')}</div>`:''}
     </div></div>`},
+  undoLast(){const u=this.undo;if(!u||Date.now()-u.at>3e5)return toast('已超過 5 分鐘，無法還原');
+    u.items.forEach(x=>{const p=patients.find(y=>y.id===x.id);if(!p)return;p.doc=x.doc;p.notes.length=x.nl;if(p.hoLog)p.hoLog.length=x.hl});
+    const lg=this.log();lg.pop();try{localStorage.setItem('er-ho-log',JSON.stringify(lg))}catch(e){}
+    this.undo=null;save();renderList();renderDetail();this.draw();toast('已還原上次交班')},
   apply(){const to=$('#hoTo').value,ids=[...this.sel];if(!ids.length)return toast('請先勾選要交班的病人');
+    if(!to)return toast('請選擇接班醫師');
+    const mv=ids.map(id=>patients.find(x=>x.id===id)).filter(p=>p&&p.doc!==to),cnt={};mv.forEach(p=>{cnt[p.doc]=(cnt[p.doc]||0)+1});
+    if(!mv.length)return toast('所選病人已經是該醫師負責');
+    const other=mv.filter(p=>p.doc!==ME).length;
+    if(!confirm('確認交班？\n\n'+Object.keys(cnt).map(d=>d+' → '+to+'：'+cnt[d]+' 位').join('\n')+'\n共 '+mv.length+' 位病人'+(other?'\n（其中 '+other+' 位不是您名下的病人）':'')+'\n\n確認後 5 分鐘內可還原。'))return;
+    this.undo={at:Date.now(),items:mv.map(p=>({id:p.id,doc:p.doc,nl:p.notes.length,hl:(p.hoLog||[]).length}))};
     const froms=new Set();
     ids.forEach(id=>{const p=patients.find(x=>x.id===id);if(!p||p.doc===to)return;const nt=(this.note[id]||'').trim();froms.add(p.doc);
       (p.hoLog=p.hoLog||[]).push({at:Date.now(),from:p.doc,to,note:nt,by:ME});
@@ -3504,7 +3527,7 @@ const Hand={
 document.addEventListener('click',e=>{const t=e.target;
   const h=t.dataset&&t.dataset.ho;if(h){e.stopPropagation();
     if(h==='close')Hand.close();else if(h==='all'){Hand.list().forEach(p=>Hand.sel.add(p.id));Hand.draw()}
-    else if(h==='none'){Hand.sel.clear();Hand.draw()}else if(h==='apply')Hand.apply();else if(h==='print')Hand.print();return}
+    else if(h==='none'){Hand.sel.clear();Hand.draw()}else if(h==='apply')Hand.apply();else if(h==='print')Hand.print();else if(h==='undo')Hand.undoLast();return}
   if(t.dataset&&t.dataset.zn){e.stopPropagation();t.dataset.zn==='ok'?Hand.zoneOk():Hand.zoneCancel()}
 },true);
 document.addEventListener('change',e=>{const t=e.target;
@@ -3853,9 +3876,9 @@ const Hx={
   data(p){if(!p.hx){const n=parseInt(p.id,10)||1,adult=+p.age>=18,k=adult?n%4:0,pm=[];for(let j=0;j<k;j++)pm.push(HXP[(n+j*3)%HXP.length]);
       p.hx={pmh:pm.map(x=>x[0]),meds:pm.filter(x=>!/^（/.test(x[1])).map(x=>({n:x[1],src:'本院病歷',last:'近 3 個月'})),
       visits:[0,1,2].map(j=>{const v=HXV[(n+j*2)%HXV.length];return{d:new Date(Date.now()-(20+j*47+n%15)*864e5).toLocaleDateString('zh-TW'),dept:v[0],dx:v[1]}}),cloud:false}}return p.hx},
-  render(p,tb){const h=this.data(p),ch=p.chart||{},pmh=[...new Set([...(h.pmh||[]),...(ch.pmh||[])])],alg=[...new Set([...(p.allergy||[]),...(ch.alg||[])])],dx=(p.dx||[]).map(d=>d.name||d.code).filter(Boolean);
+  render(p,tb){const h=this.data(p),ch=p.chart||{},pmh=[...new Set([...(h.pmh||[]),...(ch.pmh||[])])],alg=allergyOf(p).list,dx=(p.dx||[]).map(d=>d.name||d.code).filter(Boolean);
     tb.innerHTML=`<div class="hxg">
-     <div class="hxc alg"><h4>過敏</h4>${alg.length?alg.map(x=>`<span class="tag" style="background:#fde8e8;color:#b91c1c">${esc(x)}</span>`).join(''):'無已知過敏（NKDA）'}</div>
+     <div class="hxc alg"><h4>過敏</h4>${alg.length?alg.map(x=>`<span class="tag" style="background:#fde8e8;color:#b91c1c">${esc(x)}</span>`).join(''):allergyOf(p).none?'無已知過敏（NKDA）':'<b style="color:#b45309">⚠ 尚未確認過敏史，請於病歷填寫</b>'}</div>
      <div class="hxc"><h4>本次急診</h4>主訴：${esc(p.cc)}　檢傷 ${p.lvl} 級<br>診斷：${esc(dx.join('、')||p.imp||'（未填）')}<br>已開醫囑 ${(p.orders||[]).length} 筆</div>
      <div class="hxc pmh big"><h4>過去病史 PH</h4>${pmh.length?pmh.map(x=>`<span class="tag" style="font-size:14px;padding:2px 10px">${esc(x)}</span>`).join(' '):'無特殊病史'}</div>
      <div class="hxc med big"><h4>用藥 <button class="btn" data-hx="cloud" style="float:right;padding:0 10px">${h.cloud?'↻ 重新帶入健保雲端用藥':'⤓ 帶入健保雲端用藥'}</button></h4>
@@ -3956,7 +3979,14 @@ const Home={
 };
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-hm]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();p.addr=$('#hmA').value.trim();save();renderTab();toast('已儲存地址')},true);
 
-/* 初始化 */
+/* 時間校正：示範資料中的會診／危急值時間不可晚於現在 */
+(function(){const m=Date.now()-6e4;patients.forEach(p=>{(p.consults||[]).forEach(c=>{if(c.at>m)c.at=m;(c.h||[]).forEach(h=>{if(h.at>m)h.at=m})});(p.crit||[]).forEach(c=>{if(c.at>m)c.at=m})})})();
+/* ===== 尚未開放的選單：明確標示，不再「點了沒反應」===== */
+document.addEventListener('click',e=>{const m=e.target.closest&&e.target.closest('.menubar .m');if(m){e.stopPropagation();toast('「'+m.textContent.trim()+'」尚未開放（示意）');return}
+  const b=e.target.closest&&e.target.closest('.shortbar button');if(b&&/病人重取|切換醫師/.test(b.textContent)){e.stopPropagation();toast('「'+b.textContent.trim()+'」尚未開放（示意）')}
+  if(e.target.id==='triModal'){const c=document.querySelector('#triModal [data-tx="cancel"]');if(c)c.click()}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('#triModal.show')){const c=document.querySelector('#triModal [data-tx="cancel"]');if(c)c.click()}});
+
 layoutLbl();renderChips();renderList();renderDetail();
 document.addEventListener('click',e=>{if(e.target.dataset.z)renderChips()});
 </script>

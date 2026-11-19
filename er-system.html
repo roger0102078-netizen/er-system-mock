@@ -782,6 +782,7 @@ tr.crit td{background:#fff1f1}
 .side .lg div{display:inline-block;margin-right:8px;white-space:nowrap}
 .menubar .m{opacity:.6}
 @media(max-width:1280px){.side{width:150px}.side .lg+.lg{display:none}}
+#fbanner{background:#fff3cd;color:#5c4400;border-bottom:1px solid #e0c36a;padding:4px 12px;font-size:13px}body.dark #fbanner{background:#4a3d12;color:#f6e7b0}
 </style>
 
 </head>
@@ -808,6 +809,7 @@ tr.crit td{background:#fff1f1}
   <button class="btn" id="themeBtn" title="切換護眼／夜間配色">☾ 夜間</button>
   <button class="btn warn" id="hoBtn">交班</button>
 </div>
+<div id="fbanner" hidden></div>
 
 <div class="handover" id="ho">
   <b>交班模式</b>
@@ -1059,10 +1061,15 @@ function closeCrit(){const e=$('#critPop');if(e)e.remove()}
 function openCrit(id,x,y){const p=patients.find(q=>q.id===id);if(!p)return;critX=x;critY=y;closeCrit();
   const tm=t=>new Date(t).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'});
   const d=document.createElement('div');d.id='critPop';d.dataset.pid=id;
-  d.innerHTML=`<div class="cph"><b>危急值｜${p.name}（${p.bed}）</b></div>${p.crit.length?p.crit.map((c,i)=>`<div class="cpr ${c.ack?'ok':''}"><div><b>${c.name}</b> <span class="cv">${c.val}</span> <small>（參考 ${c.ref}）</small></div><div class="cs"><small>報告 ${tm(c.at)}</small>${c.ack?'<small>已知悉</small>':`<button class="btn" data-cack="${i}">已知悉</button>`}</div></div>`).join(''):'<div class="cpr">沒有危急值</div>'}${p.adm>=0?`<div class="cpa">住院進度：${ADM_STEPS.map((s,i)=>`<span class="${i<=p.adm?'on':''}">${s}</span>`).join('→')}</div>`:''}`;
+  d.innerHTML=`<div class="cph"><b>危急值｜${p.name}（${p.bed}）</b></div>${p.crit.length?p.crit.map((c,i)=>`<div class="cpr ${c.ack?'ok':''}"><div><b>${c.name}</b> <span class="cv">${c.val}</span> <small>（參考 ${c.ref}）</small></div><div class="cs"><small>報告 ${tm(c.at)}</small>${c.ack?'<small>已知悉</small>':`<button class="btn primary" data-cack="${i}">前往簽收與處置</button>`}</div></div>`).join(''):'<div class="cpr">沒有危急值</div>'}${p.adm>=0?`<div class="cpa">住院進度：${ADM_STEPS.map((s,i)=>`<span class="${i<=p.adm?'on':''}">${s}</span>`).join('→')}</div>`:''}`;
   document.body.appendChild(d);const w=d.offsetWidth,h=d.offsetHeight;d.style.left=Math.max(8,Math.min(x,innerWidth-w-8))+'px';d.style.top=Math.max(8,Math.min(y+8,innerHeight-h-8))+'px'}
+function filterBanner(n){const b=$('#fbanner');if(!b)return;const a=[];
+  if(S.zone!=='全部')a.push('區域 '+S.zone);if(S.q.trim())a.push('搜尋「'+S.q.trim()+'」');if(S.fId)a.push('病歷號 '+S.fId);if(S.fSeq)a.push('流水號 '+S.fSeq);if(S.fBed)a.push('床號 '+S.fBed);if(S.sf.size)a.push('狀態欄篩選 '+S.sf.size+' 項');
+  if(!a.length){b.hidden=true;b.innerHTML='';return}
+  b.hidden=false;b.innerHTML='<b>篩選中</b>　'+a.map(x=>esc(x)).join('、')+'　→ 顯示 '+n+' / 共 '+patients.length+' 位 <button class="btn" id="fClear">清除全部篩選</button>'}
+document.addEventListener('click',e=>{if(!(e.target.id==='fClear'))return;S.zone='全部';S.q='';S.fId='';S.fSeq='';S.fBed='';S.sf.clear();const q=$('#q');if(q)q.value='';renderChips();renderList()});
 function renderList(){
-  const L=filtered();
+  const L=filtered();filterBanner(L.length);
   $('#count').textContent=`共 ${L.length} 位`;
   const ck=p=>S.ho?`<input type="checkbox" class="ck" data-ck="${p.id}" ${S.checked.has(p.id)?'checked':''}>`:'';
   if(S.view==='card'){
@@ -3075,7 +3082,15 @@ function renderNL(){if(!root||!S)return;const nb=$('#nl');if(!nb)return;const r=
   <div class="row nlbar" style="margin-top:8px"><label class="hint">病歷類型 <select id="nlDept"><option value="" ${NL.dept?'':'selected'}>自動判斷</option><option value="nt" ${NL.dept==='nt'?'selected':''}>非外傷</option><option value="tr" ${NL.dept==='tr'?'selected':''}>外傷</option><option value="pd" ${NL.dept==='pd'?'selected':''}>小兒</option></select></label>${hasAi?`<button type="button" class="btn pri" id="nlAi" ${NL.busy?'disabled':''}>AI 解析</button>`:''}<button type="button" class="btn ${hasAi?'':'pri'}" id="nlRule" ${NL.busy?'disabled':''}>${hasAi?'快速解析（不用 AI）':'解析'}</button>${hasAi?`<button type="button" class="btn" id="nlStop" ${NL.busy?'':'hidden'}>停止</button>`:''}
   <span class="hint" id="nlStat">${esc(NL.msg||(hasAi?Z('AI 解析較完整，快速解析只比對選項字詞。','AI parsing is more complete. Quick parse only matches option words.'):''))}</span></div>
   ${r?`<div class="sub" style="margin-top:12px"><h3>解析結果：請確認後再套用（只會填入下列欄位，其他欄位不變）</h3>${rowsOf(r).length?`<dl class="nlrows">${rowsOf(r).map(([l,v])=>`<dt>${esc(l)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`:'<div class="none">沒有解析到可填入的內容。</div>'}
+   ${(()=>{const u=nlUnparsed(r);return u.length?`<div class="warnl" style="margin-top:6px">以下片段可能沒有被解析到，套用後請手動補上：${u.map(x=>'「'+esc(x)+'」').join('、')}</div>`:''})()}
    <div class="row" style="margin-top:10px"><button type="button" class="btn pri" id="nlApply" ${rowsOf(r).length?'':'disabled'}>套用到病歷</button><button type="button" class="btn" id="nlCancel">放棄</button></div></div>`:''}</section>`}
+function nlUnparsed(r){const rw=rowsOf(r),hay=rw.map(x=>x[0]+' '+x[1]).join(' ').toLowerCase();
+ return String(S.nl||'').split(/[,，。;；、\n]+/).map(x=>x.trim()).filter(x=>x.length>=2).filter(seg=>{
+  const low=seg.toLowerCase(),words=low.match(/[a-z0-9]{3,}/g)||[],han=low.replace(/[^\u4e00-\u9fff]/g,'');
+  if(!han&&!words.length)return false;
+  if(words.some(w=>hay.includes(w)))return false;
+  for(let i=0;i+2<=han.length;i++)if(hay.includes(han.slice(i,i+2)))return false;
+  return true})}
 function nlDone(r,via){
  S.nlres=r;NL.busy=false;NL.msg=Z(via+'完成，請確認結果。',via+' finished. Please review the result.');renderNL()}
 function runRule(){const t=S.nl.trim();if(!t){NL.msg=Z('請先輸入文字。','Please enter some text first.');renderNL();return}
@@ -3283,7 +3298,7 @@ document.addEventListener('click',e=>{
   if(t.id==='layoutBtn'){LAYOUT=LAYOUT==='B'?'A':'B';try{localStorage.setItem('er-layout2',LAYOUT)}catch(_){}layoutLbl();closeCrit();renderList();return}
   if(t.closest('[data-sf]')){const k=t.closest('[data-sf]').dataset.sf;S.sf.has(k)?S.sf.delete(k):S.sf.add(k);renderList();return}
   if(t.closest('[data-crit]')){openCrit(t.closest('[data-crit]').dataset.crit,e.clientX,e.clientY);return}
-  if(t.closest('#critPop')){const a=t.dataset.cack;if(a!==undefined){const p=patients.find(x=>x.id===t.closest('#critPop').dataset.pid);if(p){const c=p.crit[+a];c.ack=true;p.notes.push({t:`危急值已知悉：${c.name} ${c.val}`,at:new Date().toLocaleString('zh-TW',{hour12:false})});save();openCrit(p.id,critX,critY);renderList()}}return}
+  if(t.closest('#critPop')){const a=t.dataset.cack;if(a!==undefined){const p=patients.find(x=>x.id===t.closest('#critPop').dataset.pid);if(p){closeCrit();S.sel=p.id;S.tab='報查';const d=$('#detail');if(d){d.classList.remove('min');S.dmin=false}renderList();renderDetail();toast('請在「報查」簽收並填寫處置回覆（'+p.name+'）')}}return}
   closeCrit();
   if(t.dataset.dirv!==undefined&&t.closest('#dirMenu')){const id=t.closest('#dirMenu').dataset.pid;closeDir();setDir(id,t.dataset.dirv);return}
   if(t.id==='themeBtn'){THEME=THEME==='dark'?'dim':'dark';try{localStorage.setItem('er-theme',THEME)}catch(_){}applyTheme();return}
@@ -3604,24 +3619,31 @@ const Ord={
     const n=parseInt(p.id,10)||0;if(n%7===0)r.push('24 小時內曾有不穩定生命跡象（示範）');if(n%11===0)r.push('使用呼吸器（示範）');
     return{lv:r.length>=2||p.lvl<=2?3:r.length?2:1,r}},
   LVN:{1:'一般運送（傳送員）',2:'護理師隨行',3:'醫師隨行＋監視器'},
-  r_dispo(p,b){const D=this.dis[p.id]=this.dis[p.id]||{g:'A',a:'出院',lv:0,er1:'不掛',br:'本棟 ER1 診'},sg=this.suggestLvl(p);if(!D.lv)D.lv=sg.lv;
+  r_dispo(p,b){const D=this.dis[p.id]=this.dis[p.id]||{g:'',a:'',lv:0,er1:'',br:'本棟 ER1 診'},sg=this.suggestLvl(p);if(!D.lv)D.lv=sg.lv;
     const row=(g,title,body)=>`<div class="dsp ${D.g===g?'on':''}" data-o="dg" data-v="${g}"><div class="dh"><span class="dl">${g}</span><b>${title}</b></div><div class="db">${body}</div></div>`;
     const rd=(name,vals,cur)=>vals.map(v=>`<label><input type="radio" name="${name}" data-o="dv" data-k="${name}" data-v="${v}" ${cur===v?'checked':''}> ${v}</label>`).join('');
-    b.innerHTML=`<div class="lbl" style="margin-bottom:6px">選一個去向後按「確認」。A 仍綁掛號系統；C 的轉送等級由系統依 24 小時內生命跡象、呼吸器等條件給出建議；F 不需選原因。</div>
+    b.innerHTML=`<div class="lbl" style="margin-bottom:6px">請先點選一個去向（預設不選），確認前系統會列出尚未完成的項目。A 仍綁掛號系統；C 的轉送等級由系統依 24 小時內生命跡象、呼吸器等條件給出建議；F 不需選原因。</div>
     <div class="dgrid">
     ${row('A','出院 / AAD（綁掛號系統）',rd('a',['出院','AAD'],D.a))}
     ${row('B','轉院',`<input class="search" id="dTo" value="${esc(D.to||'')}" placeholder="轉入院所／科別" style="width:100%">`)}
-    ${row('C','住院 / 住院（ICU）',`${rd('c',['住院','住院（ICU）'],D.c||'住院')}<div class="sugg">建議轉送等級：<b>${this.LVN[sg.lv]}</b>${sg.r.length?'<br><span class="lbl">依據：'+sg.r.join('、')+'</span>':'<br><span class="lbl">目前沒有不穩定指標</span>'}</div>
+    ${row('C','住院 / 住院（ICU）',`${rd('c',['住院','住院（ICU）'],D.c)}<div class="sugg">建議轉送等級：<b>${this.LVN[sg.lv]}</b>${sg.r.length?'<br><span class="lbl">依據：'+sg.r.join('、')+'</span>':'<br><span class="lbl">目前沒有不穩定指標</span>'}</div>
        <label>採用等級 <select data-o="dlv">${[1,2,3].map(n=>`<option value="${n}" ${D.lv===n?'selected':''}>${n}：${this.LVN[n]}</option>`).join('')}</select></label>${D.lv<sg.lv?'<div class="warnl">低於系統建議，請於病程註明原因</div>':''}`)}
     ${row('D','掛 / 不掛各棟 ER1 診',`${rd('er1',['不掛','掛'],D.er1)}<label>棟別 <select data-o="dbr">${['本棟 ER1 診','北棟 ER1 診','南棟 ER1 診'].map(x=>`<option ${D.br===x?'selected':''}>${x}</option>`).join('')}</select></label>`)}
-    ${row('E','死亡 / 病危出院',rd('e',['死亡','病危出院'],D.e||'死亡'))}
+    ${row('E','死亡 / 病危出院',rd('e',['死亡','病危出院'],D.e))}
     ${row('F','Escape（離院，不需選原因）','<span class="lbl">病人自行離開，不用再選原因。</span>')}
-    </div><div class="row" style="margin-top:8px"><button class="btn primary" data-o="dok">確認去向（${D.g}）</button><button class="btn" data-o="dclr">清除動向</button><span class="lbl">目前動向：${p.dir||'無'}</span></div>`},
-  dispoApply(p){const D=this.dis[p.id];if(!D)return;let dir='',txt='';
+    </div><div class="row" style="margin-top:8px"><button class="btn primary" data-o="dok">${D.g?'確認去向（'+D.g+'）':'請先選擇去向'}</button><button class="btn" data-o="dclr">清除動向</button><span class="lbl">目前動向：${p.dir||'無'}</span></div>`},
+  dispoCheck(p){const w=[],O=(p.orders||[]).filter(o=>o.status==='wait'||o.status==='run').length,C=(p.consults||[]).filter(c=>!c.done).length;
+    if(O)w.push('尚有 '+O+' 筆醫囑未完成（等待／執行中）');if(C)w.push('尚有 '+C+' 筆會診未結案');if(critOpen(p))w.push('有危急值尚未知悉或處置');
+    if(!(p.dx||[]).length&&!(p.imp||'').trim())w.push('尚未填診斷或 Impression');return w},
+  dispoApply(p){const D=this.dis[p.id];if(!D||!D.g)return toast('請先選擇去向');let dir='',txt='';
+    if(D.g==='A'&&!D.a)return toast('請選「出院」或「AAD」');if(D.g==='C'&&!D.c)return toast('請選「住院」或「住院（ICU）」');
+    if(D.g==='D'&&!D.er1)return toast('請選「掛」或「不掛」ER1 診');if(D.g==='E'&&!D.e)return toast('請選「死亡」或「病危出院」');
+    const nm={A:D.a,B:'轉院'+(D.to?'：'+D.to:''),C:D.c,D:D.er1==='掛'?'掛 '+D.br:'不掛 ER1 診',E:D.e,F:'Escape'}[D.g],w=this.dispoCheck(p);
+    if(!confirm('確認將 '+p.name+'（'+p.id+'）去向設為：'+nm+'？'+(w.length?'\n\n【尚未完成】\n・'+w.join('\n・')+'\n\n仍要繼續嗎？':'')))return;
     switch(D.g){case'A':dir=D.a==='AAD'?'AAD':'回家';txt=D.a;break;case'B':dir='等轉院';txt='轉院'+(D.to?'：'+D.to:'');break;
-      case'C':dir=(D.c==='住院（ICU）')?'等ICU':'等住院';if(p.adm<0)p.adm=0;txt=(D.c||'住院')+'，轉送等級 '+D.lv+'（'+this.LVN[D.lv]+'）';break;
+      case'C':dir=(D.c==='住院（ICU）')?'等ICU':'等住院';if(p.adm<0)p.adm=0;txt=D.c+'，轉送等級 '+D.lv+'（'+this.LVN[D.lv]+'）';break;
       case'D':dir=D.er1==='掛'?'ER1診':'回家';txt=D.er1==='掛'?'掛 '+D.br:'不掛 ER1 診';break;
-      case'E':dir=D.e==='病危出院'?'病危出院':'死亡';txt=D.e||'死亡';break;default:dir='Escape';txt='Escape'}
+      case'E':dir=D.e==='病危出院'?'病危出院':'死亡';txt=D.e;break;default:dir='Escape';txt='Escape'}
     p.notes.push({t:'出院醫囑：'+txt,at:nowS()});setDir(p.id,dir);renderDetail()},
   act(t,p){const o=t.dataset.o;
     switch(o){
@@ -3817,10 +3839,10 @@ const Cons={
     tb.innerHTML=`<fieldset class="fs"><legend>開立會診</legend>
       <div class="row"><select id="cDept">${CDEPTS.map(d=>`<option>${d}</option>`).join('')}</select>
       <select id="cUrg"><option>一般</option><option>緊急</option></select>
-      <input class="search" id="cNote" placeholder="會診原因／想問的問題" style="flex:1;min-width:160px">
+      <input class="search" id="cNote" placeholder="會診原因／想問的問題（必填）" style="flex:1;min-width:160px">
       <button class="btn primary" data-cn="add">開立會診</button></div>
       <div class="lbl" style="margin-top:6px">流程：已送出 → 已通知 → 已接收 → 已到診 → 已回覆 → 結案。緊急 15 分鐘、一般 30 分鐘未接收，系統標示逾時。動向欄會自動顯示「會診＋科別」。</div></fieldset>
-      <fieldset class="fs"><legend>會診紀錄（${L.length}）</legend>${L.map((c,i)=>{const k=CST.indexOf(c.status),lt=this.late(c),act=!c.done;
+      <fieldset class="fs"><legend>會診紀錄（${L.length}，最新在最上）</legend>${L.map((c,i)=>({c,i})).reverse().map(({c,i})=>{const k=CST.indexOf(c.status),lt=this.late(c),act=!c.done;
       return `<div class="cn"><div class="row"><b style="min-width:90px">${esc(c.dept)}</b>${c.urg==='緊急'?'<span class="urg">緊急</span>':''}<span style="flex:1">${esc(c.note||'')}</span>
         <span class="cs ${lt?'late':c.done?'ok':''}">${c.status}${lt?'　⚠ 逾時未接收 '+Math.floor((Date.now()-c.at)/60000)+' 分':''}</span></div>
         ${c.status==='已取消'?'':`<div class="steps">${CST.map((x,j)=>`<i class="${j<=k?'on':''}" title="${x}"></i>`).join('')}</div>`}
@@ -3835,6 +3857,7 @@ const Cons={
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-cn]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();
   const a=t.dataset.cn,c=(p.consults||[])[+t.dataset.i];const log=(st)=>{c.h.push({s:st,at:Date.now()})};const note=x=>p.notes.push({t:x,at:nowS()});
   if(a==='add'){const d=$('#cDept').value,u=$('#cUrg').value,n=$('#cNote').value.trim();
+    if(!n)return toast('請填會診原因／想問的問題');
     if((p.consults||[]).some(x=>!x.done&&x.dept===d)&&!confirm('已有進行中的「'+d+'」會診，確定重複開立？'))return;
     const at=Date.now();p.consults.push({dept:d,urg:u,note:n,at,done:false,status:'已送出',h:[{s:'已送出',at}]});note('開立會診：'+d+'（'+u+'）'+(n?'：'+n:''));save();renderTab();renderList();toast('已開立會診：'+d);return}
   if(!c)return;
@@ -3947,7 +3970,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 /* ===== 通報作業：傳染病（中文搜尋顯示級別）、兒少保、併發症、廣播保全 ===== */
 const IDS=[['COVID-19／新冠肺炎','第四類'],['流感併發重症','第四類'],['登革熱','第二類'],['麻疹','第二類'],['德國麻疹','第二類'],['急性病毒性 A 型肝炎','第二類'],['桿菌性痢疾','第二類'],['傷寒','第二類'],['腸病毒感染併發重症','第三類'],['結核病','第三類'],['漢生病','第三類'],['梅毒','第四類'],['淋病','第四類'],['腸道出血性大腸桿菌感染症','第二類'],['屈公病','第二類'],['日本腦炎','第二類'],['猴痘','第二類'],['嚴重特殊傳染性肺炎','第五類（依公告）']];
 const Rpt={q:'',
-  render(p,tb){const R=p.rpts=p.rpts||[],only=S.tab==='兒少保',r=IDS.filter(x=>this.q&&(x[0].toLowerCase().includes(this.q.toLowerCase())));
+  render(p,tb){if(this.pid!==p.id){this.q='';this.pid=p.id}const R=p.rpts=p.rpts||[],only=S.tab==='兒少保',r=IDS.filter(x=>this.q&&(x[0].toLowerCase().includes(this.q.toLowerCase())));
     const doctors=DOCTORS.map(d=>`<option>${d}</option>`).join('');
     tb.innerHTML=`${only?'':`<fieldset class="fs"><legend>傳染病通報</legend><div class="row"><input class="search" id="rpQ" value="${esc(this.q)}" placeholder="輸入中文或英文疾病名稱，例如：登革熱、結核、COVID" style="flex:1;min-width:200px"></div>
       <div id="rpRes">${r.map(x=>`<div class="cn row"><b style="flex:1">${esc(x[0])}</b><span class="cs late">${esc(x[1])}</span><button class="btn primary" data-rp2="ids" data-n="${esc(x[0])}" data-c="${esc(x[1])}">通報</button></div>`).join('')||(this.q?'<div class="lbl">找不到，請換關鍵字</div>':'<div class="lbl">輸入關鍵字後，系統顯示該疾病為第幾類</div>')}</div>
@@ -3963,9 +3986,12 @@ const Rpt={q:'',
     const q=$('#rpQ');if(q)q.oninput=ev=>{Rpt.q=ev.target.value;const rr=IDS.filter(x=>Rpt.q&&x[0].toLowerCase().includes(Rpt.q.toLowerCase()));$('#rpRes').innerHTML=rr.map(x=>`<div class="cn row"><b style="flex:1">${esc(x[0])}</b><span class="cs late">${esc(x[1])}</span><button class="btn primary" data-rp2="ids" data-n="${esc(x[0])}" data-c="${esc(x[1])}">通報</button></div>`).join('')||(Rpt.q?'<div class="lbl">找不到，請換關鍵字</div>':'')}}
 };
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-rp2]');if(!t)return;const p=cur();if(!p)return;e.stopPropagation();
-  const a=t.dataset.rp2,add=(type,text)=>{(p.rpts=p.rpts||[]).push({type,text,at:Date.now(),by:ME});p.notes.push({t:'【'+type+'】'+text,at:nowS()});save();renderTab();toast('已送出：'+type)};
+  const a=t.dataset.rp2,add=(type,text)=>{(p.rpts=p.rpts||[]).push({type,text,at:Date.now(),by:ME});p.notes.push({t:'【'+type+'】'+text,at:nowS()});save();renderTab();toast('已送出：'+type+'（'+p.name+'）')};
   if(a==='ids')add('傳染病通報',t.dataset.n+'（'+t.dataset.c+'）');
-  else if(a==='cp')add('兒少保通報',($('#cpN').value||'（未填事由）')+'；通告社工：'+$('#cpS').value+(($('#cpS').value==='是')?'，社工室 02-0000-0000 分機 123':''));
+  else if(a==='cp'){const rs=$('#cpN').value.trim();if(!rs)return toast('請填兒少保通報事由');
+    const ag=String(p.age).trim(),yr=ag===''||isNaN(+ag)?null:(p.unit==='月'||p.unit==='天'?0:+ag);
+    if(yr!==null&&yr>=18&&!confirm(p.name+'（'+p.id+'）年齡 '+p.age+' 歲，已超過 18 歲，確定要送兒少保通報嗎？'))return;
+    add('兒少保通報',rs+'；通告社工：'+$('#cpS').value+(($('#cpS').value==='是')?'，社工室 02-0000-0000 分機 123':''))}
   else if(a==='cm'){const w=$('#cmW').value.trim();if(!w)return toast('請填通報原因');add('併發症通報',$('#cmT').value+'；'+w+'；住院醫師 '+$('#cmR').value+'、主治醫師 '+$('#cmA').value)}
   else if(a==='sec'){if(confirm('確定廣播保全？（示範）'))add('廣播保全','急診 '+p.bed+' 床附近發生醫療暴力，已廣播通知保全')}
 },true);

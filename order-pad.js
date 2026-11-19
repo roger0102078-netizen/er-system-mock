@@ -234,7 +234,7 @@ function openOv(){
     <span class="k">流水號</span>${e(P.id)}<span class="k">床號</span>${e(P.bed)}<span class="k">主訴</span>${e(P.cc)}
     ${allergies(P).length?`<span class="fl d">過敏：${e(allergies(P).join('、'))}</span>`:''}<span class="fl w">eGFR ${egfr(P)}</span>
     <span class="grow"></span><button class="btn" data-a="close">✕ 關閉（Esc）</button></div><div class="op"></div></div>`;
-  ov.addEventListener('mousedown',ev=>{if(ev.target===ov)close()});
+  ov.addEventListener('mousedown',ev=>{if(ev.target===ov){if(cart().length&&!confirm('醫囑籃還有 '+cart().length+' 項尚未簽署，確定關閉？（草稿會保留）'))return;close()}});
   ov.addEventListener('click',ev=>{if(ev.target.closest('.ophead [data-a="close"]'))close()});
   ov.addEventListener('keydown',ev=>{if(ev.key==='Escape')ST.mode==='entry'?back():close()});
   ov.tabIndex=-1;
@@ -242,7 +242,7 @@ function openOv(){
   root=ov.querySelector('.op');
   if(ST.mode==='entry')entryView();else{historyView();ov.focus()}
 }
-function close(){closeOv();ST.mode='history';refresh()}
+function close(){const n=P&&cart().length;closeOv();ST.mode='history';refresh();if(n&&typeof toast==='function')toast('醫囑籃還有 '+n+' 項尚未簽署（草稿已保留，重新開啟可繼續）')}
 const refresh=()=>{if(typeof S!=='undefined'&&S.tab==='醫囑'&&typeof renderTab==='function'){renderTab();return}const tb=document.getElementById('tb');if(tb&&P)render(P,tb)};
 
 /* ---------- 已開立醫囑（單擊） ---------- */
@@ -456,6 +456,6 @@ document.addEventListener('click',ev=>{
   if(ev.target.closest('.shortbar')&&typeof S!=='undefined'&&S.sel){S.tab='醫囑';renderDetail()}
 },true);
 
-function addNames(p,names){rebuild();P=p;names.forEach(n=>{const d=byName(n);if(d)addItem(d,true,true)})}
+function addNames(p,names){rebuild();P=p;names.forEach(n=>{const d=byName(n);if(d){addItem(d,true,true);if(/^12-lead ECG|^12 導程|^Troponin/.test(d.n)){const x=cart().find(y=>y.d.n===d.n);if(x)x.pri='STAT'}}})}
 window.OrderPad={render,enter,back,hooks,addNames,names:t=>{rebuild();return D.filter(d=>!t||d.t===t).map(d=>d.n)}};
 })();

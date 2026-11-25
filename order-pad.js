@@ -94,6 +94,12 @@ const BASE=[
  {t:'con',n:'General Surgery 一般外科',zh:'外科會診',al:'gs 腹痛 consult'},
  {t:'con',n:'Orthopedics 骨科',zh:'骨科會診',al:'ortho 骨折 consult'},
  {t:'con',n:'ICU 加護病房',zh:'加護會診',al:'icu 重症 consult'},
+ {t:'med',n:'Epinephrine 1 mg IV push',zh:'腎上腺素 心跳停止',al:'epi arrest cpr ohca rosc',m:['1','mg','IV','Q3-5MIN']},
+ {t:'med',n:'Amiodarone 300 mg',zh:'臟得樂 cordarone',al:'arrest vf vt 心律不整',m:['300','mg','IV','ONCE']},
+ {t:'med',n:'Ticagrelor 180 mg',zh:'百栓妥 brilinta',al:'抗血小板 stemi',m:['180','mg','PO','ONCE']},
+ {t:'med',n:'Metronidazole 500 mg',zh:'滅菌達 flagyl',al:'抗生素 厭氧',m:['500','mg','IV','Q8H']},
+ {t:'img',n:'CTA Head & Neck',zh:'頭頸部血管攝影CT',al:'cta 中風 stroke 血管',k:'ct',renal:1,fn:'顯影劑腎病變風險，請確認腎功能'},
+ {t:'nur',n:'Targeted Temperature Management (TTM)',zh:'目標體溫管理',al:'ttm 低溫 rosc 復甦後'},
 ];
 let D=[];
 function rebuild(){D=BASE.concat(hooks.items?hooks.items():[]);D.forEach((d,i)=>{d.id=i;d.zh=d.zh||'';d.hay=(d.n+' '+d.zh+' '+(d.al||'')).toLowerCase()})}
@@ -107,8 +113,60 @@ const SETS0=[
  {n:'過敏性休克',ids:['Epinephrine 0.3 mg IM','Diphenhydramine 50 mg','Methylprednisolone 40 mg','Oxygen Therapy','Cardiac Monitor + SpO₂','IV Access (18G)']},
 ];
 const setsAll=()=>hooks.sets?hooks.sets():SETS0.map(s=>({n:s.n,g:'科部',i:s.ids}));
+/* 組套：items＝預設帶入；opt＝視需要（預設不勾）。縮寫放在 aka，輸入前綴即可命中。示範內容，非臨床指引。 */
+const SETS=[
+ {k:'sepsis',short:'Sepsis',n:'Sepsis 敗血症',aka:'sepsis septic 敗血症 敗血性休克 sirs',
+  items:['Blood Culture x2','Lactate','CBC + DC','CRP','Procalcitonin','BUN / Creatinine / eGFR','Electrolytes (Na/K/Cl)','Liver Function (AST/ALT/Bil)','PT / aPTT / INR','Urine Routine + Culture','ABG 動脈血液氣體','Chest X-ray (portable)','Ceftriaxone 1 g','Normal Saline 0.9% 1000 mL','IV Access (18G)','Vital Signs Q15MIN','Cardiac Monitor + SpO₂','I/O 輸出入量記錄'],
+  opt:['Norepinephrine 4 mg/250 mL',"Lactated Ringer's 1000 mL",'Azithromycin 500 mg','Foley Catheter 導尿','ICU 加護病房']},
+ {k:'ohca',short:'OHCA',n:'OHCA 到院前心跳停止',aka:'ohca 到院前心跳停止 到院前死亡 cpr arrest 心肺停止',
+  items:['Epinephrine 1 mg IV push','Endotracheal Intubation','IV Access (18G)','12-lead ECG','Cardiac Monitor + SpO₂','ABG 動脈血液氣體','Lactate','Glucose (POCT)','Electrolytes (Na/K/Cl)','CBC + DC','Troponin I (hs)','BUN / Creatinine / eGFR','Chest X-ray (portable)','POCUS / FAST','Normal Saline 0.9% 1000 mL'],
+  opt:['Amiodarone 300 mg','Cardioversion / Defibrillation','CT Brain without contrast','Cardiology 心臟內科','ICU 加護病房','Targeted Temperature Management (TTM)']},
+ {k:'rosc',short:'ROSC',n:'ROSC 恢復自發循環（復甦後）',aka:'rosc 恢復自發循環 復甦後 post-rosc post-arrest',
+  items:['12-lead ECG','ABG 動脈血液氣體','Lactate','Electrolytes (Na/K/Cl)','Glucose (POCT)','Troponin I (hs)','CBC + DC','BUN / Creatinine / eGFR','PT / aPTT / INR','Chest X-ray (portable)','POCUS / FAST','Cardiac Monitor + SpO₂','Vital Signs Q15MIN','Foley Catheter 導尿','Targeted Temperature Management (TTM)'],
+  opt:['CT Brain without contrast','Norepinephrine 4 mg/250 mL','Midazolam 2 mg','Fentanyl 50 mcg','Echocardiography','Cardiology 心臟內科','ICU 加護病房']},
+ {k:'stemi',short:'STEMI',n:'STEMI 急性心肌梗塞',aka:'stemi 心肌梗塞 心梗 ami',
+  items:['12-lead ECG','Troponin I (hs)','CK-MB','CBC + DC','BUN / Creatinine / eGFR','Electrolytes (Na/K/Cl)','PT / aPTT / INR','Type & Screen','Chest X-ray (portable)','Aspirin 300 mg','Ticagrelor 180 mg','Heparin 5000 U','IV Access (18G)','Cardiac Monitor + SpO₂','Cardiology 心臟內科'],
+  opt:['Nitroglycerin 0.6 mg SL','Morphine 4 mg','Oxygen Therapy','Echocardiography']},
+ {k:'stroke',short:'Stroke',n:'Stroke 急性中風',aka:'stroke 中風 腦中風 腦梗塞 cva',
+  items:['CT Brain without contrast','CTA Head & Neck','Glucose (POCT)','CBC + DC','PT / aPTT / INR','Electrolytes (Na/K/Cl)','BUN / Creatinine / eGFR','Troponin I (hs)','12-lead ECG','Cardiac Monitor + SpO₂','Vital Signs Q15MIN','NPO 禁食','IV Access (18G)','Neurology 神經內科'],
+  opt:['Fall Precaution 防跌','Normal Saline 0.9% 1000 mL']},
+ {k:'uti',short:'UTI',n:'UTI 泌尿道感染',aka:'uti 泌尿道感染 尿路感染 腎盂腎炎 pyelo',
+  items:['Urine Routine + Culture','CBC + DC','CRP','BUN / Creatinine / eGFR','Electrolytes (Na/K/Cl)','Blood Culture x2','Ceftriaxone 1 g','Acetaminophen 500 mg','Normal Saline 0.9% 1000 mL'],
+  opt:['Abdominal Ultrasound','CT Chest/Abdomen/Pelvis with contrast','β-hCG','Ondansetron 4 mg']},
+ {k:'bti',short:'BTI',n:'BTI 膽道感染',aka:'bti 膽道感染 膽管炎 膽囊炎 cholangitis cholecystitis',
+  items:['CBC + DC','CRP','Liver Function (AST/ALT/Bil)','Lipase / Amylase','BUN / Creatinine / eGFR','Electrolytes (Na/K/Cl)','PT / aPTT / INR','Lactate','Blood Culture x2','Abdominal Ultrasound','Ceftriaxone 1 g','Metronidazole 500 mg','Normal Saline 0.9% 1000 mL','NPO 禁食','Ondansetron 4 mg','General Surgery 一般外科'],
+  opt:['CT Chest/Abdomen/Pelvis with contrast','Procalcitonin','Morphine 4 mg','ICU 加護病房']},
+ {k:'cp',short:'胸痛',n:'胸痛 / ACS 初篩',aka:'cp 胸痛 chest pain acs',
+  items:['12-lead ECG','Troponin I (hs)','CBC + DC','Electrolytes (Na/K/Cl)','Aspirin 300 mg','Cardiac Monitor + SpO₂','Chest X-ray (portable)'],opt:['D-dimer','Nitroglycerin 0.6 mg SL']},
+ {k:'sob',short:'呼吸困難',n:'呼吸困難',aka:'sob dyspnea 呼吸困難 喘',
+  items:['Chest X-ray (portable)','ABG 動脈血液氣體','BNP / NT-proBNP','Salbutamol 2.5 mg Neb','Oxygen Therapy'],opt:['Ipratropium 0.5 mg Neb','Methylprednisolone 40 mg','D-dimer']},
+ {k:'ana',short:'Anaphylaxis',n:'Anaphylaxis 過敏性休克',aka:'ana anaphylaxis 過敏性休克 過敏 allergy',
+  items:['Epinephrine 0.3 mg IM','Diphenhydramine 50 mg','Methylprednisolone 40 mg','Oxygen Therapy','Cardiac Monitor + SpO₂','IV Access (18G)'],opt:['Normal Saline 0.9% 1000 mL']},
+];
+const BUILT=SETS;
+BUILT.forEach(s=>{s.words=(s.k+' '+s.aka).toLowerCase().split(/\s+/);s.hay=(s.aka+' '+s.n).toLowerCase()});
+/* 全部組套 = 內建縮寫組套 + 主頁維護的科部／個人組套（以名稱搜尋） */
+function allSets(){
+  const ex=setsAll().filter(s=>!BUILT.some(b=>b.n===s.n)).map(s=>({k:'h:'+s.n,ab:s.n,short:s.n,n:s.n+(s.g?'（'+s.g+'）':''),aka:s.n,items:s.i,opt:[],mine:s.g==='個人',words:s.n.toLowerCase().split(/\s+/),hay:s.n.toLowerCase()}));
+  return BUILT.concat(ex);
+}
+const setEnt=s=>({t:'set',id:'set:'+s.k,n:s.n,sets:[s]});
+const isAscii=t=>/^[\x00-\x7f]+$/.test(t);
+const setHit=(s,t)=>isAscii(t)?s.words.some(w=>w.startsWith(t)):s.hay.includes(t);
+/* 縮寫比對：單一縮寫命中該組套；多個縮寫（如 "sepsis uti"）合併成一個組合 */
+function setResults(toks){
+  toks=toks.filter(t=>t.length>=2);if(!toks.length)return[];
+  const A=allSets(),out=A.filter(s=>toks.every(t=>setHit(s,t))).map(setEnt);
+  if(toks.length>1){
+    const picks=toks.map(t=>A.find(s=>setHit(s,t)));
+    if(picks.every(Boolean)){const u=[...new Set(picks)];if(u.length>1)out.unshift({t:'set',id:'set:'+u.map(s=>s.k).join('+'),n:'組合：'+u.map(s=>s.short).join(' + '),sets:u})}
+  }
+  return out;
+}
+const setItems=x=>[...new Set(x.sets.flatMap(s=>s.items))];
+const setOpts=x=>{const it=setItems(x);return[...new Set(x.sets.flatMap(s=>s.opt||[]))].filter(n=>!it.includes(n))};
 const ROUTES=['IV','PO','SC','IM','SL','NEB','TOP'];
-const FREQS=['ONCE','ST','QD','QN','STAT','Q4H','Q6H','Q8H','Q12H','Q24H','BID','TID','QID','Q4H PRN','Q6H PRN','Q8H PRN','Q5MIN x3','持續'];
+const FREQS=['ONCE','ST','QD','QN','STAT','Q4H','Q6H','Q8H','Q12H','Q24H','BID','TID','QID','Q4H PRN','Q6H PRN','Q8H PRN','Q5MIN x3','Q3-5MIN','持續'];
 const PRIS=['STAT','ASAP','Routine'];
 const STATUS={wait:'待收件',run:'執行中',done:'已完成',stop:'已停止'};
 
@@ -201,12 +259,21 @@ const CSS=`
 .opwin ul.res li{padding:7px 10px;font-size:15.5px}
 .opwin .ord{padding:8px 10px}.opwin .f input,.opwin .f select{font-size:14.5px;padding:3px 6px}
 .opwin .chips .chip,.opwin .sets .btn{font-size:14px}
+.op fieldset.fs{min-width:0}
+.bd.set{background:#d97706}.op .bd.set{background:#d97706}
+.op .abbr{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}.op .abbr .chip{cursor:pointer;font-weight:600}
+.op li.gh{cursor:default;background:var(--accent-soft);color:var(--muted);font-size:12.5px;font-weight:600;padding:3px 10px;position:sticky;top:0;z-index:1}
+.op li.gh:hover{background:var(--accent-soft)}
+.op .pv{margin-top:6px;border:1px solid var(--accent);border-radius:6px;background:var(--panel);color:var(--ink);padding:6px 8px;max-height:42%;overflow:auto}
+.op .pvg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:2px 10px;margin-top:4px}
+.op .pvi{display:flex;gap:6px;align-items:center;font-size:13.5px;cursor:pointer}
+.op .seg button{padding:3px 12px}
 .op .msg{background:var(--accent);color:#fff;border-radius:4px;padding:3px 10px;font-size:13px}
 `;
 function css(){if(document.getElementById('op-css'))return;const s=document.createElement('style');s.id='op-css';s.textContent=CSS;document.head.appendChild(s)}
 
 /* ---------- 狀態 ---------- */
-const ST={pid:null,mode:'history',type:'all',q:'',sel:0,hsel:-1,hfilter:'all',hq:'',fav:new Set((()=>{try{const v=JSON.parse(localStorage.getItem('er-ord-fav2'));if(Array.isArray(v))return v}catch(_){}return['Normal Saline 0.9% 1000 mL','Acetaminophen 500 mg','12-lead ECG','CBC + DC','Glucose (POCT)']})()),recent:[],msg:''};
+const ST={pid:null,mode:'history',type:'all',q:'',sel:0,hsel:-1,hfilter:'all',hq:'',fav:new Set((()=>{try{const v=JSON.parse(localStorage.getItem('er-ord-fav2'));if(Array.isArray(v))return v}catch(_){}return['Normal Saline 0.9% 1000 mL','Acetaminophen 500 mg','12-lead ECG','CBC + DC','Glucose (POCT)']})()),recent:[],msg:'',view:(()=>{try{return localStorage.getItem('op-view')==='quick'?'quick':'std'}catch(_){return'std'}})(),pv:new Set(),pvKey:null};
 let P=null,root=null,shown=[],msgT=0;
 const cart=()=>P._draft||(P._draft=[]);
 const saveFav=()=>{try{localStorage.setItem('er-ord-fav2',JSON.stringify([...ST.fav]))}catch(_){}};
@@ -299,15 +366,22 @@ function paintHistory(){
 function enter(){ST.mode='entry';ST.q='';ST.sel=0;ST.open=true;refresh()}
 function back(){ST.mode='history';ST.open=true;refresh()}
 function entryView(){
+  const quick=ST.view==='quick';
+  const abs=allSets().filter(x=>BUILT.includes(x)||x.mine);
+  const opd=hooks.opdNames?`<button class="btn" data-a="opd" title="全部設為 1 天，不帶慢簽 28 天">＋ 門診用藥</button>`:'';
   root.innerHTML=`
-  <div class="bar"><span class="ttl">開立醫囑</span><span class="grow"></span>
-    <span class="hint">藥品／檢驗／影像／處置／護理／會診 同一個搜尋框　·　↑↓ 選擇 · Enter 加入 · Tab 切類別 · Esc 返回</span></div>
+  <div class="bar"><span class="ttl">開立醫囑</span>
+    <div class="seg" title="切換輸入模式"><button class="${quick?'':'on'}" data-v="std">標準模式</button><button class="${quick?'on':''}" data-v="quick">單一輸入模式</button></div>
+    <span class="grow"></span>
+    <span class="hint">${quick?'輸入縮寫帶入組套（可多個，如 sepsis uti）　·　↑↓ 選擇 · Enter 套用／加入 · Esc 返回':'藥品／檢驗／影像／處置／護理／會診 同一個搜尋框　·　↑↓ 選擇 · Enter 加入 · Tab 切類別 · Esc 返回'}</span></div>
   <div class="grid">
-   <fieldset class="fs"><legend>搜尋（藥囑＋醫囑）</legend>
-    <div class="sw"><input class="search" id="q" autocomplete="off" placeholder="例：cef、血糖、cxr、ct 腦、ntg、胸痛" value="${e(ST.q)}"></div>
-    <div class="chips" id="chips"></div>
-    <div class="sets" id="sets"><span class="hint">組套：</span>${setsAll().map((s,i)=>`<button class="btn ${s.g==='個人'?'mine':''}" data-s="${i}" title="${e(s.g)}組套：${e(s.i.join('、'))}">${s.g==='個人'?'★ ':'＋ '}${e(s.n)}</button>`).join('')}${hooks.opdNames?`<button class="btn" data-a="opd" title="全部設為 1 天，不帶慢簽 28 天">＋ 門診用藥</button>`:''}</div>
+   <fieldset class="fs"><legend>${quick?'單一輸入：藥囑＋醫囑＋組套':'搜尋（藥囑＋醫囑）'}</legend>
+    <div class="sw"><input class="search" id="q" autocomplete="off" placeholder="${quick?'縮寫：sepsis / OHCA / ROSC / STEMI / stroke / UTI / BTI …，或直接輸入藥名、檢驗、檢查':'例：cef、血糖、cxr、ct 腦、ntg、胸痛'}" value="${e(ST.q)}"></div>
+    ${quick?`<div class="abbr">${abs.map(x=>`<button class="chip" data-ab="${e(x.ab||x.k)}" title="${e(x.n)}">${e(x.short)}</button>`).join('')}${opd}</div>`
+     :`<div class="chips" id="chips"></div>
+    <div class="sets" id="sets"><span class="hint">組套：</span>${setsAll().map((s,i)=>`<button class="btn ${s.g==='個人'?'mine':''}" data-s="${i}" title="${e(s.g)}組套：${e(s.i.join('、'))}">${s.g==='個人'?'★ ':'＋ '}${e(s.n)}</button>`).join('')}${opd}</div>`}
     <div class="box"><ul class="res" id="res"></ul></div>
+    ${quick?'<div class="pv" id="pv" style="display:none"></div>':''}
    </fieldset>
    <fieldset class="fs"><legend>醫囑籃</legend>
     <div class="alerts" id="alerts"></div><div class="sug" id="sug"></div>
@@ -317,46 +391,95 @@ function entryView(){
    </fieldset>
   </div>`;
   root.onclick=entryClick;root.ondblclick=null;
-  root.addEventListener('input',entryInput);root.addEventListener('change',entryInput);
+  root.oninput=root.onchange=entryInput;
   const q=root.querySelector('#q');
   q.oninput=ev=>{ST.q=ev.target.value;ST.sel=0;paintRes()};
   q.onkeydown=ev=>{
     ev.stopPropagation();
     if(ev.key==='ArrowDown'){ev.preventDefault();ST.sel=Math.min(shown.length-1,ST.sel+1);paintRes()}
     else if(ev.key==='ArrowUp'){ev.preventDefault();ST.sel=Math.max(0,ST.sel-1);paintRes()}
-    else if(ev.key==='Enter'){ev.preventDefault();if(shown[ST.sel])addItem(shown[ST.sel])}
+    else if(ev.key==='Enter'){ev.preventDefault();if(shown[ST.sel])activate(shown[ST.sel])}
     else if(ev.key==='Escape'){if(ST.q){ST.q='';q.value='';ST.sel=0;paintRes()}else back()}
-    else if(ev.key==='Tab'){ev.preventDefault();const ks=['all',...Object.keys(TYPES)],i=ks.indexOf(ST.type);ST.type=ks[(i+(ev.shiftKey?-1:1)+ks.length)%ks.length];ST.sel=0;paintRes()}
+    else if(ev.key==='Tab'&&!quick){ev.preventDefault();const ks=['all',...Object.keys(TYPES)],i=ks.indexOf(ST.type);ST.type=ks[(i+(ev.shiftKey?-1:1)+ks.length)%ks.length];ST.sel=0;paintRes()}
   };
   paintRes();paintCart();q.focus();
 }
+function setView(v){ST.view=v;try{localStorage.setItem('op-view',v)}catch(_){}ST.sel=0;ST.pvKey=null;entryView()}
 function paintSets(){const el=root.querySelector('#sets');if(!el)return;el.innerHTML=`<span class="hint">組套：</span>${setsAll().map((s,i)=>`<button class="btn ${s.g==='個人'?'mine':''}" data-s="${i}" title="${e(s.g)}組套：${e(s.i.join('、'))}">${s.g==='個人'?'★ ':'＋ '}${e(s.n)}</button>`).join('')}${hooks.opdNames?`<button class="btn" data-a="opd">＋ 門診用藥</button>`:''}`}
 function search(){
   const toks=ST.q.toLowerCase().split(/\s+/).filter(Boolean);
   const list=D.filter(d=>toks.every(t=>d.hay.includes(t)));
   const sc=d=>{let s=0;const n=d.n.toLowerCase();toks.forEach(t=>{if(n.startsWith(t))s+=10;else if(n.includes(t))s+=5;else if(d.zh.includes(t))s+=4});if(ST.fav.has(d.n))s+=3;if(ST.recent.includes(d.n))s+=2;return s};
-  return list.sort((a,b)=>sc(b)-sc(a));
+  list.sort((a,b)=>sc(b)-sc(a));
+  return ST.view==='quick'?[...setResults(toks),...list]:list;
 }
 function hl(t){let h=e(t);ST.q.toLowerCase().split(/\s+/).filter(Boolean).forEach(k=>{h=h.replace(new RegExp('('+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>')});return h}
-function paintRes(){
-  const all=search();
-  const cnt={all:all.length};Object.keys(TYPES).forEach(k=>cnt[k]=all.filter(d=>d.t===k).length);
-  root.querySelector('#chips').innerHTML=['all',...Object.keys(TYPES)].map(k=>`<button class="chip ${ST.type===k?'on':''}" data-k="${k}">${k==='all'?'全部':TYPES[k]}<span class="n">${cnt[k]}</span></button>`).join('');
-  let list=ST.type==='all'?all:all.filter(d=>d.t===ST.type);
-  const idle=!ST.q&&ST.type==='all';
-  if(idle){const fv=list.filter(d=>ST.fav.has(d.n)||ST.recent.includes(d.n));list=fv.length?fv:list.slice(0,10)}
-  shown=list.slice(0,60);if(ST.sel>=shown.length)ST.sel=Math.max(0,shown.length-1);
-  const done=n=>P.orders.find(o=>o.name===n);
-  root.querySelector('#res').innerHTML=(idle?'<li style="cursor:default;color:var(--muted);font-size:12px">★ 常用 / 最近（輸入以搜尋全部）</li>':'')+(shown.length?shown.map((d,i)=>{
-    const inCart=cart().some(c=>c.d.n===d.n),ord=done(d.n);
-    const sub=d.t==='med'?`${d.zh} · ${d.m.join(' ')}`:d.t==='lab'?`${d.zh} · ${d.tube}`:d.zh;
-    const bad=d.allergy&&allergies(P).includes(d.allergy);
-    return `<li data-i="${i}" class="${i===ST.sel?'sel':''}"><span class="bd ${d.t}">${BADGE[d.t]}</span><div class="nm"><b>${hl(d.n)}</b><small>${hl(sub)}</small></div>
+const GROUPS=['set','med','lab','img','proc','nur','ord','nut','con'],GLBL={set:'組套',...TYPES};
+function rowHtml(d,i){
+  const sel=i===ST.sel?'sel':'';
+  if(d.t==='set'){
+    const it=setItems(d),all=it.every(n=>cart().some(c=>c.d.n===n));
+    return `<li data-i="${i}" class="${sel}"><span class="bd set">組</span><div class="nm"><b>${hl(d.n)}</b><small>${it.length} 項：${e(it.slice(0,6).join('、'))}${it.length>6?'…':''}</small></div><span class="fl i">組套</span>${all?'<span class="fl i">✓ 已全部加入</span>':''}</li>`;
+  }
+  const inCart=cart().some(c=>c.d.n===d.n),ord=P.orders.find(o=>o.name===d.n);
+  const sub=d.t==='med'?`${d.zh} · ${d.m.join(' ')}`:d.t==='lab'?`${d.zh} · ${d.tube}`:d.zh;
+  const bad=d.allergy&&allergies(P).includes(d.allergy);
+  return `<li data-i="${i}" class="${sel}"><span class="bd ${d.t}">${BADGE[d.t]}</span><div class="nm"><b>${hl(d.n)}</b><small>${hl(sub)}</small></div>
      ${bad?'<span class="fl d">過敏</span>':d.flag?'<span class="fl w">注意</span>':''}${d.renal&&egfr(P)<50?'<span class="fl w">腎功能</span>':''}
      ${ord?`<span class="fl i">已開 ${hhmm(ord.ts)}</span>`:''}${inCart?'<span class="fl i">✓ 籃中</span>':''}
-     <button class="star ${ST.fav.has(d.n)?'on':''}" data-f="${i}" title="常用">★</button></li>`}).join(''):'<li class="empty" style="cursor:default">找不到符合項目</li>');
-  const s=root.querySelector('#res li.sel');if(s)s.scrollIntoView({block:'nearest'});
+     <button class="star ${ST.fav.has(d.n)?'on':''}" data-f="${i}" title="常用">★</button></li>`;
 }
+function paintRes(){
+  const quick=ST.view==='quick',all=search();
+  const chipEl=root.querySelector('#chips');
+  if(chipEl){
+    const cnt={all:all.length};Object.keys(TYPES).forEach(k=>cnt[k]=all.filter(d=>d.t===k).length);
+    chipEl.innerHTML=['all',...Object.keys(TYPES)].map(k=>`<button class="chip ${ST.type===k?'on':''}" data-k="${k}">${k==='all'?'全部':TYPES[k]}<span class="n">${cnt[k]}</span></button>`).join('');
+  }
+  const favs=D.filter(d=>ST.fav.has(d.n)||ST.recent.includes(d.n));
+  let list,note='';
+  if(quick){
+    if(ST.q)list=all;
+    else{list=[...allSets().filter(s=>BUILT.includes(s)||s.mine).map(setEnt),...favs];note='輸入縮寫或關鍵字；下列為組套與 ★ 常用／最近'}
+  }else{
+    list=ST.type==='all'?all:all.filter(d=>d.t===ST.type);
+    if(!ST.q&&ST.type==='all'){const fv=list.filter(d=>ST.fav.has(d.n)||ST.recent.includes(d.n));list=fv.length?fv:list.slice(0,10);note='★ 常用 / 最近（輸入以搜尋全部）'}
+  }
+  let html='';
+  if(quick){
+    const g={};list.forEach(d=>(g[d.t]=g[d.t]||[]).push(d));shown=[];
+    GROUPS.forEach(k=>{if(!g[k])return;const part=g[k].slice(0,k==='set'?10:12);
+      html+=`<li class="gh">${GLBL[k]}（${g[k].length}）${g[k].length>part.length?'　<small>僅顯示前 '+part.length+' 筆，輸入更多字縮小範圍</small>':''}</li>`;
+      part.forEach(d=>{html+=rowHtml(d,shown.length);shown.push(d)})});
+  }else{shown=list.slice(0,60);html=shown.map(rowHtml).join('')}
+  if(ST.sel>=shown.length){ST.sel=Math.max(0,shown.length-1);if(quick){paintRes();return}}
+  root.querySelector('#res').innerHTML=(note?`<li class="gh" style="${quick?'':'font-weight:400'}">${e(note)}</li>`:'')+(shown.length?html:'<li class="empty" style="cursor:default">找不到符合項目</li>');
+  if(quick)paintPv();
+  const sl=root.querySelector('#res li.sel');if(sl)sl.scrollIntoView({block:'nearest'});
+}
+/* 組套預覽（單一輸入模式）：勾選要帶入的項目 */
+function paintPv(){
+  const box=root.querySelector('#pv');if(!box)return;
+  const cur=shown[ST.sel];
+  if(!cur||cur.t!=='set'){box.style.display='none';return}
+  const it=setItems(cur),op=setOpts(cur);
+  if(ST.pvKey!==cur.id){ST.pvKey=cur.id;ST.pv=new Set(it)}
+  box.style.display='';
+  const chk=(n,o)=>{const d=byName(n);if(!d)return'';const inC=cart().some(c=>c.d.n===d.n);
+    return `<label class="pvi"><input type="checkbox" data-pv="${e(n)}" ${ST.pv.has(n)?'checked':''}><span class="bd ${d.t}">${BADGE[d.t]}</span><span>${e(n)}${o?' <i class="hint">視需要</i>':''}${inC?' <i class="hint">✓籃中</i>':''}</span></label>`};
+  box.innerHTML=`<div class="bar"><b>${e(cur.n)}</b><span class="hint">勾選要開立的項目；已在籃中的會自動略過</span><span class="grow"></span><button class="btn primary" data-a="applyset">套用組套（Enter）</button></div>
+   <div class="pvg">${it.map(n=>chk(n,0)).join('')}${op.map(n=>chk(n,1)).join('')}</div>`;
+}
+function applySet(cur){
+  const names=ST.pvKey===cur.id?[...ST.pv]:setItems(cur);
+  let add=0,dup=0;
+  names.forEach(n=>{const d=byName(n);if(!d)return;if(cart().some(c=>c.d.n===d.n)){dup++;return}addItem(d,true,true);add++});
+  paintCart();
+  ST.q='';ST.sel=0;ST.pvKey=null;const q=root.querySelector('#q');if(q){q.value='';q.focus()}
+  paintRes();
+  flash(`已套用：${cur.n}（新增 ${add} 項${dup?`，已在籃中 ${dup} 項略過`:''}）`);
+}
+const activate=d=>d.t==='set'?applySet(d):addItem(d);
 function addItem(d,quiet,silent){
   const c=cart();
   if(c.some(x=>x.d.n===d.n)){if(!silent)flash('已在醫囑籃：'+d.n);return}
@@ -402,7 +525,9 @@ function paintCart(){
 }
 function flash(m){const el=root&&root.querySelector('#msg');if(!el)return;el.textContent=m;el.style.display='';clearTimeout(msgT);msgT=setTimeout(()=>{el.style.display='none'},2200)}
 function entryInput(ev){
-  const t=ev.target;if(!t.dataset||t.dataset.k===undefined)return;
+  const t=ev.target;if(!t.dataset)return;
+  if(t.dataset.pv!==undefined){t.checked?ST.pv.add(t.dataset.pv):ST.pv.delete(t.dataset.pv);return}
+  if(t.dataset.k===undefined)return;
   const x=cart()[+t.dataset.i];if(x)x[t.dataset.k]=t.value;
   if(t.dataset.k==='reason')paintCart();
 }
@@ -413,15 +538,21 @@ function entryClick(ev){
     if(a.dataset.a==='back')return back();
     if(a.dataset.a==='clear'){P._draft=[];paintCart();paintRes();return}
     if(a.dataset.a==='submit')return submit();
+    if(a.dataset.a==='applyset'){const cur=shown[ST.sel];if(cur&&cur.t==='set')applySet(cur);return}
     if(a.dataset.a==='mkset'){const c=cart();if(!c.length)return flash('醫囑籃是空的');const nm=prompt('個人組套名稱');if(nm&&hooks.saveSet){hooks.saveSet(nm,c.map(x=>x.d.n));paintSets();flash('已存成個人組套：'+nm)}return}
     if(a.dataset.a==='opd'){(hooks.opdNames?hooks.opdNames():[]).forEach(n=>{const d=byName(n);if(!d)return;addItem(d,true,true);const x=cart().find(y=>y.d.n===d.n);if(x)x.days=1});paintCart();paintRes();flash('已帶入門診用藥，天數設為 1 天');return}
   }
+  const vb=T.closest('[data-v]');if(vb){if(vb.dataset.v!==ST.view)setView(vb.dataset.v);return}
+  const ab=T.closest('[data-ab]');if(ab){ST.q=ab.dataset.ab;ST.sel=0;const q=root.querySelector('#q');q.value=ST.q;paintRes();q.focus();return}
   const k=T.closest('[data-k].chip');if(k){ST.type=k.dataset.k;ST.sel=0;paintRes();root.querySelector('#q').focus();return}
   const sg=T.closest('[data-sg]');if(sg){const d=byName(sg.dataset.sg);if(d)addItem(d);return}
   const s=T.closest('[data-s]');if(s){const set=setsAll()[+s.dataset.s];set.i.forEach(n=>{const d=byName(n);if(d)addItem(d,true,true)});paintCart();paintRes();flash('已套用：'+set.n);return}
   const x=T.closest('[data-x]');if(x){cart().splice(+x.dataset.x,1);paintCart();paintRes();return}
   const st=T.closest('.star');if(st){const d=shown[+st.dataset.f];ST.fav.has(d.n)?ST.fav.delete(d.n):ST.fav.add(d.n);saveFav();paintRes();return}
-  const li=T.closest('#res li[data-i]');if(li){addItem(shown[+li.dataset.i]);root.querySelector('#q').focus()}
+  const li=T.closest('#res li[data-i]');if(li){
+    const d=shown[+li.dataset.i];
+    if(d.t==='set'&&ev.detail<2){ST.sel=+li.dataset.i;paintRes();return}
+    activate(d);root.querySelector('#q').focus()}
 }
 function submit(){
   const c=cart();if(!c.length||c.some(x=>x.bad))return;

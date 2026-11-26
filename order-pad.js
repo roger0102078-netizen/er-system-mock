@@ -376,7 +376,7 @@ function entryView(){
     <span class="hint">${quick?'輸入縮寫帶入組套（可多個，如 sepsis uti）　·　↑↓ 選擇 · Enter 套用／加入 · Esc 返回':'藥品／檢驗／影像／處置／護理／會診 同一個搜尋框　·　↑↓ 選擇 · Enter 加入 · Tab 切類別 · Esc 返回'}</span></div>
   <div class="grid">
    <fieldset class="fs"><legend>${quick?'單一輸入：藥囑＋醫囑＋組套':'搜尋（藥囑＋醫囑）'}</legend>
-    <div class="sw"><input class="search" id="q" autocomplete="off" placeholder="${quick?'縮寫：sepsis / OHCA / ROSC / STEMI / stroke / UTI / BTI …，或直接輸入藥名、檢驗、檢查':'例：cef、血糖、cxr、ct 腦、ntg、胸痛'}" value="${e(ST.q)}"></div>
+    <div class="sw"><input class="search" id="opq" autocomplete="off" placeholder="${quick?'縮寫：sepsis / OHCA / ROSC / STEMI / stroke / UTI / BTI …，或直接輸入藥名、檢驗、檢查':'例：cef、血糖、cxr、ct 腦、ntg、胸痛'}" value="${e(ST.q)}"></div>
     ${quick?`<div class="abbr">${abs.map(x=>`<button class="chip" data-ab="${e(x.ab||x.k)}" title="${e(x.n)}">${e(x.short)}</button>`).join('')}${opd}</div>`
      :`<div class="chips" id="chips"></div>
     <div class="sets" id="sets"><span class="hint">組套：</span>${setsAll().map((s,i)=>`<button class="btn ${s.g==='個人'?'mine':''}" data-s="${i}" title="${e(s.g)}組套：${e(s.i.join('、'))}">${s.g==='個人'?'★ ':'＋ '}${e(s.n)}</button>`).join('')}${opd}</div>`}
@@ -392,7 +392,7 @@ function entryView(){
   </div>`;
   root.onclick=entryClick;root.ondblclick=null;
   root.oninput=root.onchange=entryInput;
-  const q=root.querySelector('#q');
+  const q=root.querySelector('#opq');
   q.oninput=ev=>{ST.q=ev.target.value;ST.sel=0;paintRes()};
   q.onkeydown=ev=>{
     ev.stopPropagation();
@@ -475,7 +475,7 @@ function applySet(cur){
   let add=0,dup=0;
   names.forEach(n=>{const d=byName(n);if(!d)return;if(cart().some(c=>c.d.n===d.n)){dup++;return}addItem(d,true,true);add++});
   paintCart();
-  ST.q='';ST.sel=0;ST.pvKey=null;const q=root.querySelector('#q');if(q){q.value='';q.focus()}
+  ST.q='';ST.sel=0;ST.pvKey=null;const q=root.querySelector('#opq');if(q){q.value='';q.focus()}
   paintRes();
   flash(`已套用：${cur.n}（新增 ${add} 項${dup?`，已在籃中 ${dup} 項略過`:''}）`);
 }
@@ -543,8 +543,8 @@ function entryClick(ev){
     if(a.dataset.a==='opd'){(hooks.opdNames?hooks.opdNames():[]).forEach(n=>{const d=byName(n);if(!d)return;addItem(d,true,true);const x=cart().find(y=>y.d.n===d.n);if(x)x.days=1});paintCart();paintRes();flash('已帶入門診用藥，天數設為 1 天');return}
   }
   const vb=T.closest('[data-v]');if(vb){if(vb.dataset.v!==ST.view)setView(vb.dataset.v);return}
-  const ab=T.closest('[data-ab]');if(ab){ST.q=ab.dataset.ab;ST.sel=0;const q=root.querySelector('#q');q.value=ST.q;paintRes();q.focus();return}
-  const k=T.closest('[data-k].chip');if(k){ST.type=k.dataset.k;ST.sel=0;paintRes();root.querySelector('#q').focus();return}
+  const ab=T.closest('[data-ab]');if(ab){ST.q=ab.dataset.ab;ST.sel=0;const q=root.querySelector('#opq');q.value=ST.q;paintRes();q.focus();return}
+  const k=T.closest('[data-k].chip');if(k){ST.type=k.dataset.k;ST.sel=0;paintRes();root.querySelector('#opq').focus();return}
   const sg=T.closest('[data-sg]');if(sg){const d=byName(sg.dataset.sg);if(d)addItem(d);return}
   const s=T.closest('[data-s]');if(s){const set=setsAll()[+s.dataset.s];set.i.forEach(n=>{const d=byName(n);if(d)addItem(d,true,true)});paintCart();paintRes();flash('已套用：'+set.n);return}
   const x=T.closest('[data-x]');if(x){cart().splice(+x.dataset.x,1);paintCart();paintRes();return}
@@ -552,7 +552,7 @@ function entryClick(ev){
   const li=T.closest('#res li[data-i]');if(li){
     const d=shown[+li.dataset.i];
     if(d.t==='set'&&ev.detail<2){ST.sel=+li.dataset.i;paintRes();return}
-    activate(d);root.querySelector('#q').focus()}
+    activate(d);root.querySelector('#opq').focus()}
 }
 function submit(){
   const c=cart();if(!c.length||c.some(x=>x.bad))return;

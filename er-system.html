@@ -783,6 +783,14 @@ tr.crit td{background:#fff1f1}
 .menubar .m{opacity:.6}
 @media(max-width:1280px){.side{width:150px}.side .lg+.lg{display:none}}
 #fbanner{background:#fff3cd;color:#5c4400;border-bottom:1px solid #e0c36a;padding:4px 12px;font-size:13px}body.dark #fbanner{background:#4a3d12;color:#f6e7b0}
+.critv{color:#b91c1c;font-weight:700}body.dark .critv{color:#ff8a80}
+body.dark{color-scheme:dark}
+.zmci{color:#b3261e}body.dark .zmci{color:#ff9c90}
+body.dark *{scrollbar-color:#5f7565 #1c251f}
+:where(body.dark) .chip{background:#2c3830;color:#d6e0d8}
+body.dark .ophead{background:#3a3820;color:#e6dfa8}body.dark .ophead .btn{background:#4a4727;border-color:#66622f;color:#f3ecb8}
+body.dark .op .ord.bad{background:#4a1f22;color:#ffd6d2}body.dark .op .pri-ASAP{color:#ffa94d}body.dark .op .pri-STAT{color:#ff8a80}
+body.dark .cn .urg{color:#ff8a80}
 </style>
 
 </head>
@@ -867,7 +875,7 @@ tr.crit td{background:#fff1f1}
   </div>
 </div>
 
-<script src="order-pad.js?v=5"></script>
+<script src="order-pad.js?v=8"></script>
 <script>
 /* ===== 範例資料（皆為虛構）===== */
 const DOCTORS=['周明哲','李婉婷','張宇軒','吳佩珊','黃建宏','林怡君','陳柏翰','蔡雅惠'];
@@ -1041,7 +1049,7 @@ function renderChips(){
   z.push({k:'大',name:'大量傷患（跨區標記）'});
   $('#zoneChips').innerHTML=z.map(o=>{
     const n=o.k,c=n==='全部'?patients.length:n==='大'?patients.filter(p=>p.mci).length:patients.filter(p=>p.zone===n).length;
-    return `<label title="${o.name}（${c}）"${n==='大'?' style="color:#b3261e"':''}><input type="radio" name="zr" data-z="${n}" ${S.zone===n?'checked':''}>${n==='全部'?'全':ZSHORT[n]||n}<span class="n">${c}</span></label>`}).join('');
+    return `<label title="${o.name}（${c}）"${n==='大'?' class="zmci"':''}><input type="radio" name="zr" data-z="${n}" ${S.zone===n?'checked':''}>${n==='全部'?'全':ZSHORT[n]||n}<span class="n">${c}</span></label>`}).join('');
   $('#sortRg').innerHTML=[['id','流'],['lvl','檢'],['bed','床'],['doc','醫'],['stay','停']].map(([k,t])=>`<label title="排序"><input type="radio" name="sr" data-sort="${k}" ${S.sort===k?'checked':''}>${t}</label>`).join('');
 }
 
@@ -1105,6 +1113,8 @@ const cur=()=>patients.find(p=>p.id===S.sel);
 const FK1=['病歷','檢傷','診斷','病程','病歷查詢','檢驗','報查','累報','醫囑','會診','證明','出院','住院','其他','發報告'];
 const FK_LIVE=['病歷','檢傷','診斷','病程','病歷查詢','檢驗','報查','醫囑','會診','證明','出院','住院','悄悄話','提報','兒少保','在宅'];
 const FK2=['悄悄話','照相','護理紀錄','VTS','ICU空','ICU待床','提報','待床','流程','鎮靜評估','兒少保','DNR','影像流程','緊急醫療','醫雲','在宅'];
+function algRefresh(){const el=$('#dAlg'),p=cur();if(el&&p){const h=allergyTag(p);if(el.innerHTML!==h)el.innerHTML=h}}
+['click','input','change'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest('.chart'))setTimeout(algRefresh,0)},true));
 function renderDetail(){
   const p=cur(), d=$('#detail');
   d.classList.toggle('none',!p);d.classList.toggle('min',!!S.dmin);
@@ -1118,7 +1128,7 @@ function renderDetail(){
     <span><span class="k">區域</span><select id="zSel">${ZONES.map(z=>`<option value="${z.k}" ${z.k===p.zone?'selected':''}>${z.name}</option>`).join('')}</select></span>
     <span><span class="k">床號</span><input id="bedIn" value="${p.bed}" size="5" style="border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--panel)"></span>
     <span><span class="k">主訴</span>${p.cc}</span>
-    <span><span class="k">主責醫師</span><b>${p.doc}</b></span><span>${allergyTag(p)}</span>
+    <span><span class="k">主責醫師</span><b>${p.doc}</b></span><span id="dAlg">${allergyTag(p)}</span>
     <span><span class="k">停留</span><span id="stayNow">${fmtH(hrs(p))}</span></span>
     <label style="font-weight:600">大量傷患 <select id="mciSel"><option value="">無</option>${MCI_T.map(t=>`<option ${p.mci===t?'selected':''}>${t}</option>`).join('')}</select></label>
     <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${(p.act||[]).map(a=>`<span class="actchip" title="啟動者 ${a.by}">${a.type} ${new Date(a.at).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'})}</span>`).join('')}
@@ -3399,7 +3409,7 @@ function addDx(code,name,quiet){
   p.dx.push(e);save();const i=$('#icd');if(i){i.value='';$('#sug').style.display='none'}renderDx();return true;
 }
 document.addEventListener('input',e=>{
-  if(e.target.id==='q'){S.q=e.target.value;renderList()}
+  if(e.target.id==='q'&&!e.target.closest('.opov')){S.q=e.target.value;renderList()}
   if(e.target.id==='fId'){S.fId=e.target.value;renderList()}
   if(e.target.id==='fSeq'){S.fSeq=e.target.value;renderList()}
   if(e.target.id==='fBed'){S.fBed=e.target.value;renderList()}
@@ -3898,7 +3908,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 /* ===== 報告查詢：危急值簽收／處置回覆、離院後報告追蹤 ===== */
 const Rep={
   render(p,tb){const C=p.crit||[],F=p.fup=p.fup||[],now=Date.now(),nu=C.filter(c=>!c.ack).length,nr=C.filter(c=>c.ack&&!c.reply).length;
-    tb.innerHTML=`<fieldset class="fs"><legend>危急值（未簽收 ${nu}、已簽收未回覆 ${nr}）</legend>${C.map((c,i)=>`<div class="cn"><div class="row"><b>${esc(c.name)}</b><span style="color:#b91c1c;font-weight:700">${esc(c.val)}</span><span class="lbl">參考 ${esc(c.ref||'')}　通知 ${hm(c.at)}（${Math.max(0,Math.round((now-c.at)/60000))} 分鐘前）</span><span style="flex:1"></span>
+    tb.innerHTML=`<fieldset class="fs"><legend>危急值（未簽收 ${nu}、已簽收未回覆 ${nr}）</legend>${C.map((c,i)=>`<div class="cn"><div class="row"><b>${esc(c.name)}</b><span class="critv">${esc(c.val)}</span><span class="lbl">參考 ${esc(c.ref||'')}　通知 ${hm(c.at)}（${Math.max(0,Math.round((now-c.at)/60000))} 分鐘前）</span><span style="flex:1"></span>
       <span class="cs ${c.reply?'ok':!c.ack?'late':''}">${c.reply?'已處置回覆':c.ack?'已簽收，未回覆':'未簽收'}</span></div>
       ${c.ack?`<div class="hist">簽收：${esc(c.ackBy||'—')} ${c.ackAt?hm(c.ackAt):''}</div>`:''}
       ${c.reply?`<div class="note"><b>處置回覆</b>：${esc(c.reply)}<br><small>${esc(c.replyBy)} ${hm(c.replyAt)}</small></div>`:`<div class="row" style="margin-top:4px">${!c.ack?`<button class="btn primary" data-rp="ack" data-i="${i}">簽收</button>`:`<input class="search" id="rr${i}" placeholder="處置回覆，例如：已補鉀 40 mEq，1 小時後複驗" style="flex:1"><button class="btn primary" data-rp="reply" data-i="${i}">送出處置回覆</button>`}</div>`}</div>`).join('')||'<div class="lbl">此病人沒有危急值</div>'}</fieldset>

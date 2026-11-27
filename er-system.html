@@ -483,41 +483,12 @@ fieldset.fs{background:#dcebd1;border-color:#9dbb8c}
 .note{background:#d3e5c7}
 
 
-/* ===== 五級檢傷視窗 ===== */
+/* ===== 五級檢傷視窗（內容在 triage-win.html，以 iframe 嵌入）===== */
 .tm{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:none;align-items:center;justify-content:center}
 .tm.show{display:flex}
-.tmb{background:#e8efe2;border:2px solid #3b5a3a;border-radius:6px;width:min(980px,96vw);max-height:94vh;overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.4);color:#12210f}
-.tmb .tt{display:flex;align-items:center;gap:8px;background:#f4f7f0;padding:5px 10px;font-size:16px;border-bottom:1px solid #9bb391}
-.tmb .tt .x{margin-left:auto;border:0;background:none;font-size:22px;cursor:pointer;color:inherit}
-.tmb .tt b.cross{color:#d22;font-size:20px}
-.tri3{display:grid;grid-template-columns:150px 1.1fr 1.5fr;height:300px;border-bottom:1px solid #9bb391;background:#cfe0c6}
-.tri3 .cl{overflow:auto;border-right:1px solid #9bb391}
-.tri3 .cl:last-child{border-right:0}
-.tri3 .h{position:sticky;top:0;background:#16168a;color:#fff;padding:2px 6px;font-size:14px;z-index:1}
-.tri3 .it{padding:3px 6px;border-bottom:1px solid #b5c9ab;cursor:pointer;font-size:15px;line-height:1.35}
-.tri3 .c1 .it{background:#cfd4cc}.tri3 .c2 .it{background:#efcfa6}
-.tri3 .it:hover{filter:brightness(1.07)}
-.tri3 .it.on{outline:2px solid #1b4fd6;outline-offset:-2px;font-weight:800}
-.tri3 .it.red{color:#d11}
-.tl1{background:#f78df0}.tl2{background:#ff8a2a}.tl3{background:#ffee44}.tl4{background:#86e870}.tl5{background:#84e8f2}
-.tri3 .emp{padding:10px;opacity:.6;font-size:14px}
-.tmf{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;padding:8px 12px;align-items:start}
-.tmf .lv{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:15px}
-.tmf .bx{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;font-size:24px;font-weight:800;border-radius:4px;border:1px solid #6b8a62}
-.tmf .pick{width:46px;height:46px;font-size:26px;font-weight:800;border:2px solid transparent;border-radius:4px;cursor:pointer;color:#222}
-.tmf .pick.on{border-color:#123;box-shadow:0 0 0 2px #fff inset}
-.tmf select,.tmf textarea{border:1px solid #6b8a62;border-radius:4px;background:#fffbe0;font:inherit;padding:3px 6px;color:#111}
-.tmf textarea{width:100%;box-sizing:border-box;height:76px;resize:vertical}
-.tmf .btns{display:flex;flex-direction:column;gap:8px}
-.tmf .btns button{background:#0f8a82;color:#fff;border:0;border-radius:3px;font-size:18px;font-weight:800;padding:8px 22px;cursor:pointer}
-.tmf .btns button.g{background:#8a8f88}
-.tmf .btns button:hover{filter:brightness(1.1)}
-.tmf .cur{display:flex;align-items:center;gap:8px}
-.tmf .bx{background:none;border:0;width:auto;height:auto;min-width:30px;font-size:30px}
-.tmf .pick{background:none;border:2px solid transparent;width:44px;height:44px}
-.tmf .pick.on{border:2px solid #123;box-shadow:none;background:#fff}
-body.dark .tmb{background:#26332b;color:#e6efe8;border-color:#6b8a62}
-body.dark .tmb .tt{background:#2e3d33}
+.tm .twb{width:min(1100px,96vw);height:min(780px,94vh);background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.tm .twb iframe{width:100%;height:100%;border:0;display:block}
+@media(max-width:700px){.tm .twb{width:100vw;height:100vh;border-radius:0}}
 
 /* ===== 結構化病歷（急診結構化病歷，非外傷／外傷／小兒）===== */
 .chart{--bg:#dfeed5;--panel:#eef6e8;--ink:#16261a;--mute:#4f6355;--line:#a7bf9a;--accent:#1f6f86;--accent-ink:#fff;--accent-soft:#d3e8e0;--ok:#1b7f4c;--warn:#a85f00;--crit:#c0282d;--crit-soft:#fbe0dd;--warn-soft:#fff0cf;--t1:#c0282d;--t2:#e0662a;--t3:#e3b02a;--t4:#2f8f5b;--t5:#4f7fb8;--trauma:#a8321f;--pedi:#5b4bb4;--sans:inherit;--mono:ui-monospace,Consolas,monospace;color:var(--ink);font-size:14.5px;line-height:1.5}
@@ -917,62 +888,140 @@ const ICD=[
 ['D64.9','貧血，未特定','Anemia, unspecified'],['O20.0','先兆流產','Threatened abortion'],['N83.20','卵巢囊腫','Unspecified ovarian cysts']
 ];
 const now=Date.now(), H=3600e3;
-const P=(id,bed,zone,lvl,name,sex,age,cc,doc,nur,hrs,dir,st,dx=[])=>({id,bed,zone,lvl,name,sex,age,cc,doc,nur,arrive:now-hrs*H,dir,st,dx,imp:'',notes:[]});
-/* 以固定亂數種子產生虛構病人（每次載入結果相同） */
+/* ===== 範例病人：13 位代表病人（皆為虛構）=====
+   涵蓋 A～F 區、觀察區、ICU 待床；成人／小兒、外傷／非外傷；檢傷 1～5 級。
+   每位都有：生命徵象、檢傷紀錄（與五級檢傷視窗的主訴／判定依據對應）、已存檔的現病史、診斷與急診處置。 */
+const icdName=c=>(ICD.find(x=>x[0]===c)||[c,c])[1];
+const SEED=[
+ {bed:'A01',zone:'A',lvl:1,name:'林佳蓉',sex:'女',age:34,cc:'嚴重過敏、喘',doc:0,nur:0,hrs:.3,dir:'',st:{med:'Y',proc:'Y',lab:'P',ekg:'Y'},
+  vs:{bp:'78/42',hr:132,rr:28,bt:'36.9',spo2:88},dx:[['T78.2XXA']],imp:'Anaphylaxis（疑食物誘發）',
+  tri:['A0107','成人非外傷','呼吸系統','過敏反應','重度呼吸窘迫(<90%)'],
+  hpi:'34 歲女性，進食海鮮後約 20 分鐘出現全身蕁麻疹、喉嚨緊縮感、喘鳴與頭暈，家人緊急送醫。到院時喘、說話只能單字，皮膚潮紅冒冷汗。',
+  pmh:'PMH：過敏性鼻炎。過敏：蝦（曾起蕁麻疹）。',
+  pe:'意識清楚但焦躁；全身蕁麻疹、口唇輕度腫脹；雙肺喘鳴音；四肢冰冷、微血管充填時間延長。',
+  course:'Epinephrine 0.5 mg IM（大腿外側）、高流量氧氣、雙管靜脈輸液 NS 1000 mL、Methylprednisolone 40 mg IV、Diphenhydramine 30 mg IV。15 分鐘後血壓回升至 105/65、SpO2 97%。持續監測，觀察至少 6 小時無反覆再評估離院，開立 Epinephrine 自動注射筆並轉介過敏免疫科。'},
+ {bed:'A02',zone:'A',lvl:2,name:'張建國',sex:'男',age:68,cc:'突發口齒不清、肢體無力',doc:1,nur:1,hrs:.6,dir:'等檢查',st:{med:'N',lab:'P',ct:'N',ekg:'Y'},
+  vs:{bp:'186/104',hr:88,rr:18,bt:'36.6',spo2:96},dx:[['I63.9',1]],imp:'Acute ischemic stroke, R/O',
+  tri:['A0410','成人非外傷','神經系統','中風症狀(突發性口齒不清/單側肢體感覺異常 /突發性視覺異常)','症狀發作時間<4.5 小時'],
+  hpi:'68 歲男性，約 1 小時前看電視時突然右側肢體無力、口齒不清，家屬發現後叫救護車。無頭痛、嘔吐、抽搐，無外傷。',
+  pmh:'PMH：高血壓、第 2 型糖尿病、心房顫動（未規律服用抗凝血劑）。過敏：無。',
+  pe:'GCS E4V4M6；右側面癱、右上肢肌力 2/5、右下肢 3/5；言語不清；NIHSS 11 分。ECG：心房顫動，心室律 88 次/分。',
+  course:'啟動急性中風流程：急抽血（含凝血功能）、血糖 142 mg/dL、腦部 CT／CTA 優先。發作未滿 4.5 小時，與神經內科討論靜脈血栓溶解及動脈取栓。暫不降血壓（<220/120）。'},
+ {bed:'A03',zone:'A',lvl:2,name:'王志豪',sex:'男',age:57,cc:'胸痛，冒冷汗',doc:0,nur:2,hrs:.9,dir:'',st:{med:'Y',lab:'O',ekg:'Y',bio:'P'},
+  vs:{bp:'96/60',hr:104,rr:22,bt:'36.8',spo2:94},dx:[['I21.9']],imp:'Inferior STEMI',
+  consult:{dept:'心臟內科',note:'下壁 STEMI，請評估緊急心導管'},crit:[{name:'肌鈣蛋白 TnI',val:'2.8 ng/mL',ref:'<0.04',ack:false}],
+  tri:['A0202','成人非外傷','心臟血管系統','胸痛/胸悶','疑似心因性胸痛/胸悶'],
+  hpi:'57 歲男性，約 1 小時前活動後出現胸骨後壓迫性疼痛，放射至左肩，伴隨冒冷汗、噁心，疼痛 NRS 8/10，休息未緩解。',
+  pmh:'PMH：高血壓、高血脂；抽菸 30 年。過敏：無。',
+  pe:'冒冷汗、痛苦面容；心音規則、無雜音；雙肺清；無下肢水腫。ECG：II、III、aVF ST 上升，V1–V3 無變化（下壁 STEMI）。',
+  course:'Aspirin 300 mg 嚼服、Ticagrelor 180 mg、Heparin 5000 U IV；血壓偏低暫不用硝化甘油，先輸液並監測右心室梗塞徵象。已通知心導管室與心臟內科，目標 door-to-balloon 90 分鐘內。'},
+ {bed:'B01',zone:'B',lvl:2,name:'吳秀英',sex:'女',age:79,cc:'發燒、意識混亂',doc:2,nur:4,hrs:2.1,dir:'等住院',st:{med:'Y',lab:'O',xr:'Y',bio:'P'},adm:1,
+  vs:{bp:'88/50',hr:118,rr:24,bt:'38.9',spo2:93},dx:[['A41.9'],['N39.0']],imp:'Sepsis, urinary source',
+  crit:[{name:'乳酸 Lactate',val:'5.2 mmol/L',ref:'<2.0',ack:false}],
+  tri:['A1302','成人非外傷','一般和其他','發燒/畏寒','發燒疑似敗血症，伴隨任一徵象(中度呼吸窘迫、血行動力循環不足或意識程度改變)及SIRS 的條件≥3'],
+  hpi:'79 歲女性，由安養院轉來。2 天來發燒、解尿混濁、食慾差，今日意識混亂、反應變慢。',
+  pmh:'PMH：第 2 型糖尿病、慢性腎臟病第 3 期、反覆泌尿道感染。過敏：無。',
+  pe:'嗜睡，GCS E3V4M6；口乾；下腹壓痛、右側 CVA 敲痛（+）；四肢偏冰。Lab：WBC 17.8 K、CRP 186 mg/L、Lactate 5.2；尿液分析大量白血球。',
+  course:'啟動敗血症處置：抽 2 套血液培養後 1 小時內給 Ceftriaxone 2 g IV，輸液 30 mL/kg（約 1500 mL），監測尿量與乳酸；輸液後血壓仍低則加升壓劑。已開住院單，評估加護病房。'},
+ {bed:'C01',zone:'C',lvl:3,name:'黃柏宇',sex:'男',age:26,cc:'右下腹痛',doc:4,nur:8,hrs:3.2,dir:'',st:{med:'Y',lab:'Y',ct:'Y'},
+  vs:{bp:'124/76',hr:92,rr:18,bt:'37.8',spo2:99},dx:[['K35.80',1]],imp:'Acute appendicitis',
+  consult:{dept:'外科',note:'CT 顯示闌尾腫大，請評估手術'},
+  tri:['A0301','成人非外傷','腸胃系統','腹痛','急性中樞中度疼痛(4-7)'],
+  hpi:'26 歲男性，昨晚開始臍周悶痛，今日轉移至右下腹，伴隨噁心、食慾差，疼痛 NRS 6/10，走動或咳嗽時加劇。',
+  pmh:'PMH：無特殊。過敏：無。',
+  pe:'右下腹 McBurney 點壓痛、反彈痛（+），Rovsing sign（+）。Lab：WBC 14.2 K；CT：闌尾腫大 9 mm，周圍脂肪浸潤。',
+  course:'NPO、靜脈輸液、止痛，Cefmetazole 1 g IV。已請一般外科會診，安排腹腔鏡闌尾切除術。'},
+ {bed:'C02',zone:'C',lvl:4,name:'李淑惠',sex:'女',age:41,cc:'尿頻、排尿疼痛',doc:5,nur:9,hrs:1.4,dir:'',st:{lab:'Y'},
+  vs:{bp:'118/72',hr:78,rr:16,bt:'37.2',spo2:99},dx:[['N39.0']],imp:'Acute cystitis',
+  tri:['A0607','成人非外傷','泌尿系統','泌尿道感染相關症狀(頻尿、解尿疼痛)','急性周邊中度疼痛(4-7)'],
+  hpi:'41 歲女性，3 天來尿頻、解尿灼熱感、下腹悶痛，無發燒、腰痛或血尿。',
+  pmh:'PMH：無。過敏：無。',
+  pe:'下腹輕度壓痛，CVA 敲痛（−）。尿液分析：白血球 2+、亞硝酸鹽（+）。',
+  course:'Cefuroxime 500 mg 每日 2 次共 5 天，多喝水；3 天後門診追蹤，若發燒或腰痛請立即回診。'},
+ {bed:'C03',zone:'C',lvl:5,name:'蔡明哲',sex:'男',age:22,cc:'流鼻水、鼻塞',doc:4,nur:10,hrs:.5,dir:'',st:{},
+  vs:{bp:'118/70',hr:74,rr:16,bt:'36.7',spo2:99},dx:[['J06.9']],imp:'Acute URI',
+  tri:['A0712','成人非外傷','耳鼻喉系統','過敏或非特定因素引起的鼻塞','過敏或非特定因素引起的鼻塞，生命徵象正常，無發燒，無疼痛不適'],
+  hpi:'22 歲男性，2 天來流鼻水、鼻塞、喉嚨微癢，無發燒、咳嗽、呼吸困難。',
+  pmh:'PMH：過敏性鼻炎。過敏：無。',
+  pe:'咽部輕度充血、扁桃腺無腫大，雙肺呼吸音清，無頸部淋巴結腫大。',
+  course:'症狀治療：Acetaminophen 與 Loratadine；多休息、多喝水，建議家醫科追蹤，衛教警訊症狀（高燒、呼吸困難）。'},
+ {bed:'D01',zone:'D',lvl:4,name:'周詩涵',sex:'女',age:30,cc:'機車擦撞',doc:6,nur:12,hrs:1.2,dir:'等檢查',st:{proc:'N',xr:'N'},
+  vs:{bp:'128/82',hr:112,rr:18,bt:'36.8',spo2:97},dx:[['V89.2XXA']],imp:'Left leg laceration and knee contusion, motorcycle accident',
+  tri:['T1208','外傷','肢體外傷','下肢撕裂傷、擦傷','急性周邊中度疼痛(4-7)'],
+  hpi:'30 歲女性，騎機車時被轎車擦撞跌倒，左小腿及左膝擦挫傷；有戴安全帽，無頭部撞擊、無意識喪失、無頭暈嘔吐，疼痛 NRS 6/10。',
+  pmh:'PMH：無。過敏：無。破傷風疫苗：近 10 年內未接種。',
+  pe:'意識清楚；左小腿約 3 cm 表淺撕裂傷、已停止出血；左膝紅腫壓痛、活動度尚可；足背動脈搏動正常、感覺正常；其餘肢體無明顯傷處。',
+  course:'傷口沖洗清創後縫合（預計 2 針）、施打破傷風疫苗；左膝 X 光排除骨折；衛教傷口護理並於 7～10 天拆線。'},
+ {bed:'D02',zone:'D',lvl:3,name:'陳宥安',sex:'男',age:6,cc:'跌倒，頭皮撕裂傷',doc:7,nur:13,hrs:.8,dir:'等縫合',st:{proc:'N'},
+  vs:{bp:'102/64',hr:104,rr:22,bt:'36.7',spo2:99},dx:[['S01.01XA']],imp:'Forehead laceration after fall',
+  tri:['T0203','外傷','頭部外傷','頭部撕裂傷、擦傷','加壓後已止血'],
+  hpi:'6 歲男童，在遊樂場從約 1 公尺高處跌落，前額撞地後哭鬧，傷口出血，經家長加壓後止血。無意識喪失、無嘔吐、活動力如常。',
+  pmh:'PMH：無。過敏：無。預防接種：依時程完成。',
+  pe:'意識清楚 GCS 15；前額約 3 cm 撕裂傷、已止血；瞳孔等大對光反射正常；無神經學缺損、無頭皮血腫。PECARN 低風險，暫不需頭部 CT。',
+  course:'局部麻醉後縫合；衛教頭部外傷觀察重點（嘔吐、嗜睡、抽搐請立即回診）；5～7 天拆線。'},
+ {bed:'E01',zone:'E',lvl:3,name:'何玉蘭',sex:'女',age:83,cc:'跌倒，髖部疼痛',doc:2,nur:4,hrs:2.6,dir:'等住院',st:{med:'Y',xr:'Y'},adm:0,
+  vs:{bp:'146/82',hr:84,rr:18,bt:'36.6',spo2:96},dx:[['S72.001A']],imp:'Right femoral neck fracture',
+  consult:{dept:'骨科',note:'右股骨頸骨折，請評估手術'},
+  tri:['T1206','外傷','肢體外傷','下肢鈍傷','下肢其他部位腫脹變形，疑似骨折/脫臼'],
+  hpi:'83 歲女性，在家浴室滑倒，右髖著地，隨即右髖劇痛、無法站立行走，疼痛 NRS 8/10。無頭部撞擊、無意識喪失。',
+  pmh:'PMH：高血壓、骨質疏鬆。過敏：無。',
+  pe:'右下肢縮短並外旋；右髖腹股溝處壓痛；遠端血液循環及感覺正常。骨盆／右髖 X 光：右股骨頸骨折（移位）。',
+  course:'止痛（Acetaminophen、必要時 Morphine 小量 IV）、右下肢牽引固定；已請骨科會診，預計住院行人工髖關節置換術，術前評估心肺功能與抗凝血用藥。'},
+ {bed:'F01',zone:'F',lvl:3,name:'郭沛辰',sex:'男',age:5,cc:'發燒咳嗽',doc:1,nur:1,hrs:1.1,dir:'觀察後續追蹤',st:{med:'Y',lab:'Y'},sars:true,
+  vs:{bp:'96/58',hr:128,rr:30,bt:'39.2',spo2:97},dx:[['J10.1',1]],imp:'Influenza A',
+  tri:['P1301','兒童','一般和其他','發燒/畏寒','年齡>3Y，體溫>38℃，看起來有病容(活動力不佳)'],
+  hpi:'5 歲男童，發燒（最高 39.2°C）2 天，伴隨咳嗽、流鼻水、全身痠痛，活動力較差；班上有同學類流感。無嘔吐、腹瀉、抽搐。',
+  pmh:'PMH：無。過敏：無。預防接種：依時程完成，今年尚未接種流感疫苗。',
+  pe:'精神稍差但可互動；咽部紅；雙肺呼吸音粗、無囉音；無頸部僵硬；微血管充填時間 2 秒內。流感快篩 A 型（+）。',
+  course:'依體重給予 Oseltamivir 5 天，退燒藥（Acetaminophen）間隔使用；請家屬戴口罩並於隔離區等候，衛教補充水分與返診警訊（呼吸急促、持續高燒、嗜睡）。'},
+ {bed:'ICU1',zone:'ICU待床',lvl:1,name:'徐國榮',sex:'男',age:66,cc:'意識不清，疑腦出血',doc:0,nur:3,hrs:9.5,dir:'等ICU',st:{med:'Y',proc:'Y',lab:'O',ct:'Y',bio:'Y'},adm:2,
+  vs:{bp:'198/112',hr:58,rr:12,bt:'36.5',spo2:98},dx:[['I61.9']],imp:'Left basal ganglia ICH with IVH',
+  consult:{dept:'神經內科',note:'基底核出血併腦室出血，請評估加護病房照護'},
+  tri:['A0401','成人非外傷','神經系統','意識程度改變','無意識(GCS3-8)'],
+  hpi:'66 歲男性，晨間被家人發現倒臥浴室、意識不清，EMS 送醫。到院 GCS E1V2M4＝7，右側肢體無反應。',
+  pmh:'PMH：高血壓（未規律治療）。過敏：不詳。',
+  pe:'昏迷，GCS 7；左瞳孔 4 mm、右瞳孔 3 mm，對光反射遲鈍；右側偏癱。腦部 CT：左側基底核出血約 40 mL，併腦室出血。',
+  course:'插管保護呼吸道並使用鎮靜；Nicardipine 降血壓（目標收縮壓 140～160）；高張溶液降腦壓；神經外科評估，手術風險高，建議保守治療。已簽 ICU 住院，等候床位。'},
+ {bed:'觀01',zone:'觀察',lvl:3,name:'林建成',sex:'男',age:55,cc:'胸痛，連續心肌酵素追蹤',doc:4,nur:2,hrs:7.5,dir:'觀察後續追蹤',st:{lab:'P',ekg:'Y',bio:'Y'},
+  vs:{bp:'138/84',hr:76,rr:16,bt:'36.6',spo2:98},dx:[['R07.9']],imp:'Chest pain, low-risk, serial troponin pending',
+  tri:['A0202','成人非外傷','心臟血管系統','胸痛/胸悶','急性中樞中度疼痛(4-7)'],
+  hpi:'55 歲男性，今晨胸悶約 20 分鐘後自行緩解，無冒冷汗、放射痛或呼吸困難，到院時已無症狀。',
+  pmh:'PMH：高血脂；抽菸。過敏：無。',
+  pe:'無痛苦面容；心音規則、無雜音；雙肺清。ECG 無缺血變化；hs-TnI 0 小時 <0.01、3 小時 0.012 ng/mL（正常範圍內）。',
+  course:'HEART score 3 分（低風險）。留觀並於第 6 小時再抽一次心肌酵素，若仍正常可出院，門診安排運動心電圖或冠狀動脈檢查；若再次胸痛立即重做 ECG。'}
+];
+/* 病歷的「過去史／過敏／個人史」勾選（標籤須與結構化病歷的選項一致）：[過去史, 過敏, 個人史] */
+const BG={A01:[[],['海鮮'],[]],A02:[['高血壓','糖尿病','心房顫動'],['無已知過敏'],[]],A03:[['高血壓'],['無已知過敏'],['抽菸']],
+  B01:[['糖尿病','慢性腎臟病'],['無已知過敏'],[]],C01:[['無特殊病史'],['無已知過敏'],[]],C02:[['無特殊病史'],[],[]],C03:[[],['無已知過敏'],[]],
+  D01:[['無特殊病史'],['無已知過敏'],[]],D02:[['無特殊病史'],['無已知過敏'],[]],E01:[['高血壓'],['無已知過敏'],[]],F01:[['無特殊病史'],['無已知過敏'],[]],
+  ICU1:[['高血壓'],[],[]],觀01:[[],['無已知過敏'],['抽菸']]};
 let patients=(()=>{
-  let seed=20261030;const rnd=()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-  const pick=a=>a[Math.floor(rnd()*a.length)], ri=(a,b)=>a+Math.floor(rnd()*(b-a+1));
-  const SUR=['陳','林','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','邱','廖','賴','徐','周','葉','蘇','莊','呂','江','何','蕭','羅','高'];
-  const GM=['志明','俊宏','建國','家豪','冠宇','承恩','宗翰','柏毅','彥廷','信宏','文傑','仁豪','國華','榮輝','金龍','明德'];
-  const GF=['淑芬','美玲','雅婷','怡君','佩珊','惠敏','靜宜','欣怡','秀英','麗華','詩涵','雨潔','心怡','玉蘭','淑惠','宛庭'];
-  const CC={
-   A:[['胸痛，冒冷汗','I21.9'],['意識改變','R40.20'],['呼吸困難','R06.02'],['突發口齒不清、肢體無力','I63.9'],['心悸、血壓低','I48.91'],['抽搐','R56.9'],['解黑便、頭暈','K92.2'],['嚴重過敏、喘','T78.2XXA'],['交通事故，多處外傷','T14.90XA'],['昏倒','R55']],
-   B:[['胸悶','I20.0'],['發燒、意識混亂','A41.9'],['喘、無法平躺','I50.9'],['腹痛劇烈','R10.9'],['血糖過高','E11.65'],['嘔血','K92.2'],['肺炎疑似，喘','J18.9'],['低血糖昏迷','E16.2'],['頭暈、步態不穩','R42'],['COPD 惡化','J44.1']],
-   C:[['腹瀉嘔吐','A09'],['上腹痛','K29.70'],['頭痛','R51.9'],['發燒咳嗽','R50.9'],['頭暈','R42'],['尿頻、排尿疼痛','N39.0'],['右下腹痛','K35.80'],['側腹絞痛','N23'],['下背痛','M54.5'],['全身無力','D64.9'],['咳嗽喉嚨痛','J06.9'],['血壓過高','I10']],
-   D:[['頭部外傷','S06.0X0A'],['手部割傷','S61.411A'],['頭皮撕裂傷','S01.01XA'],['機車擦撞','V89.2XXA'],['跌倒，頭部撞傷','W19.XXXA'],['胸部撞傷','S22.39XA'],['腹部外傷','T14.90XA'],['被刀割傷','S61.411A']],
-   E:[['跌倒，髖部疼痛','S72.001A'],['手腕疼痛腫脹','S52.501A'],['小腿受傷','S82.201A'],['腰部拉傷','S39.012A'],['下背痛','M54.5'],['肩膀疼痛','T14.90XA'],['腳踝扭傷','T14.90XA'],['運動傷害，膝蓋痛','T14.90XA'],['肋骨疼痛','S22.39XA']],
-   F:[['發燒、喉嚨痛','J10.1'],['發燒咳嗽、疑似 COVID','U07.1'],['高燒、全身痠痛','J10.1'],['咳嗽、呼吸急促','J18.9'],['腹瀉、發燒','A09']],
-   觀察:[['腹痛，待追蹤','R10.9'],['頭暈，待觀察','R42'],['胸痛，連續心肌酵素追蹤','R07.9'],['發燒，待培養結果','R50.9'],['脫水，輸液中','E86.0']],
-   ICU待床:[['敗血症、低血壓','A41.9'],['呼吸衰竭，插管','J44.1'],['腦出血','I61.9'],['急性心肌梗塞','I21.9']]
-  };
-  const LV={A:[1,1,2,2,2,3],B:[2,2,2,3,3],C:[3,3,4,4,4,5],D:[3,3,4,4,5],E:[3,4,4,5],F:[3,4,4],觀察:[3,3,4],ICU待床:[1,1,2]};
-  const DIR={A:['','','等檢查','等照會'],B:['','等住院','等照會','等ICU',''],C:['','','等住院',''],D:['','等縫合','','等住院'],E:['','等檢查','等住院',''],F:['','','觀察後續追蹤'],觀察:['等住院','等照會','觀察後續追蹤'],ICU待床:['等ICU']};
-  const N={A:20,B:20,C:21,D:19,E:20,F:8,觀察:10,ICU待床:3};
-  // 每區固定 2 位主責醫師、4 位護理師
-  const ZD={A:[0,1],B:[2,3],C:[4,5],D:[6,7],E:[0,2],F:[1,3],觀察:[4,6],ICU待床:[0,2]};
-  const ZN={A:[0,1,2,3],B:[4,5,6,7],C:[8,9,10,11],D:[12,13,14,15],E:[0,4,8,12],F:[1,5,9,13],觀察:[2,6,10,14],ICU待床:[3,7,11,15]};
-  const out=[];let no=100;
-  for(const z of Object.keys(N)){
-    for(let i=1;i<=N[z];i++){
-      const f=rnd()<.5, [cc,icd]=pick(CC[z]);
-      const st={};
-      if(rnd()<.85)st.med=pick('YYYNP');
-      if(['A','B','D','E'].includes(z)&&rnd()<.5)st.proc=pick('YYNP');
-      if(rnd()<.8)st.lab=pick('YYNPO');
-      if(['A','B','D','E','F'].includes(z)&&rnd()<.6)st.xr=pick('YYNP');
-      if(['A','B','D'].includes(z)&&rnd()<.4)st.ct=pick('YNO');
-      if(['A','B','C','觀察'].includes(z)&&rnd()<.5)st.bio=pick('YP');
-      if(['A','B'].includes(z)&&rnd()<.15)st.scope=pick('YN');
-      if(['A','B','C','觀察'].includes(z)&&rnd()<.6)st.ekg=pick('YYNP');
-      const bed=z==='觀察'?'觀'+String(i).padStart(2,'0'):z==='ICU待床'?'ICU'+i:z+String(i).padStart(2,'0');
-      const hrs=z==='觀察'?rnd()*40+6:z==='ICU待床'?rnd()*20+3:Math.round(rnd()*rnd()*14*100)/100+.05;
-      out.push((P(String(++no).padStart(4,'0'),bed,z,pick(LV[z]),pick(SUR)+(f?pick(GF):pick(GM)),f?'女':'男',ri(z==='F'?5:18,92),cc,
-        DOCTORS[pick(ZD[z])],NURSES[pick(ZN[z])],hrs,pick(DIR[z]),st,rnd()<.3?[{code:icd,ro:rnd()<.3}]:[])));
-    }
-  }
+  const fmt=t=>new Date(t).toLocaleString('zh-TW',{hour12:false});
+  const out=SEED.map(s=>{
+    const arrive=now-s.hrs*H,tt=m=>fmt(arrive+m*6e4);
+    const p={id:'',bed:s.bed,zone:s.zone,lvl:s.lvl,name:s.name,sex:s.sex,age:s.age,cc:s.cc,doc:DOCTORS[s.doc],nur:NURSES[s.nur],arrive,dir:s.dir,st:s.st,
+      dx:s.dx.map(d=>({code:d[0],ro:!!d[1],name:icdName(d[0])})),imp:s.imp,notes:[],
+      vs:{...s.vs,at:arrive+5*6e4},crit:(s.crit||[]).map(c=>({...c,at:arrive+45*6e4})),
+      fl:{sars:!!s.sars,major:false,ref:0,cert:false,rv:0,drg:0,pre:false},adm:s.adm===undefined?-1:s.adm,
+      tri:{code:s.tri[0],kind:s.tri[1],cat:s.tri[2],cc:s.tri[3],basis:s.tri[4],auto:s.lvl,mod:s.lvl,reason:'',note:'',at:tt(5)}};
+    if(s.consult)p.consults=[{dept:s.consult.dept,note:s.consult.note,at:arrive+30*6e4,done:false}];
+    const text=`主訴 CC：${s.cc}　檢傷 ${s.lvl} 級\n\n現在病史 HPI：\n${s.hpi}\n\n過去史 / 過敏：\n${s.pmh}\n\n理學檢查 PE：\n${s.pe}\n\n診斷：\n`+s.dx.map((d,i)=>`${i+1}. ${icdName(d[0])}${d[1]?'（疑）':''} (${d[0]})`).join('\n');
+    const bg=BG[s.bed]||[[],[],[]];
+    p.chart={saved:{text,at:tt(25)},pmh:bg[0],alg:bg[1],soc:bg[2],
+      hpi:{on:'',unit:'小時',course:'',nrs:null,loc:[],side:'',q:[],sym:{},ext:{},note:s.hpi.replace(/^\d+ 歲(男性|女性|男童|女童)，/,'')}};
+    p.notes.push({t:`檢傷：${p.tri.kind}／${p.tri.cat}／${p.tri.cc}｜${p.tri.basis}；維持 ${s.lvl} 級`,at:tt(5)});
+    p.notes.push({t:'【現病史 Present Illness】\n'+text,at:tt(25),cid:'chart'});
+    p.notes.push({t:'【急診處置】\n'+s.course,at:tt(40)});
+    return p;
+  });
   /* 流水號：依到院先後遞增（越晚到院號碼越大）；病歷號為另一組編號 */
   [...out].sort((a,b)=>a.arrive-b.arrive).forEach((q,i)=>{
     q.id=String(101+i).padStart(4,'0');
     q.mrn=String(10000000+(parseInt(q.id,10)*7919003)%89999999).padStart(8,'0');
   });
-  /* 會診：有開立會診者，動向欄由系統自動顯示「會診某科」，不需手動選 */
-  const CD={A:['心臟內科','神經內科'],B:['神經內科','胸腔內科','腸胃內科'],C:['腸胃內科','腎臟科'],D:['外科','神經外科'],E:['骨科'],F:['感染科'],觀察:['腸胃內科','心臟內科'],ICU待床:['神經內科']};
-  for(const q of out){if(q.dir==='等照會'){const a=CD[q.zone]||['內科'];q.consults=[{dept:a[parseInt(q.id,10)%a.length],note:'',at:q.arrive+36e5,done:false}];q.dir=''}}
-  /* 範例：模擬一起事故的大量傷患，分散在各區（旗標與區域無關） */
-  let m=0;for(const q of out){if(m<8&&['A','B','D','E'].includes(q.zone)&&/機車|擦撞|外傷|撞傷|跌倒|傷|割/.test(q.cc)){q.mci=['重','中','輕','中','輕','重','輕','中'][m];m++}}
   return out;
 })();
-try{const s=localStorage.getItem('er-mock-v9');if(s)patients=JSON.parse(s)}catch(e){}
+try{const s=localStorage.getItem('er-mock-v10');if(s)patients=JSON.parse(s)}catch(e){}
 /* 示範用：危急值與住院進度（依流水號固定產生，舊存檔也會自動補上） */
 const CRIT_POOL=[['鉀 K','6.8 mmol/L','3.5–5.0'],['血糖 Glu','28 mg/dL','70–110'],['肌鈣蛋白 TnI','2.8 ng/mL','<0.04'],['乳酸 Lactate','5.2 mmol/L','<2.0'],['血紅素 Hb','5.9 g/dL','12–16'],['鈉 Na','118 mmol/L','135–145'],['INR','6.2','0.9–1.2']];
 const ADM_STEPS=['未開單','已開單','已簽','待床'];
@@ -987,7 +1036,7 @@ const ADM_STEPS=['未開單','已開單','已簽','待床'];
   if(!both){patients.filter(p=>/住院|ICU/.test(p.dir)||p.zone==='ICU待床').slice(0,3).forEach((p,i)=>{const c=CRIT_POOL[i];p.crit=[{name:c[0],val:c[1],ref:c[2],at:p.arrive+36e5,ack:false}];p.adm=[2,1,3][i]})}
 })();
 const critOpen=p=>(p.crit||[]).filter(c=>!c.ack).length;
-const save=()=>{try{localStorage.setItem('er-mock-v9',JSON.stringify(patients))}catch(e){}};
+const save=()=>{try{localStorage.setItem('er-mock-v10',JSON.stringify(patients))}catch(e){}};
 
 /* ===== 狀態 ===== */
 let LAYOUT='B';try{LAYOUT=localStorage.getItem('er-layout2')||'B'}catch(e){}
@@ -1190,83 +1239,40 @@ function allergyOf(p){const ch=((p.chart&&p.chart.alg)||[]),base=p.allergy||(/�
 const allergyTag=p=>{const a=allergyOf(p);return a.list.length?`<b style="color:#b91c1c;background:#fde8e8;border-radius:4px;padding:0 6px">過敏：${a.list.map(esc).join('、')}</b>`:a.none?'<span style="color:#2f7d4f">NKDA</span>':'<b style="color:#b45309;background:#fff4e0;border-radius:4px;padding:0 6px">過敏史未確認</b>'};
 
 
-/* ===== 五級檢傷（TTAS 示意資料，非正式判定標準）===== */
-const TG={
- resp:[[1,'重度呼吸窘迫(<90%)'],[2,'中度呼吸窘迫(<92%)'],[3,'輕度呼吸窘迫(92-94%)']],
- hemo:[[1,'休克'],[2,'血行動力循環不足'],[3,'血壓或心跳有異於病人之平常數值，但血行動力穩定']],
- cons:[[1,'無意識(GCS3-8)'],[2,'意識程度改變(GCS9-13)'],[3,'輕微意識改變(GCS14)']],
- fever:[[2,'發燒(免疫功能缺陷)'],[2,'發燒疑似敗血症，伴隨任一徵象(中度呼吸窘迫、血行動力不足、意識改變)'],[3,'發燒(看起來有病容)'],[4,'發燒(看起來無病容)']],
- pain:[[2,'重度疼痛(8-10)'],[3,'中度疼痛(4-7)'],[4,'輕度疼痛(<4)']],
- bleed:[[1,'大量出血，血行動力不穩'],[2,'中度出血，持續出血不止'],[3,'輕度出血，已止血'],[4,'輕微出血']],
- chr:[[4,'慢性或反覆性症狀，生命徵象正常，無其他急性徵象'],[5,'慢性症狀，無急性變化／回診、拿藥、開證明']]
-};
-const TRI=[
- ['呼吸系統',[['呼吸道阻塞/異物',['resp'],[[1,'完全呼吸道阻塞']]],['呼吸喘/呼吸困難',['resp']],['咳嗽',['resp','fever','chr']],['咳血',['bleed','resp']],['胸痛(呼吸性)',['pain','resp']],['喘鳴',['resp']]]],
- ['心臟血管系統',[['胸痛(心因性)',['hemo','pain'],[[1,'心跳停止/無脈搏'],[2,'典型心因性胸痛，疑急性冠心症']]],['心悸',['hemo'],[[2,'心律不整伴血行動力不穩']]],['高血壓',['chr'],[[2,'血壓>220/130 伴器官症狀'],[3,'血壓>180/110 無症狀']]],['水腫',['resp','chr']],['暈厥',['cons','hemo']]]],
- ['腸胃系統',[['腹痛',['hemo','pain'],[[2,'疑急腹症（腹膜炎徵象）']]],['噁心/嘔吐',['hemo'],[[3,'持續嘔吐，輕度脫水'],[4,'噁心嘔吐，可進食']]],['腹瀉',['hemo'],[[3,'脫水'],[4,'輕度腹瀉']]],['吐血/解黑便',['bleed','hemo']],['便秘',['chr'],[[4,'腹脹便秘']]],['吞嚥困難/異物',['resp'],[[3,'吞嚥困難']]]]],
- ['神經系統',[['意識程度改變',['cons']],['混亂',['cons']],['眩暈/頭暈',['hemo','chr'],[[3,'中度眩暈合併嘔吐']]],['頭痛',['pain'],[[2,'突發劇烈頭痛(雷擊樣)'],[2,'頭痛合併局部神經學缺損'],[3,'頭痛合併發燒、頸部僵硬']]],['抽搐',[],[[1,'持續抽搐'],[2,'抽搐後意識未恢復'],[3,'抽搐後恢復，意識清楚']]],['步態不穩/運動失調',['chr'],[[3,'急性發作']]],['震顫',['chr']],['肢體無力',['chr'],[[2,'急性單側無力']]],['知覺喪失/感覺異常',['chr'],[[2,'急性單側麻木']]],['中風症狀',[],[[2,'中風症狀，發作 4.5 小時內'],[3,'中風症狀，發作超過 4.5 小時或已緩解']]]]],
- ['骨骼系統',[['肢體疼痛',['pain'],[[2,'肢體缺血徵象']]],['疑似骨折',[],[[2,'開放性骨折/明顯變形，神經血管受損'],[3,'閉鎖性骨折'],[4,'輕微扭傷挫傷']]],['背痛',['pain'],[[2,'疑似脊髓壓迫']]],['關節腫痛',['pain'],[[3,'紅腫熱痛，疑感染']]],['頭部外傷',['cons'],[[2,'高能量創傷機轉'],[3,'頭部外傷，意識清楚'],[4,'輕微頭部撞傷']]],['撕裂傷/割傷',['bleed']],['車禍/高處墜落',['hemo'],[[2,'高能量創傷機轉']]],['燒燙傷',[],[[2,'大面積或呼吸道燒傷'],[3,'中度燒燙傷'],[4,'輕度燒燙傷']]]]],
- ['泌尿系統',[['排尿困難/頻尿',['fever'],[[4,'輕微不適']]],['血尿',['bleed']],['側腹痛/腰痛',['pain'],[[3,'疑腎絞痛']]],['尿滯留',[],[[3,'急性尿滯留，膀胱脹痛']]],['陰囊疼痛',['pain'],[[2,'疑睪丸扭轉']]]]],
- ['皮膚系統',[['皮疹',['fever'],[[2,'疑嚴重藥物過敏/史蒂文生強生症候群'],[4,'局部皮疹']]],['蕁麻疹/過敏',['resp'],[[2,'過敏反應伴呼吸或血行動力異常'],[4,'局部蕁麻疹']]],['膿瘍/蜂窩性組織炎',['fever'],[[3,'擴散性紅腫熱痛'],[4,'局部膿瘍']]],['傷口換藥/拆線',[],[[5,'傷口換藥/拆線']]]]],
- ['耳鼻喉系統',[['耳痛',['pain','fever']],['喉嚨痛',['fever'],[[3,'疑會厭炎，流口水'],[4,'喉嚨痛']]],['鼻出血',['bleed']],['流鼻水/鼻塞',[],[[4,'上呼吸道感染症狀'],[5,'輕微鼻塞']]],['聽力喪失',[],[[3,'突發性聽力喪失']]],['耳鼻異物',[],[[3,'耳鼻異物']]]]],
- ['婦產科',[['陰道出血',['bleed','hemo'],[[2,'懷孕合併出血']]],['下腹痛',['pain'],[[2,'疑子宮外孕']]],['懷孕相關問題',[],[[2,'懷孕超過 20 週，宮縮或破水'],[3,'懷孕未滿 20 週不適']]],['性侵害',[],[[2,'性侵害，需緊急處置'],[3,'性侵害，生命徵象穩定']]]]],
- ['心理健康',[['自殺意念/行為',[],[[2,'自殺行為，具立即危險'],[3,'自殺意念，無具體計畫']]],['焦慮/恐慌',[],[[3,'恐慌發作'],[4,'焦慮']]],['暴力/攻擊',[],[[2,'有暴力傾向，無法控制'],[3,'激動但可配合']]],['精神症狀',[],[[3,'幻覺妄想']]]]],
- ['物質誤用',[['酒精中毒',['cons'],[[3,'醉酒，意識尚清'],[4,'輕微酒精戒斷']]],['藥物過量/中毒',['cons','hemo'],[[2,'疑似服毒/過量']]],['藥物戒斷',[],[[3,'戒斷症狀明顯']]]]],
- ['一般和其他',[['發燒',['fever','resp']],['虛弱/全身無力',['hemo','chr']],['疼痛',['pain']],['血糖異常',['cons'],[[2,'血糖<60 有症狀'],[3,'血糖>400'],[4,'血糖偏高無症狀']]],['脫水',['hemo']],['回診/拿藥/開證明',[],[[5,'回診拿藥/開診斷書']]]]]
-];
-const TRI_WHY=['','病人主訴與電腦判斷不符','生命徵象與判斷依據不符','病情變化/再評估','臨床經驗判斷','家屬／病人反映','其他'];
-const triBasis=c=>{const a=[...(c[2]||[])];(c[1]||[]).forEach(g=>a.push(...TG[g]));return a.map((x,i)=>[...x,i]).sort((a,b)=>a[0]-b[0]||a[2]-b[2])};
-const triGuess=cc=>/胸/.test(cc)?'心臟血管系統':/腹|胃|腸|嘔|瀉/.test(cc)?'腸胃系統':/喘|咳|呼吸/.test(cc)?'呼吸系統':/頭|暈|中風|無力|抽|意識/.test(cc)?'神經系統':/傷|骨|折|跌|撞|車禍|痛/.test(cc)?'骨骼系統':/尿|腰/.test(cc)?'泌尿系統':'一般和其他';
-let TT=null;
-function openTri(){
-  const p=cur();if(!p)return;
-  const o=p.tri||{};
-  TT={pid:p.id,cat:o.cat||triGuess(p.cc),cc:o.cc||'',basis:o.basis||'',auto:o.auto||p.lvl,mod:p.lvl,reason:o.reason||'',note:o.note||'',init:p.lvl,iauto:o.auto||p.lvl};
-  let m=$('#triModal');if(!m){m=document.createElement('div');m.id='triModal';m.className='tm';document.body.appendChild(m);
-    m.addEventListener('click',triClick);m.addEventListener('input',e=>{if(e.target.id==='triNote')TT.note=e.target.value});
-    m.addEventListener('change',e=>{if(e.target.id==='triWhy')TT.reason=e.target.value})}
-  m.classList.add('show');triRender();
-}
-function triRender(){
-  const m=$('#triModal'),p=cur()||{},T=TT;
-  const cats=TRI.find(c=>c[0]===T.cat)||TRI[0],cc=cats[1].find(c=>c[0]===T.cc);
-  const bs=cc?triBasis(cc):[];
-  m.innerHTML=`<div class="tmb"><div class="tt"><b class="cross">✚</b>請選擇檢傷類別（五級檢傷）　<span style="font-size:14px;opacity:.8">${esc(p.name||'')}｜${esc(p.cc||'')}</span><button class="x" data-tx="cancel" title="取消（Esc）">×</button></div>
-  <div class="tri3">
-    <div class="cl c1"><div class="h">大分類</div>${TRI.map(c=>`<div class="it ${c[0]===T.cat?'on':''}" data-tcat="${c[0]}">${c[0]}</div>`).join('')}</div>
-    <div class="cl c2"><div class="h">主訴</div>${cats[1].map(c=>`<div class="it ${c[0]===T.cc?'on':''}" data-tcc="${esc(c[0])}">${esc(c[0])}</div>`).join('')}</div>
-    <div class="cl c3"><div class="h">判斷依據</div>${cc?bs.map(b=>`<div class="it tl${b[0]} ${b[1]===T.basis?'on':''}" data-tb="${esc(b[1])}" data-tl="${b[0]}">${esc(b[1])}</div>`).join(''):'<div class="emp">請先選擇主訴</div>'}</div>
-  </div>
-  <div class="tmf">
-    <div><div class="lv"><span class="bx tl${T.auto}">${T.auto}</span>←電腦分級</div>
-      <div class="cur" style="margin-top:10px">目前級數：<span class="bx tl${T.init}">${T.init}</span></div></div>
-    <div>
-      <div class="lv">修改後分級　<span class="bx tl${T.mod}">${T.mod}</span>　預修改分級→ ${[1,2,3,4,5].map(n=>`<button class="pick tl${n} ${T.mod===n?'on':''}" data-tmod="${n}">${n}</button>`).join('')}</div>
-      <div class="lv" style="margin-top:6px">修改原因說明 <select id="triWhy" style="flex:1;min-width:220px">${TRI_WHY.map(w=>`<option ${w===T.reason?'selected':''}>${w}</option>`).join('')}</select></div>
-      <textarea id="triNote" placeholder="備註（選填）">${esc(T.note)}</textarea>
-      <div class="btns" style="flex-direction:row;margin-top:6px;justify-content:flex-end"><button class="g" data-tx="reset">重設</button><button data-tx="save">儲存</button><button data-tx="cancel">取消</button></div>
-    </div></div></div>`;
-}
-function triClick(e){
-  const t=e.target.closest('[data-tcat],[data-tcc],[data-tb],[data-tmod],[data-tx]');
-  if(!t){if(e.target.id==='triModal')closeTri();return}
-  const T=TT;
-  if(t.dataset.tcat){T.cat=t.dataset.tcat;T.cc='';T.basis=''}
-  else if(t.dataset.tcc){T.cc=t.dataset.tcc;T.basis=''}
-  else if(t.dataset.tb){T.basis=t.dataset.tb;T.auto=+t.dataset.tl;T.mod=T.auto}
-  else if(t.dataset.tmod)T.mod=+t.dataset.tmod;
-  else if(t.dataset.tx==='cancel'){closeTri();return}
-  else if(t.dataset.tx==='reset'){T.cat=triGuess(cur().cc);T.cc='';T.basis='';T.auto=T.iauto;T.mod=T.init;T.reason='';T.note=''}
-  else if(t.dataset.tx==='save'){
-    const p=cur();
-    if(T.mod!==T.auto&&!T.reason){toast('修改分級需選擇「修改原因說明」');return}
-    const old=p.lvl;p.lvl=T.mod;
-    p.tri={cat:T.cat,cc:T.cc,basis:T.basis,auto:T.auto,mod:T.mod,reason:T.reason,note:T.note};
-    p.notes.push({t:`檢傷：${T.cat}${T.cc?'／'+T.cc:''}${T.basis?'｜'+T.basis:''}；電腦分級 ${T.auto}、${old===T.mod?'維持':'修改為'} ${T.mod}${T.reason?'（'+T.reason+(T.note?'：'+T.note:'')+'）':''}`,at:new Date().toLocaleString('zh-TW',{hour12:false})});
-    save();closeTri();renderList();renderDetail();toast(`檢傷已儲存：${T.mod} 級`);return}
-  triRender();
-}
-function closeTri(){const m=$('#triModal');if(m)m.classList.remove('show');TT=null}
+/* ===== 五級檢傷（TTAS）=====
+   按「檢傷」鈕會開啟 triage-win.html（以 iframe 嵌入）：選大分類 → 主訴 → 判定依據，系統依判定依據給級數，
+   可手動調整；改級數需填原因，降級會再確認。按「儲存」後寫回病人的檢傷級數、檢傷紀錄與病程。 */
+window.TriWin=(()=>{
+  let fr=null,pid=null;
+  const hhmm=t=>new Date(t).toLocaleTimeString('zh-TW',{hour12:false,hour:'2-digit',minute:'2-digit'});
+  const vitalsOf=p=>{const v=p.vs;if(!v)return[];
+    const sbp=parseInt(String(v.bp).split('/')[0],10),hr=+v.hr,rr=+v.rr,bt=+v.bt,sp=+v.spo2;
+    return [['BP',v.bp,sbp<90||sbp>=180?1:0],['HR',v.hr,hr<50||hr>120?1:0],['RR',v.rr,rr<10||rr>22?1:0],['SpO₂',v.spo2+'%',sp<94?1:0],['BT',v.bt+'°',bt>=38||bt<35.5?1:0]]};
+  const ctxOf=p=>{const t=p.tri||{};
+    return {name:p.name,sex:p.sex,ageText:p.age+' 歲',ageM:Math.round((+p.age||0)*12),arrive:hhmm(p.arrive),cc:p.cc,lvl:p.lvl,vs:vitalsOf(p),
+      trauma:/傷|撞|跌|車禍|割|骨折|摔|墜/.test(p.cc),dark:document.body.classList.contains('dark'),
+      tri:t.code?{code:t.code,basis:t.basis}:null,
+      lastMod:t.at?`上次修改：${t.at} · ${t.mod} 級${t.basis?' · '+t.basis:''}`:''}};
+  function open(p){
+    if(!p)return;pid=p.id;
+    let m=$('#triModal');if(!m){m=document.createElement('div');m.id='triModal';m.className='tm';document.body.appendChild(m)}
+    m.innerHTML='<div class="twb"><iframe title="檢傷視窗" src="triage-win.html?v=1"></iframe></div>';
+    fr=m.querySelector('iframe');m.classList.add('show')}
+  function close(){const m=$('#triModal');if(m){m.classList.remove('show');m.innerHTML=''}fr=null;pid=null}
+  function saveRec(rec){
+    const p=patients.find(x=>x.id===pid);if(!p){close();return}
+    const old=p.lvl,at=new Date().toLocaleString('zh-TW',{hour12:false}),sel=[rec.kind,rec.cat,rec.cc].filter(Boolean).join('／');
+    p.lvl=rec.mod;p.tri={...rec,at};
+    p.notes.push({t:`檢傷：${sel||'（未選主訴）'}${rec.basis?'｜'+rec.basis:''}；${old===rec.mod?'維持 '+rec.mod+' 級':'由 '+old+' 級改為 '+rec.mod+' 級'}${rec.reason?'（'+rec.reason+(rec.note?'：'+rec.note:'')+'）':''}`,at});
+    save();close();renderList();renderDetail();toast(`檢傷已儲存：${rec.mod} 級`)}
+  addEventListener('message',e=>{
+    if(!fr||e.source!==fr.contentWindow)return;const d=e.data||{};
+    if(d.tw==='ready'){const p=patients.find(x=>x.id===pid);if(p)fr.contentWindow.postMessage({tw:'ctx',ctx:ctxOf(p)},'*')}
+    else if(d.tw==='save')saveRec(d.rec);
+    else if(d.tw==='close')close()});
+  return {open,close};
+})();
+const openTri=()=>TriWin.open(cur());
 
 const Chart=(()=>{
 const DOC=globalThis.document,LST={};
@@ -4047,8 +4053,8 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 /* ===== 尚未開放的選單：明確標示，不再「點了沒反應」===== */
 document.addEventListener('click',e=>{const m=e.target.closest&&e.target.closest('.menubar .m');if(m){e.stopPropagation();toast('「'+m.textContent.trim()+'」尚未開放（示意）');return}
   const b=e.target.closest&&e.target.closest('.shortbar button');if(b&&/病人重取|切換醫師/.test(b.textContent)){e.stopPropagation();toast('「'+b.textContent.trim()+'」尚未開放（示意）')}
-  if(e.target.id==='triModal'){const c=document.querySelector('#triModal [data-tx="cancel"]');if(c)c.click()}},true);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('#triModal.show')){const c=document.querySelector('#triModal [data-tx="cancel"]');if(c)c.click()}});
+  if(e.target.id==='triModal')TriWin.close()},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('#triModal.show'))TriWin.close()});
 
 layoutLbl();renderChips();renderList();renderDetail();
 document.addEventListener('click',e=>{if(e.target.dataset.z)renderChips()});
